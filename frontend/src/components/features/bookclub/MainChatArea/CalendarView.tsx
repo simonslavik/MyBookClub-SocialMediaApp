@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FiChevronLeft, FiChevronRight, FiVideo, FiX } from 'react-icons/fi';
+import { createPortal } from 'react-dom';
+import { FiChevronLeft, FiChevronRight, FiVideo, FiX, FiBook } from 'react-icons/fi';
 import apiClient from '@api/axios';
 import { bookclubAPI } from '@api/bookclub.api';
 import logger from '@utils/logger';
@@ -11,6 +12,20 @@ const CalendarView = ({ bookClubId }) => {
   const [bookClubBooks, setBookClubBooks] = useState([]);
   const [meetings, setMeetings] = useState([]);
   const [selectedMeeting, setSelectedMeeting] = useState(null);
+  const [hoveredEvent, setHoveredEvent] = useState<
+    | { type: 'meeting' | 'book'; data: any; rect: DOMRect; date?: Date }
+    | null
+  >(null);
+
+  const handleEventEnter = (
+    type: 'meeting' | 'book',
+    data: any,
+    e: React.MouseEvent<HTMLDivElement>,
+    date?: Date,
+  ) => {
+    setHoveredEvent({ type, data, rect: e.currentTarget.getBoundingClientRect(), date });
+  };
+  const handleEventLeave = () => setHoveredEvent(null);
 
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -267,7 +282,8 @@ const CalendarView = ({ bookClubId }) => {
                         key={`meeting-${meeting.id}`}
                         className={`text-xs p-1 rounded ${getMeetingPlatformColor(meeting.platform)} text-white cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1`}
                         onClick={(e) => { e.stopPropagation(); setSelectedMeeting(meeting); }}
-                        title={`${meeting.title} - ${new Date(meeting.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                        onMouseEnter={(e) => handleEventEnter('meeting', meeting, e)}
+                        onMouseLeave={handleEventLeave}
                       >
                         <FiVideo size={10} className="flex-shrink-0" />
                         <span className="font-semibold truncate">{meeting.title}</span>
@@ -280,7 +296,8 @@ const CalendarView = ({ bookClubId }) => {
                         key={book.id}
                         className={`text-xs p-1 rounded ${getBookStatusColor(book.status)} text-white cursor-pointer hover:opacity-80 transition-opacity border border-white border-opacity-30`}
                         onClick={() => setSelectedBook({ ...book, clickedDate: date })}
-                        title={`${book.book.title} - ${getBookStatusLabel(book, date)}`}
+                        onMouseEnter={(e) => handleEventEnter('book', book, e, date)}
+                        onMouseLeave={handleEventLeave}
                       >
                         <div className="font-semibold truncate">
                           {getBookStatusLabel(book, date)}: {book.book.title}
@@ -372,6 +389,117 @@ const CalendarView = ({ bookClubId }) => {
             )}
           </div>
         </div>
+      )}
+
+      {/* Hover popover (rendered to body via portal so the calendar's overflow doesn't clip it) */}
+      {hoveredEvent && createPortal(
+        (() => {
+          const POPOVER_W = 256;
+          const margin = 8;
+          const fitsRight = hoveredEvent.rect.right + margin + POPOVER_W <= window.innerWidth;
+          const left = fitsRight
+            ? hoveredEvent.rect.right + margin
+            : Math.max(margin, hoveredEvent.rect.left - margin - POPOVER_W);
+          const top = Math.min(
+            Math.max(margin, hoveredEvent.rect.top),
+            window.innerHeight - margin - 200,
+          );
+          return (
+            <div
+              className="fixed z-[9999] w-64 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl p-3 pointer-events-none animate-in fade-in duration-100"
+              style={{ left, top }}
+            >
+              {hoveredEvent.type === 'meeting' ? (
+                <div className="space-y-2">
+                  <div className="flex items-start gap-2">
+                    <FiVideo size={14} className="text-indigo-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-white text-sm font-semibold leading-tight break-words">
+                      {hoveredEvent.data.title}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] ${getMeetingPlatformColor(hoveredEvent.data.platform)} text-white`}>
+                      {getMeetingPlatformLabel(hoveredEvent.data.platform)}
+                    </span>
+                    <span className="text-gray-400 text-[11px]">·</span>
+                    <span className="text-gray-300 text-[11px]">{hoveredEvent.data.duration} min</span>
+                    {hoveredEvent.data.status && (
+                      <>
+                        <span className="text-gray-400 text-[11px]">·</span>
+                        <span className="text-gray-300 text-[11px]">{hoveredEvent.data.status}</span>
+                      </>
+                    )}
+                  </div>
+                  <div className="text-gray-300 text-[11px]">
+                    {new Date(hoveredEvent.data.scheduledAt).toLocaleString([], {
+                      weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+                    })}
+                  </div>
+                  {hoveredEvent.data.description && (
+                    <p className="text-gray-400 text-[11px] leading-snug pt-2 border-t border-gray-700 line-clamp-3 break-words">
+                      {hoveredEvent.data.description}
+                    </p>
+                  )}
+                  {hoveredEvent.data.rsvps?.length > 0 && (
+                    <div className="text-[11px] text-gray-400 pt-2 border-t border-gray-700">
+                      <span className="text-green-400">{hoveredEvent.data.rsvps.filter((r: any) => r.status === 'ATTENDING').length} going</span>
+                      {hoveredEvent.data.rsvps.filter((r: any) => r.status === 'MAYBE').length > 0 && (
+                        <span className="ml-2 text-yellow-400">{hoveredEvent.data.rsvps.filter((r: any) => r.status === 'MAYBE').length} maybe</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    {hoveredEvent.data.book?.coverUrl ? (
+                      <img
+                        src={hoveredEvent.data.book.coverUrl}
+                        alt=""
+                        className="w-10 h-14 object-cover rounded flex-shrink-0 shadow"
+                      />
+                    ) : (
+                      <div className="w-10 h-14 bg-gray-700 rounded flex items-center justify-center flex-shrink-0">
+                        <FiBook size={14} className="text-gray-500" />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-white text-sm font-semibold line-clamp-2 break-words leading-tight">
+                        {hoveredEvent.data.book?.title}
+                      </p>
+                      {hoveredEvent.data.book?.author && (
+                        <p className="text-gray-400 text-[11px] mt-0.5 truncate">{hoveredEvent.data.book.author}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap pt-2 border-t border-gray-700">
+                    <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] ${getBookStatusColor(hoveredEvent.data.status)} text-white capitalize`}>
+                      {hoveredEvent.data.status}
+                    </span>
+                    {hoveredEvent.date && (
+                      <span className="text-indigo-300 text-[11px] font-medium">
+                        {getBookStatusLabel(hoveredEvent.data, hoveredEvent.date)}
+                      </span>
+                    )}
+                  </div>
+                  {hoveredEvent.data.startDate && (
+                    <div className="text-[11px] text-gray-300">
+                      <span className="text-gray-400">Start:</span>{' '}
+                      {new Date(hoveredEvent.data.startDate).toLocaleDateString()}
+                    </div>
+                  )}
+                  {hoveredEvent.data.endDate && (
+                    <div className="text-[11px] text-gray-300">
+                      <span className="text-gray-400">Due:</span>{' '}
+                      {new Date(hoveredEvent.data.endDate).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })(),
+        document.body,
       )}
 
       {/* Book details modal */}

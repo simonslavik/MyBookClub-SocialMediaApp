@@ -118,16 +118,18 @@ const BookClubBookView = ({
             )}
           </div>
         </div>
-        <select
-          value={bookClubBook.status}
-          onChange={(e) => handleStatusChange(bookClubBook.bookId, e.target.value)}
-          onClick={(e) => e.stopPropagation()}
-          className={`w-full px-2.5 py-1 bg-gray-700 border border-gray-600 rounded text-white text-xs focus:outline-none focus:ring-2 ${focusRingColor}`}
-        >
-          <option value="current">Currently Reading</option>
-          <option value="upcoming">Coming Up Next</option>
-          <option value="completed">Completed</option>
-        </select>
+        {canManageBooks && (
+          <select
+            value={bookClubBook.status}
+            onChange={(e) => handleStatusChange(bookClubBook.bookId, e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            className={`w-full px-2.5 py-1 bg-gray-700 border border-gray-600 rounded text-white text-xs focus:outline-none focus:ring-2 ${focusRingColor}`}
+          >
+            <option value="current">Currently Reading</option>
+            <option value="upcoming">Coming Up Next</option>
+            <option value="completed">Completed</option>
+          </select>
+        )}
       </div>
     );
   };

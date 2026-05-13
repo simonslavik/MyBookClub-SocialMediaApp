@@ -138,6 +138,13 @@ const BookClub = () => {
     typingUsers, sendTyping,
   } = useBookclubWebSocket(bookClub, currentRoom, auth, bookClubId, { onInit: handleWsInit });
 
+  // Clear stale messages immediately when switching bookclubs;
+  // otherwise the previous bookclub's chat stays visible until the
+  // new WebSocket connection delivers an `init` payload.
+  useEffect(() => {
+    setMessages([]);
+  }, [bookClubId, setMessages]);
+
   // ─── Extract role whenever members change ──────────────
   useEffect(() => {
     extractUserRole(bookClubMembers);

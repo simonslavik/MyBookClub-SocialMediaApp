@@ -108,7 +108,12 @@ const BookSuggestionsView = ({ bookClubId, auth, members = [], userRole, onSugge
         {/* Suggestions Grid */}
         {bookSuggestions.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {bookSuggestions.map((suggestion) => (
+            {bookSuggestions.map((suggestion) => {
+              const suggesterId = suggestion.suggestedById || suggestion.suggestedBy?.id;
+              const suggester = members.find(m => m.id === suggesterId);
+              const suggesterName = suggester?.username || suggestion.suggestedBy?.name || 'Unknown';
+              const suggesterImage = getProfileImageUrl(suggester?.profileImage) || '/images/default-avatar.png';
+              return (
               <div
                 key={suggestion.id}
                 onClick={() => setSelectedSuggestion(suggestion)}
@@ -137,12 +142,23 @@ const BookSuggestionsView = ({ bookClubId, auth, members = [], userRole, onSugge
                   </div>
                 </div>
 
-                {/* Reason */}
+                {/* Reason — attributed speech bubble */}
                 {suggestion.reason && (
-                  <div className="mb-3 p-2 bg-white/[0.04] rounded">
-                    <p className="text-gray-300 text-xs italic">
-                      "{suggestion.reason}"
-                    </p>
+                  <div className="mb-3 flex items-start gap-2">
+                    <img
+                      src={suggesterImage}
+                      alt={suggesterName}
+                      className="w-6 h-6 rounded-full object-cover flex-shrink-0 mt-0.5"
+                      onError={(e) => { (e.target as HTMLImageElement).src = '/images/default-avatar.png'; }}
+                    />
+                    <div className="relative flex-1 min-w-0 bg-indigo-500/10 border border-indigo-500/30 rounded-lg rounded-tl-sm px-3 py-2">
+                      <span
+                        aria-hidden
+                        className="absolute -left-[5px] top-2.5 w-2 h-2 bg-indigo-500/10 border-l border-t border-indigo-500/30 rotate-[-45deg]"
+                      />
+                      <p className="text-[10px] font-medium text-indigo-300 mb-0.5">{suggesterName}</p>
+                      <p className="text-gray-200 text-xs leading-snug break-words">{suggestion.reason}</p>
+                    </div>
                   </div>
                 )}
 
@@ -172,17 +188,19 @@ const BookSuggestionsView = ({ bookClubId, auth, members = [], userRole, onSugge
                       <span className="font-medium">{suggestion.downvotes || 0}</span>
                     </button>
                   </div>
-                  <div
-                    className="flex items-center gap-1.5 text-gray-400 text-[11px] cursor-pointer hover:text-indigo-500 transition-colors"
-                    onClick={(e) => { e.stopPropagation(); navigate(`/profile/${suggestion.suggestedById || suggestion.suggestedBy?.id}`); }}
-                  >
-                    <img
-                      src={getProfileImageUrl(members.find(m => m.id === (suggestion.suggestedById || suggestion.suggestedBy?.id))?.profileImage) || '/images/default-avatar.png'}
-                      alt=""
-                      className="w-4 h-4 rounded-full object-cover"
-                    />
-                    <span className="hover:underline">{members.find(m => m.id === (suggestion.suggestedById || suggestion.suggestedBy?.id))?.username || suggestion.suggestedBy?.name || 'Unknown'}</span>
-                  </div>
+                  {!suggestion.reason && (
+                    <div
+                      className="flex items-center gap-1.5 text-gray-400 text-[11px] cursor-pointer hover:text-indigo-500 transition-colors"
+                      onClick={(e) => { e.stopPropagation(); navigate(`/profile/${suggesterId}`); }}
+                    >
+                      <img
+                        src={suggesterImage}
+                        alt=""
+                        className="w-4 h-4 rounded-full object-cover"
+                      />
+                      <span className="hover:underline">{suggesterName}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Book Description (if available) */}
@@ -195,7 +213,8 @@ const BookSuggestionsView = ({ bookClubId, auth, members = [], userRole, onSugge
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-12">

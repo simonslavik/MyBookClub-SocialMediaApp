@@ -231,6 +231,7 @@ const ConnectedUsersSidebar = ({
                 </div>
                 <div className="flex-1 flex items-center gap-1.5 min-w-0">
                   <span className="truncate text-[13px]">{user.username}</span>
+                  {isCurrentUser && <span className="text-[11px] text-gray-500 flex-shrink-0">(you)</span>}
                   <RoleBadge role={user.role} />
                 </div>
                 {isFriend && (
