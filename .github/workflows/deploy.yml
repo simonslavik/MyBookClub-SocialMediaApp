@@ -115,11 +115,16 @@ jobs:
           TAG: ${{ needs.setup.outputs.tag }}
           REGISTRY: ${{ env.REGISTRY }}
           IMAGE_PREFIX: ${{ needs.setup.outputs.image_prefix }}
+          # Optional secrets — when present, override values in .env.production.
+          # Leave unset to keep using the on-server .env.production values.
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          envs: TAG,REGISTRY,IMAGE_PREFIX
+          envs: TAG,REGISTRY,IMAGE_PREFIX,CLOUDINARY_CLOUD_NAME,CLOUDINARY_API_KEY,CLOUDINARY_API_SECRET
           script: |
             DEPLOY_DIR="$HOME/app"
             mkdir -p "$DEPLOY_DIR"
@@ -133,6 +138,9 @@ jobs:
             _TAG="$TAG"
             _REGISTRY="$REGISTRY"
             _IMAGE_PREFIX="$IMAGE_PREFIX"
+            _CLOUDINARY_CLOUD_NAME="$CLOUDINARY_CLOUD_NAME"
+            _CLOUDINARY_API_KEY="$CLOUDINARY_API_KEY"
+            _CLOUDINARY_API_SECRET="$CLOUDINARY_API_SECRET"
 
             # ── Use fixed project name for volume consistency ──
             export COMPOSE_PROJECT_NAME="bookclub"
@@ -164,8 +172,14 @@ jobs:
             export REGISTRY="$_REGISTRY"
             export IMAGE_PREFIX="$_IMAGE_PREFIX"
 
+            # Override Cloudinary creds from GitHub Secrets when present.
+            # Empty values fall through to whatever .env.production already set.
+            [ -n "$_CLOUDINARY_CLOUD_NAME" ] && export CLOUDINARY_CLOUD_NAME="$_CLOUDINARY_CLOUD_NAME"
+            [ -n "$_CLOUDINARY_API_KEY" ]    && export CLOUDINARY_API_KEY="$_CLOUDINARY_API_KEY"
+            [ -n "$_CLOUDINARY_API_SECRET" ] && export CLOUDINARY_API_SECRET="$_CLOUDINARY_API_SECRET"
+
             echo "── Deploying: $REGISTRY/$IMAGE_PREFIX/*:$TAG ──"
-            echo "── ENV check: POSTGRES_USER=${POSTGRES_USER:-MISSING} REDIS_PASSWORD=${REDIS_PASSWORD:+SET} JWT_SECRET=${JWT_SECRET:+SET} ──"
+            echo "── ENV check: POSTGRES_USER=${POSTGRES_USER:-MISSING} REDIS_PASSWORD=${REDIS_PASSWORD:+SET} JWT_SECRET=${JWT_SECRET:+SET} CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME:+SET} CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY:+SET} CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET:+SET} ──"
 
             # ── Ensure SSL certificates exist (non-fatal) ──
             echo "── Checking SSL certificates ──"
