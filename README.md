@@ -1,6 +1,6 @@
 <div align="center">
 
-# 📚 BookClubs
+# 📚 MyBookClubs
 
 ### A full-stack, real-time book club platform built with microservices
 
@@ -17,17 +17,69 @@
 
 </div>
 
+> **Live demo:** _add staging URL here_ · **Demo account:** _email / password_
+
 ---
 
 ## Overview
 
-BookClubs is a Discord-inspired community platform purpose-built for reading groups. Users can create and join book clubs with real-time chat, organize reading schedules, vote on book suggestions, track progress, and receive push notifications — all within a responsive single-page application backed by a resilient microservices architecture.
+**MyBookClubs** is a Discord-inspired community platform purpose-built for reading groups. Users can create and join book clubs with real-time chat, organize reading schedules, vote on book suggestions, track progress, and receive push notifications — all within a responsive single-page application backed by a resilient microservices architecture.
 
 The project demonstrates production-grade engineering practices including service isolation, API gateway routing, WebSocket real-time communication, JWT-based authentication with refresh tokens, observability with Prometheus/Grafana/Loki, and containerized deployment with Docker.
+
+### Highlights
+
+- **5-service microservices backend** with strict per-service database ownership and gateway-only public surface.
+- **Real-time chat over WebSockets** with reactions, replies, edits, mentions, presence and typing indicators.
+- **Real-time push notification stream** with scheduled email reminders and per-type user preferences.
+- **Production-ready ops**: Nginx reverse proxy, Redis-backed distributed rate limiting, Prometheus metrics, Grafana dashboards, Loki log aggregation, alert rules.
+- **Modern frontend stack**: React 19 + the React Compiler, Vite 7, Tailwind 4, MSW for API mocking, Vitest + Testing Library.
+
+---
+
+## Screenshots
+
+> _Add screenshots / GIFs here: club chat, calendar, suggestions voting, Grafana dashboards._
 
 ---
 
 ## Architecture
+
+```mermaid
+flowchart TB
+    Client["Browser SPA<br/>React 19 + Vite"]
+    Nginx["Nginx<br/>SSL · rate limit · WS upgrade"]
+    GW["API Gateway<br/>JWT verify · proxy · metrics"]
+    User["User Service<br/>auth · profiles · friends · DMs"]
+    Books["Books Service<br/>catalog · library · suggestions"]
+    Collab["Collab Editor Service<br/>clubs · rooms · WS chat · events"]
+    Notif["Notification Service<br/>push · email · scheduled"]
+    Redis[("Redis<br/>cache · rate limit")]
+    UDB[("users_db")]
+    BDB[("books_db")]
+    CDB[("collab_db")]
+    NDB[("notifications_db")]
+
+    Client -->|HTTPS| Nginx
+    Client -->|WSS /ws/collab| Nginx
+    Client -->|WSS /ws/notifications| Nginx
+    Nginx --> GW
+    Nginx -->|WS upgrade| Collab
+    Nginx -->|WS upgrade| Notif
+    GW --> User
+    GW --> Books
+    GW --> Collab
+    GW --> Notif
+    GW <--> Redis
+    User --> UDB
+    Books --> BDB
+    Collab --> CDB
+    Notif --> NDB
+    Books <--> Redis
+```
+
+<details>
+<summary>ASCII version</summary>
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
@@ -68,6 +120,8 @@ The project demonstrates production-grade engineering practices including servic
                   │Rate Limit│
                   └──────────┘
 ```
+
+</details>
 
 Each microservice owns its database and communicates only through the API Gateway — enforcing strict service boundaries and independent scalability.
 
@@ -390,6 +444,64 @@ All API routes are proxied through the Gateway at `/v1/`:
 | `/v1/notifications` | Notification Service | Required |
 | `/ws/collab` | Collab Editor | WebSocket |
 | `/ws/notifications` | Notification Service | WebSocket |
+
+---
+
+## Real-Time Chat Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User (browser)
+    participant N as Nginx
+    participant C as Collab Service
+    participant DB as collab_db
+    participant Other as Other clients
+
+    U->>N: WSS /ws/collab + JWT
+    N->>C: WebSocket upgrade
+    C->>C: verify JWT + load member roles
+    C-->>U: init { rooms, messages, members, unread }
+
+    U->>C: { type: chat-message, text, attachments }
+    C->>DB: persist message + attachments
+    C->>Other: broadcast { chat-message }
+    C-->>U: ack via broadcast (own echo)
+    C->>Notif: emit room-activity (mentions → push)
+```
+
+The `init` payload bundles room metadata, the most-recent messages, members, presence and unread cursors in a single round-trip — keeping cold-load to one network event. Subsequent state mutations (reactions, edits, deletes) are funnelled through a pure reducer on the client so message ordering and identity stay consistent regardless of arrival order.
+
+---
+
+## Engineering Decisions & Trade-offs
+
+This section documents the choices behind the design — and the things I'd tackle next given more time.
+
+### Why microservices for a portfolio project?
+A monolith would have shipped faster, but the goal was to demonstrate boundary design — service-owned databases, gateway-mediated traffic, isolated deploys. The cost is operational complexity (more containers, more migrations, more env wiring) and the absence of cross-service transactions; I deliberately accepted eventual consistency between bookclub-side membership and books-side bookclub-book records.
+
+### Database per service
+Each service owns its PostgreSQL schema and is the only writer. There are no foreign keys across service boundaries — instead, entities reference the user's `id` from `users_db` by UUID. This keeps services independently deployable and migratable, at the cost of having to denormalise the user's display name and avatar where they're shown in chat.
+
+### Why WebSockets directly instead of Socket.IO?
+The native `ws` API on the server and the browser-native `WebSocket` on the client are smaller, dependency-free, and force a clean message protocol. Socket.IO's automatic fallbacks are unnecessary for an authenticated, modern-browser app. The trade-off is that I had to implement reconnection-with-backoff and message reducers myself.
+
+### Auth: short-lived access + rotating refresh
+Access tokens are short-lived (15 min) and refresh tokens rotate on every use, with the previous token invalidated server-side — limiting the blast radius of a stolen token. See [docs/AUTH_HARDENING.md](docs/AUTH_HARDENING.md) for the full threat model and implementation notes.
+
+### Rate limiting via Redis
+Per-IP and per-user buckets live in Redis so the gateway scales horizontally without hot-spotting one instance. Nginx provides a coarse outer limit; the gateway enforces fine-grained per-route policies (auth endpoints stricter than reads).
+
+### Observability before features
+Prometheus scraping, Grafana dashboards, Loki log aggregation, and alert rules were wired up early — before half the features existed. This forced every service to expose `/metrics` and structure its logs from day one.
+
+### What I'd do differently
+- **Split the bookclub page component.** The main page hook tree grew organically and the page file is too large; the view-router branches and modal cluster should be separate components.
+- **Replace ad-hoc message-state refs with a state machine.** The WebSocket hook leans on several `useRef` flags to track stale closures and reconnection state; an XState machine or a `useReducer` per concern would make the lifecycle far easier to reason about.
+- **Promote shared TypeScript types to a workspace package.** Message and entity shapes are duplicated between frontend and the collab service — a `packages/shared-types` workspace would eliminate drift.
+- **Add E2E tests.** The unit/integration coverage is solid per service, but a Playwright smoke suite would catch the kinds of cross-service regressions that unit tests miss.
+- **Migrate from Express to Fastify** in the gateway for lower per-request overhead and built-in schema validation.
+- **Move file uploads to S3-compatible storage** instead of Docker volumes — the current setup ties uploads to a single host.
 
 ---
 

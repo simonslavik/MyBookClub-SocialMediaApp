@@ -1,11 +1,27 @@
 import cloudinaryPkg from 'cloudinary';
 const cloudinary = cloudinaryPkg.v2;
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME?.trim(),
-  api_key: process.env.CLOUDINARY_API_KEY?.trim(),
-  api_secret: process.env.CLOUDINARY_API_SECRET?.trim(),
-});
+const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim();
+const apiKey = process.env.CLOUDINARY_API_KEY?.trim();
+const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim();
+
+// Loud fail-fast warning at boot so misconfiguration shows up in logs
+// immediately instead of only when a user tries to upload.
+const placeholders = new Set(['', 'example', 'changeme', 'your_cloud_name', 'your_api_key', 'your_api_secret']);
+const missing = !cloudName || !apiKey || !apiSecret;
+const placeholder =
+  placeholders.has((cloudName ?? '').toLowerCase()) ||
+  placeholders.has((apiKey ?? '').toLowerCase()) ||
+  placeholders.has((apiSecret ?? '').toLowerCase());
+
+if (missing || placeholder) {
+  console.warn(
+    '[cloudinary] ⚠️  CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET are missing or set to placeholder values. ' +
+    'Image uploads will fail with HTTP 503 until real credentials are provided.',
+  );
+}
+
+cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
 
 /**
  * Upload a buffer to Cloudinary
