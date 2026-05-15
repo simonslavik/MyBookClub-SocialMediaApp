@@ -141,7 +141,9 @@ const Home = () => {
             onSetHoveredMember={setHoveredMember}
           />
 
-          <div className="flex justify-center mt-8 md:mt-16">
+          {/* `mt-6` matches the carousel-internal gap between cards and dots,
+              giving an even card → dots → button rhythm. */}
+          <div className="flex justify-center mt-6">
             <button
               onClick={() => navigate('/discover')}
               className="font-medium rounded-lg px-5 py-2.5 bg-stone-800 text-white cursor-pointer hover:bg-stone-700 transition-colors text-sm"

@@ -2,6 +2,7 @@ import { useState, useEffect, useContext, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiChevronLeft, FiChevronRight, FiUsers } from 'react-icons/fi';
 import { getCollabImageUrl, getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 import AuthContext from '@context/index';
 
 const DEFAULT_IMAGE = '/images/default.svg';
@@ -12,7 +13,7 @@ const DEFAULT_IMAGE = '/images/default.svg';
 const CreateClubCard = ({ onClick, scale, opacity, zIndex, isCenter }) => (
   <div
     onClick={onClick}
-    className="w-[240px] sm:w-[300px] h-[400px] sm:h-[480px] flex-shrink-0 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all duration-500 ease-out group"
+    className="w-[240px] sm:w-[300px] h-[460px] sm:h-[520px] flex-shrink-0 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all duration-500 ease-out group"
     style={{
       transform: `scale(${scale})`,
       opacity,
@@ -41,8 +42,8 @@ const CurrentBooksPreview = ({ books, clubId, bookIdx, onChangeIndex }) => {
   const heading = allUpcoming ? 'Up Next' : 'Currently Reading';
 
   return (
-    <div className="mt-3 px-3 py-3 rounded-xl bg-stone-800/5 dark:bg-white/5">
-      <p className="text-[10px] uppercase tracking-widest text-stone-400 dark:text-stone-500 font-semibold mb-2">
+    <div className="mt-3 px-3 py-2 rounded-xl bg-stone-800/5 dark:bg-white/5 flex-shrink min-h-0">
+      <p className="text-[10px] uppercase tracking-widest text-stone-400 dark:text-stone-500 font-semibold mb-1">
         {heading}
       </p>
 
@@ -113,7 +114,7 @@ const MemberAvatars = ({ members, memberCount, onHover, onLeave }) => {
   // populated so cards stay visually balanced.
   if (list.length === 0) {
     return (
-      <div className="mt-auto pt-3 flex items-center gap-2 text-stone-400">
+      <div className="mt-auto pt-3 flex items-center gap-2 text-stone-400 flex-shrink-0">
         <FiUsers size={14} />
         <span className="text-xs font-medium">
           {total} {total === 1 ? 'member' : 'members'}
@@ -123,21 +124,24 @@ const MemberAvatars = ({ members, memberCount, onHover, onLeave }) => {
   }
 
   return (
-    <div className="mt-auto pt-3 flex items-center justify-between">
+    <div className="mt-auto pt-3 flex items-center justify-between flex-shrink-0">
       <div className="flex -space-x-2">
-        {list.slice(0, 4).map((member) => (
-          <div key={member.id} className="relative">
-            <img
-              src={getProfileImageUrl(member.profileImage) || DEFAULT_IMAGE}
-              alt={member.username}
-              className="w-7 h-7 rounded-full border-2 border-white object-cover shadow-sm cursor-pointer hover:ring-2 hover:ring-stone-400 transition-all hover:z-10 relative"
-              onClick={(e) => { e.stopPropagation(); navigate(`/profile/${member.id}`); }}
-              onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_IMAGE; }}
-              onMouseEnter={(e) => onHover(e, member)}
-              onMouseLeave={onLeave}
-            />
-          </div>
-        ))}
+        {list.slice(0, 4).map((member) => {
+          const fallback = getAvatarUrl(getAvatarSeed(member));
+          return (
+            <div key={member.id} className="relative">
+              <img
+                src={getProfileImageUrl(member.profileImage) || fallback}
+                alt={member.username}
+                className="w-7 h-7 rounded-full border-2 border-white object-cover shadow-sm cursor-pointer hover:ring-2 hover:ring-stone-400 transition-all hover:z-10 relative"
+                onClick={(e) => { e.stopPropagation(); navigate(`/profile/${member.id}`); }}
+                onError={(e) => { (e.target as HTMLImageElement).src = fallback; }}
+                onMouseEnter={(e) => onHover(e, member)}
+                onMouseLeave={onLeave}
+              />
+            </div>
+          );
+        })}
         {total > list.length && (
           <div className="w-7 h-7 rounded-full border-2 border-white bg-stone-100 flex items-center justify-center text-[10px] font-bold text-stone-700">
             +{total - list.length}
@@ -177,7 +181,7 @@ const ClubCard = ({ bookClub, scale, opacity, zIndex, isCenter, cardBookIndex, o
   return (
     <div
       onClick={() => navigate(`/bookclub/${bookClub.id}`)}
-      className="w-[240px] sm:w-[300px] h-[400px] sm:h-[480px] flex-shrink-0 rounded-2xl flex flex-col cursor-pointer transition-all duration-500 ease-out relative overflow-hidden"
+      className="w-[240px] sm:w-[300px] h-[460px] sm:h-[520px] flex-shrink-0 rounded-2xl flex flex-col cursor-pointer transition-all duration-500 ease-out relative overflow-hidden"
       style={{
         transform: `scale(${scale})`,
         opacity,
@@ -334,7 +338,7 @@ const MyClubsCarousel = ({
       onSetHoveredMember({
         id: member.id,
         name: member.name || member.username,
-        image: getProfileImageUrl(member.profileImage) || DEFAULT_IMAGE,
+        image: getProfileImageUrl(member.profileImage) || getAvatarUrl(getAvatarSeed(member)),
         x: rect.left + rect.width / 2,
         y: rect.top,
       });
@@ -409,7 +413,7 @@ const MyClubsCarousel = ({
 
       <div
         className="relative w-full flex items-center justify-center"
-        style={{ minHeight: isMobile ? '400px' : '500px' }}
+        style={{ minHeight: isMobile ? '460px' : '520px' }}
       >
         {/* Left arrow */}
         <CarouselArrow
@@ -421,7 +425,7 @@ const MyClubsCarousel = ({
         {/* Track */}
         <div
           className="overflow-x-clip overflow-y-visible w-full px-4 md:px-12"
-          style={{ height: isMobile ? '380px' : '470px' }}
+          style={{ height: isMobile ? '460px' : '520px' }}
         >
           <div
             className="flex items-center h-full transition-transform duration-500 ease-out"
@@ -470,21 +474,23 @@ const MyClubsCarousel = ({
           disabled={idx === items.length - 1}
           onClick={goNext}
         />
+      </div>
 
-        {/* Dot indicators */}
-        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
-          {items.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCarouselIndex(i)}
-              className={`rounded-full transition-all duration-300 ${
-                i === idx
-                  ? 'w-6 h-2.5 bg-stone-700 dark:bg-stone-400'
-                  : 'w-2.5 h-2.5 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400'
-              }`}
-            />
-          ))}
-        </div>
+      {/* Dot indicators — in normal flow under the carousel so the gap above
+          (cards → dots) matches the gap below (dots → Discover button), which
+          is set by `mt-6` on the Discover wrapper in home/index.tsx. */}
+      <div className="mt-6 flex justify-center gap-2">
+        {items.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCarouselIndex(i)}
+            className={`rounded-full transition-all duration-300 ${
+              i === idx
+                ? 'w-6 h-2.5 bg-stone-700 dark:bg-stone-400'
+                : 'w-2.5 h-2.5 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400'
+            }`}
+          />
+        ))}
       </div>
     </div>
   );
