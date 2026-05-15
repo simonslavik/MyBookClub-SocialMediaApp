@@ -7,7 +7,7 @@ import OwnMessage from '../chat/OwnMessage';
 import OtherMessage from '../chat/OtherMessage';
 import { shouldGroupMessages } from '../chat/messageUtils';
 
-const BookClubChat = ({ messages, setMessages, currentRoom, auth, userRole, ws, members = [], onReply, friends = [], onSendFriendRequest, connectedUsers = [], lastReadAt, hasMoreMessages = false, loadingOlder = false, onLoadOlder }) => {
+const BookClubChat = ({ messages, setMessages, currentRoom, auth, userRole, ws, members = [], onReply, friends = [], onSendFriendRequest, connectedUsers = [], lastReadAt, hasMoreMessages = false, loadingOlder = false, loadingMessages = false, onLoadOlder }) => {
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const editInputRef = useRef(null);
@@ -243,7 +243,12 @@ const BookClubChat = ({ messages, setMessages, currentRoom, auth, userRole, ws, 
           <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
         </div>
       )}
-      {messages.length === 0 ? (
+      {loadingMessages ? (
+        <div className="flex flex-col items-center justify-center h-full text-gray-500 gap-3">
+          <div className="w-7 h-7 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs text-gray-600">Loading messages…</p>
+        </div>
+      ) : messages.length === 0 ? (
         <div className="text-center text-gray-500 mt-12">
           <FiHash className="mx-auto text-2xl mb-2 opacity-30" />
           <p className="text-sm">Welcome to #{currentRoom?.name}</p>

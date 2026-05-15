@@ -111,7 +111,7 @@ const BookClub = () => {
     ws, messages, setMessages, connectedUsers,
     bookClubMembers, unreadRooms, setUnreadRooms,
     unreadSections, viewSection, notifySectionActivity,
-    lastReadAt, hasMoreMessages, loadingOlder, loadOlderMessages,
+    lastReadAt, hasMoreMessages, loadingOlder, loadingMessages, loadOlderMessages,
     typingUsers, sendTyping,
   } = useBookclubWebSocket(bookClub, currentRoom, auth, bookClubId, { onInit: handleWsInit });
 
@@ -343,6 +343,7 @@ const BookClub = () => {
             friends={friends} handleSendFriendRequest={handleSendFriendRequest}
             connectedUsers={connectedUsers} lastReadAt={lastReadAt}
             hasMoreMessages={hasMoreMessages} loadingOlder={loadingOlder}
+            loadingMessages={loadingMessages}
             loadOlderMessages={loadOlderMessages}
             setReplyingTo={setReplyingTo}
           />

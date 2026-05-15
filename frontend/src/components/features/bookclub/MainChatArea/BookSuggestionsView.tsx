@@ -6,6 +6,7 @@ import BookSuggestionDetailsModal from '../Modals/BookSuggestionDetailsModal';
 import apiClient from '@api/axios';
 import logger from '@utils/logger';
 import { getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl } from '@utils/avatar';
 
 const BookSuggestionsView = ({ bookClubId, auth, members = [], userRole, onSuggestionAdded }) => {
   const navigate = useNavigate();
@@ -112,7 +113,7 @@ const BookSuggestionsView = ({ bookClubId, auth, members = [], userRole, onSugge
               const suggesterId = suggestion.suggestedById || suggestion.suggestedBy?.id;
               const suggester = members.find(m => m.id === suggesterId);
               const suggesterName = suggester?.username || suggestion.suggestedBy?.name || 'Unknown';
-              const suggesterImage = getProfileImageUrl(suggester?.profileImage) || '/images/default-avatar.png';
+              const suggesterImage = getProfileImageUrl(suggester?.profileImage) || getAvatarUrl(suggesterId);
               return (
               <div
                 key={suggestion.id}
@@ -149,7 +150,7 @@ const BookSuggestionsView = ({ bookClubId, auth, members = [], userRole, onSugge
                       src={suggesterImage}
                       alt={suggesterName}
                       className="w-6 h-6 rounded-full object-cover flex-shrink-0 mt-0.5"
-                      onError={(e) => { (e.target as HTMLImageElement).src = '/images/default-avatar.png'; }}
+                      onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(suggesterId); }}
                     />
                     <div className="relative flex-1 min-w-0 bg-indigo-500/10 border border-indigo-500/30 rounded-lg rounded-tl-sm px-3 py-2">
                       <span

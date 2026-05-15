@@ -4,6 +4,7 @@ import { FiX, FiTrash2 } from 'react-icons/fi';
 import apiClient from '@api/axios';
 import logger from '@utils/logger';
 import { getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl } from '@utils/avatar';
 import { useConfirm, useToast } from '@hooks/useUIFeedback';
 
 const BookSuggestionDetailsModal = ({ suggestion, bookClubId, auth, members = [], userRole, onClose, onDeleted }: any) => {
@@ -110,9 +111,10 @@ const BookSuggestionDetailsModal = ({ suggestion, bookClubId, auth, members = []
                 <span className="text-gray-500 text-xs">Suggested by</span>
                 <span className="text-gray-400 group-hover:text-indigo-500 transition-colors flex items-center gap-1.5">
                   <img
-                    src={suggesterImage || '/images/default-avatar.png'}
+                    src={suggesterImage || getAvatarUrl(suggesterId)}
                     alt={suggesterName}
                     className="w-6 h-6 rounded-full object-cover group-hover:ring-1 group-hover:ring-indigo-500 transition-all"
+                    onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(suggesterId); }}
                   />
                   <span className="text-xs font-medium text-gray-300 group-hover:underline">{suggesterName}</span>
                 </span>

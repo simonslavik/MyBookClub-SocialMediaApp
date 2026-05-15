@@ -5,6 +5,7 @@ import { FiTrash2, FiBookOpen } from 'react-icons/fi';
 import apiClient from '@api/axios';
 import logger from '@utils/logger';
 import { getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl } from '@utils/avatar';
 import { useConfirm, useToast } from '@hooks/useUIFeedback';
 
 const ProgressTab = ({ currentBookData, book, members = [] }) => {
@@ -233,10 +234,11 @@ const ProgressTab = ({ currentBookData, book, members = [] }) => {
                   className={`flex items-start gap-2 px-2.5 py-2 ${isMe ? 'bg-indigo-500/[0.06]' : ''}`}
                 >
                   <img
-                    src={profileImg || '/images/default-avatar.png'}
+                    src={profileImg || getAvatarUrl(p.userId)}
                     alt={memberName}
                     className="w-6 h-6 rounded-full object-cover flex-shrink-0 cursor-pointer hover:ring-1 hover:ring-indigo-500 transition-all"
                     onClick={() => navigate(`/profile/${p.userId}`)}
+                    onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(p.userId); }}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
