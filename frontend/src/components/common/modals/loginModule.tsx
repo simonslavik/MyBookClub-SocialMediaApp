@@ -69,9 +69,14 @@ const Login = ({ onClose, onSwitchToRegister }) => {
             }
 
             setAuth({ token: accessToken, user });
-            
             onClose?.();
-            window.location.reload();
+            // Unverified users go straight to the gate so they can't poke
+            // around the app while we're nagging them to confirm their email.
+            if (user.emailVerified === false) {
+                window.location.assign('/verify-required');
+            } else {
+                window.location.reload();
+            }
         } catch (err) {
             const respMsg = err?.response?.data?.message;
             const respErrors = err?.response?.data?.errors;

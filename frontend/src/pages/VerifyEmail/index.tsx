@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { verifyEmail } from '@api/auth.api';
+import AuthContext from '@context/index';
 import logger from '@utils/logger';
 
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { auth, setAuth } = useContext(AuthContext);
   const [status, setStatus] = useState('verifying'); // verifying, success, error
   const [message, setMessage] = useState('');
   const token = searchParams.get('token');
@@ -22,22 +24,32 @@ const VerifyEmail = () => {
         const response = await verifyEmail(token);
         setStatus('success');
         setMessage(response.message || 'Email verified successfully!');
-        
-        // Redirect to login after 3 seconds
-        setTimeout(() => {
-          navigate('/login');
-        }, 3000);
+
+        // If the user is already signed in (verified in the same browser they
+        // registered in), flip their cached `emailVerified` flag so the gate
+        // route lets them through immediately on next render.
+        if (auth?.user && auth.user.emailVerified === false) {
+          setAuth({
+            user: { ...auth.user, emailVerified: true },
+            token: auth.token,
+          });
+        }
+
+        // Redirect home after 3s. If signed in, the home page now lets them
+        // through; if not, they'll see the public home with a login modal.
+        setTimeout(() => navigate('/'), 3000);
       } catch (error) {
+        logger.error('Email verification failed:', error);
         setStatus('error');
         setMessage(
-          error.response?.data?.message || 
+          error.response?.data?.message ||
           'Verification failed. The link may be invalid or expired.'
         );
       }
     };
 
     verify();
-  }, [token, navigate]);
+  }, [token, navigate, auth, setAuth]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -75,7 +87,7 @@ const VerifyEmail = () => {
               </h2>
               <p className="mt-2 text-sm text-gray-600">{message}</p>
               <p className="mt-4 text-sm text-gray-600">
-                Redirecting to login page...
+                Redirecting…
               </p>
             </>
           )}
@@ -101,20 +113,11 @@ const VerifyEmail = () => {
               <p className="mt-2 text-sm text-red-600">{message}</p>
               <div className="mt-6 space-y-3">
                 <button
-                  onClick={() => navigate('/login')}
+                  onClick={() => navigate(auth?.user ? '/verify-required' : '/')}
                   className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-stone-700 hover:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-500"
                 >
-                  Go to Login
+                  {auth?.user ? 'Back to verification' : 'Go home'}
                 </button>
-                <p className="text-sm text-gray-600">
-                  Need a new verification link?{' '}
-                  <button
-                    onClick={() => navigate('/resend-verification')}
-                    className="font-medium text-stone-700 hover:text-stone-500"
-                  >
-                    Resend verification email
-                  </button>
-                </p>
               </div>
             </>
           )}

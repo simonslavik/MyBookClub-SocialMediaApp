@@ -99,6 +99,9 @@ export class AuthService {
         email: user.email,
         profileImage: user.profileImage,
         authProvider: user.authProvider || 'local',
+        // Frontend uses this to redirect unverified users to the
+        // /verify-required gate instead of the main app.
+        emailVerified: user.emailVerified,
       },
       accessToken,
       refreshToken,

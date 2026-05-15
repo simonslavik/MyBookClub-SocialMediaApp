@@ -73,9 +73,15 @@ const RegisterModule = ({ onClose, onSwitchToLogin }) => {
             }
 
             setAuth({ token: accessToken, user });
-            
             onClose?.();
-            window.location.reload();
+            // Fresh registrations are unverified by definition (Google OAuth
+            // skips this modal entirely), so always send them to the gate
+            // page where they can resend the verification mail.
+            if (user.emailVerified === false) {
+                window.location.assign('/verify-required');
+            } else {
+                window.location.reload();
+            }
         } catch (err) {
             const respMsg = err?.response?.data?.message;
             const respErrors = err?.response?.data?.errors;

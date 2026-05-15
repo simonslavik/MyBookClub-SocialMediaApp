@@ -3,7 +3,6 @@ import { Route, Routes } from 'react-router-dom';
 import ErrorBoundary from '@components/common/ErrorBoundary';
 import PageTransition from '@components/common/PageTransition';
 import ProtectedRoute from '@components/common/ProtectedRoute';
-import EmailVerificationBanner from '@components/common/EmailVerificationBanner';
 
 // ─── Lazy-loaded page components (code-split per route) ──────
 const Home = lazy(() => import('@pages/home'));
@@ -19,6 +18,7 @@ const DMChatPage = lazy(() => import('@pages/DMChat'));
 const FindPeople = lazy(() => import('@pages/people'));
 const ResetPasswordPage = lazy(() => import('@pages/ResetPassword'));
 const VerifyEmailPage = lazy(() => import('@pages/VerifyEmail'));
+const VerifyRequiredPage = lazy(() => import('@pages/VerifyRequired'));
 
 /** Minimal fallback while a lazy chunk loads. */
 const PageLoader = () => (
@@ -30,9 +30,6 @@ const PageLoader = () => (
 function App() {
   return (
     <ErrorBoundary>
-      {/* Sticky cross-app banner — only renders for signed-in users with an
-          unverified email; self-hides when verified or after a 24h dismiss. */}
-      <EmailVerificationBanner />
       <Suspense fallback={<PageLoader />}>
         <PageTransition>
           <Routes>
@@ -49,6 +46,7 @@ function App() {
             <Route path="/people" element={<ProtectedRoute><FindPeople /></ProtectedRoute>} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/verify-required" element={<VerifyRequiredPage />} />
           </Routes>
         </PageTransition>
       </Suspense>
