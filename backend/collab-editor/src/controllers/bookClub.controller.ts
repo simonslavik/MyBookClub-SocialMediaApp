@@ -89,6 +89,25 @@ export class BookClubController {
   }
 
   /**
+   * Per-club unread summary for the sidebar bubbles. Returns one entry per
+   * club the authenticated user belongs to, with message counts + section dots.
+   */
+  static async getUnreadSummary(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user?.userId;
+      if (!userId) {
+        return res.status(401).json({ success: false, message: 'Authentication required' });
+      }
+
+      const summary = await BookClubService.getUnreadSummary(userId);
+      res.json({ success: true, summary });
+    } catch (error: any) {
+      logger.error('ERROR_GET_UNREAD_SUMMARY', { error: error.message });
+      res.status(500).json({ success: false, message: 'Failed to fetch unread summary' });
+    }
+  }
+
+  /**
    * Get clubs another user (`:userId`) is an ACTIVE member of, scoped to what
    * the requesting viewer is allowed to see (INVITE_ONLY clubs are hidden
    * from non-members). Used by the public profile page.

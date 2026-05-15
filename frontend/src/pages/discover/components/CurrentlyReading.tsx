@@ -9,6 +9,10 @@ import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 const CurrentlyReading = ({ books, activeIndex, onIndexChange }) => {
   const current = books[activeIndex] || books[0];
   const multi = books.length > 1;
+  // The batch endpoint falls back to `upcoming` books when the club has no
+  // `current` ones — relabel the card so the user knows what they're looking at.
+  const allUpcoming = books.every((b) => b.status === 'upcoming');
+  const heading = allUpcoming ? 'Up Next' : 'Currently Reading';
 
   const prev = (e) => {
     e.stopPropagation();
@@ -26,7 +30,7 @@ const CurrentlyReading = ({ books, activeIndex, onIndexChange }) => {
   return (
     <div className="mt-3 px-3 py-3 rounded-xl bg-stone-800/5 dark:bg-white/5">
       <p className="text-[10px] uppercase tracking-widest text-stone-400 dark:text-stone-500 font-semibold mb-2">
-        Currently Reading
+        {heading}
       </p>
 
       <div className="flex items-center gap-2">

@@ -9,6 +9,7 @@ import apiClient from '@api/axios';
 import logger from '@utils/logger';
 import { useToast } from '@hooks/useUIFeedback';
 import useDarkBodyLock from '@hooks/useDarkBodyLock';
+import { useUnreadSummary } from '@hooks/useUnreadSummary';
 import { FiMenu } from 'react-icons/fi';
 
 // Normalize raw Prisma reactions [{userId, emoji, ...}] to grouped format [{emoji, count, userIds}]
@@ -34,6 +35,7 @@ const normalizeMessage = (msg) => ({
 const DMChatPage = () => {
   useDarkBodyLock();
   const { auth, setAuth, logout } = useContext(AuthContext);
+  const { summary: unreadSummary } = useUnreadSummary(auth?.token);
   const navigate = useNavigate();
   const { userId } = useParams();
   const { toastError } = useToast();
@@ -388,7 +390,7 @@ const DMChatPage = () => {
       <div className={`${showMobileSidebar ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 fixed md:static inset-y-0 left-0 z-50 flex h-full transition-transform duration-300 ease-in-out`}>
         {/* My Bookclubs Sidebar */}
         <div className="w-20 h-full flex-shrink-0">
-          <MyBookClubsSidebar 
+          <MyBookClubsSidebar
             bookClubs={myBookClubs}
             viewMode="dm"
             onSelectBookClub={(id) => { setShowMobileSidebar(false); navigate(`/bookclub/${id}`); }}
@@ -397,6 +399,7 @@ const DMChatPage = () => {
             setAuth={setAuth}
             wsRef={dmWs}
             onLogout={logout}
+            unreadSummary={unreadSummary}
           />
         </div>
         

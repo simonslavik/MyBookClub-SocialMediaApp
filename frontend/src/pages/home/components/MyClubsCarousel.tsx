@@ -36,11 +36,14 @@ const CreateClubCard = ({ onClick, scale, opacity, zIndex, isCenter }) => (
 const CurrentBooksPreview = ({ books, clubId, bookIdx, onChangeIndex }) => {
   const currentEntry = books[bookIdx] || books[0];
   const hasMultiple = books.length > 1;
+  // Backend falls back to upcoming books when there's no current one — relabel.
+  const allUpcoming = books.every((b) => b.status === 'upcoming');
+  const heading = allUpcoming ? 'Up Next' : 'Currently Reading';
 
   return (
     <div className="mt-3 px-3 py-3 rounded-xl bg-stone-800/5 dark:bg-white/5">
       <p className="text-[10px] uppercase tracking-widest text-stone-400 dark:text-stone-500 font-semibold mb-2">
-        Currently Reading
+        {heading}
       </p>
 
       <div className="flex items-center gap-2">

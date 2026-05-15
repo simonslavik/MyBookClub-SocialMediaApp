@@ -30,6 +30,9 @@ router.get('/users/:userId', optionalAuthMiddleware, BookClubController.getClubs
 // Get user's own bookclubs
 router.get('/my', authMiddleware, BookClubController.getMyClubs);
 
+// Per-club unread summary for the sidebar bubbles
+router.get('/unread-summary', authMiddleware, BookClubController.getUnreadSummary);
+
 // Create new bookclub
 router.post('/', authMiddleware, validate(createClubSchema), BookClubController.createClub);
 

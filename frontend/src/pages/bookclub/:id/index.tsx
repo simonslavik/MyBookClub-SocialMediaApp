@@ -5,6 +5,7 @@ import { useBookclubViews } from '@hooks/useBookclubViews';
 import { useModals } from '@hooks/useModals';
 import { useBookclubWebSocket } from '@hooks/useBookclubWebSocket';
 import useDarkBodyLock from '@hooks/useDarkBodyLock';
+import { useUnreadSummary } from '@hooks/useUnreadSummary';
 import { bookclubAPI } from '@api/bookclub.api';
 
 import MyBookClubsSidebar from '@components/features/bookclub/MyBookClubsSidebar';
@@ -121,6 +122,14 @@ const BookClub = () => {
   useEffect(() => {
     setMessages([]);
   }, [bookClubId, setMessages]);
+
+  // Per-club unread badges for the leftmost bookclub bubble sidebar.
+  // Optimistically clear the badge for the bookclub the user just opened —
+  // the next poll/refresh will re-confirm based on server-side RoomRead.
+  const { summary: unreadSummary, clearClub: clearUnreadForClub } = useUnreadSummary(auth?.token);
+  useEffect(() => {
+    if (bookClubId) clearUnreadForClub(bookClubId);
+  }, [bookClubId, clearUnreadForClub]);
 
   // ─── Extract role whenever members change ──────────────
   useEffect(() => {
@@ -261,6 +270,7 @@ const BookClub = () => {
             onSelectBookClub={(id) => navigate(`/bookclub/${id}`)}
             onOpenDM={() => navigate('/dm')}
             auth={auth} setAuth={setAuth} wsRef={ws} onLogout={logout}
+            unreadSummary={unreadSummary}
           />
         </ResizablePanel>
 

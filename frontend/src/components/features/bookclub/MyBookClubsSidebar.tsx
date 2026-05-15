@@ -7,7 +7,7 @@ import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 import StatusPopup from './StatusPopup';
 import { getStatusColor } from './statusUtils';
 
-const MyBookClubsSidebar = ({ bookClubs, currentBookClubId, onSelectBookClub, onOpenDM, auth, setAuth, wsRef, onLogout, viewMode }: any) => {
+const MyBookClubsSidebar = ({ bookClubs, currentBookClubId, onSelectBookClub, onOpenDM, auth, setAuth, wsRef, onLogout, viewMode, unreadSummary }: any) => {
     const navigate = useNavigate();
     const location = useLocation();
     const [showStatusPopup, setShowStatusPopup] = useState(false);
@@ -69,35 +69,61 @@ const MyBookClubsSidebar = ({ bookClubs, currentBookClubId, onSelectBookClub, on
           <div className="w-10 h-px bg-gray-700"></div>
           
           {/* My Bookclubs */}
-          {bookClubs.map((club) => (
-            <button
-              key={club.id}
-              onClick={() => onSelectBookClub(club.id)}
-              onMouseEnter={(e) => handleMouseEnter(club, e)}
-              onMouseLeave={handleMouseLeave}
-              className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${
-                !isOnDMPage && club.id === currentBookClubId
-                  ? 'bg-indigo-700 ring-2 ring-indigo-500'
-                  : 'bg-gray-700 hover:bg-indigo-700'
-              }`}
-              title=""
-            >
-              {club.imageUrl ? (
-                <img
-                  src={getCollabImageUrl(club.imageUrl)}
-                  alt={club.name}
-                  className="w-full h-full rounded-full object-cover"
-                  onError={(e) => { 
-                    (e.target as HTMLElement).style.display = 'none';
-                    if ((e.target as HTMLElement).nextSibling) ((e.target as HTMLElement).nextSibling as HTMLElement).style.display = 'flex';
-                  }}
-                />
-              ) : null}
-              <span className={club.imageUrl ? 'hidden' : ''}>
-                {club.name.substring(0, 2).toUpperCase()}
-              </span>
-            </button>
-          ))}
+          {bookClubs.map((club) => {
+            const isActive = !isOnDMPage && club.id === currentBookClubId;
+            const unread = unreadSummary?.get?.(club.id);
+            // While the user is *inside* a club its badge is hidden — the
+            // existing per-bookclub WS clears the read state in real time and
+            // showing the badge would be visual noise.
+            const badgeMessages = !isActive ? (unread?.unreadMessageCount ?? 0) : 0;
+            const badgeSectionDot = !isActive && (unread?.unreadSections?.length ?? 0) > 0;
+            const showBadge = badgeMessages > 0 || badgeSectionDot;
+            return (
+              <div key={club.id} className="relative flex-shrink-0">
+                <button
+                  onClick={() => onSelectBookClub(club.id)}
+                  onMouseEnter={(e) => handleMouseEnter(club, e)}
+                  onMouseLeave={handleMouseLeave}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm ${
+                    isActive
+                      ? 'bg-indigo-700 ring-2 ring-indigo-500'
+                      : 'bg-gray-700 hover:bg-indigo-700'
+                  }`}
+                  title=""
+                >
+                  {club.imageUrl ? (
+                    <img
+                      src={getCollabImageUrl(club.imageUrl)}
+                      alt={club.name}
+                      className="w-full h-full rounded-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                        if ((e.target as HTMLElement).nextSibling) ((e.target as HTMLElement).nextSibling as HTMLElement).style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <span className={club.imageUrl ? 'hidden' : ''}>
+                    {club.name.substring(0, 2).toUpperCase()}
+                  </span>
+                </button>
+                {showBadge && (
+                  badgeMessages > 0 ? (
+                    <span
+                      className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-gray-900 pointer-events-none"
+                      aria-label={`${badgeMessages} unread message${badgeMessages === 1 ? '' : 's'}`}
+                    >
+                      {badgeMessages > 99 ? '99+' : badgeMessages}
+                    </span>
+                  ) : (
+                    <span
+                      className="absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-gray-900 pointer-events-none"
+                      aria-label="New activity"
+                    />
+                  )
+                )}
+              </div>
+            );
+          })}
           
           {/* Add Bookclub Button */}
           <button
