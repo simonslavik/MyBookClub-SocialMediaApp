@@ -1,8 +1,7 @@
 import { getCollabImageUrl } from '@config/constants';
+import { getBookclubCoverUrl, getBookclubSeed } from '@utils/avatar';
 import CurrentlyReading from './CurrentlyReading';
 import MemberAvatars from './MemberAvatars';
-
-const DEFAULT_IMAGE = '/images/default.svg';
 
 // ─── Pastel palette (matches home card) ──────────────────
 
@@ -45,7 +44,7 @@ const BookClubCard = ({ bookClub, bookIndex = 0, onBookIndexChange, friendIds, o
             alt={bookClub.name}
             className="w-full h-full object-cover transition-transform duration-500"
             loading="lazy"
-            onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_IMAGE; }}
+            onError={(e) => { (e.target as HTMLImageElement).src = getBookclubCoverUrl(getBookclubSeed(bookClub)); }}
           />
         ) : (
           <div

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { FiX, FiHash, FiLock, FiVolume2 } from 'react-icons/fi';
 import { getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 import logger from '@utils/logger';
 
 const ROOM_TYPES = [
@@ -224,7 +225,7 @@ const CreateRoomModal = ({ isOpen, onClose, onCreateRoom, members, currentUserId
                       className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-gray-800 transition-colors text-left"
                     >
                       <img
-                        src={getProfileImageUrl(member.profileImage) || '/images/default.svg'}
+                        src={getProfileImageUrl(member.profileImage) || getAvatarUrl(getAvatarSeed(member))}
                         alt=""
                         className="w-5 h-5 rounded-full object-cover"
                       />

@@ -1,6 +1,5 @@
 import { createPortal } from 'react-dom';
-
-const DEFAULT_IMAGE = '/images/default.svg';
+import { getAvatarUrl } from '@utils/avatar';
 
 /**
  * Floating tooltip shown on member avatar hover.
@@ -25,7 +24,7 @@ const MemberTooltip = ({ member }) => {
         src={member.image}
         alt={member.name}
         className="w-6 h-6 rounded-full object-cover ring-1 ring-white/20"
-        onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_IMAGE; }}
+        onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(member.id || member.name); }}
       />
       <span className="font-medium">{member.name}</span>
       {member.isFriend && (

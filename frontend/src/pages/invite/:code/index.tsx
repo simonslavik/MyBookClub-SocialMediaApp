@@ -4,6 +4,7 @@ import AuthContext from '@context/index';
 import HomePageHeader from '@components/layout/Header';
 import { FiCheck, FiX, FiUsers, FiBook } from 'react-icons/fi';
 import { getCollabImageUrl } from '@config/constants';
+import { getBookclubCoverUrl, getBookclubSeed } from '@utils/avatar';
 import apiClient from '@api/axios';
 import logger from '@utils/logger';
 
@@ -144,14 +145,19 @@ const InviteJoinPage = () => {
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
           {/* Book Club Image */}
           <div className="mb-6">
-            <img
-              src={inviteInfo.bookClub.imageUrl 
-                ? getCollabImageUrl(inviteInfo.bookClub.imageUrl) 
-                : '/images/default.svg'}
-              alt={inviteInfo.bookClub.name}
-              className="w-full h-48 object-cover rounded-xl"
-              onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
-            />
+            {(() => {
+              const coverFallback = getBookclubCoverUrl(getBookclubSeed(inviteInfo.bookClub));
+              return (
+                <img
+                  src={inviteInfo.bookClub.imageUrl
+                    ? getCollabImageUrl(inviteInfo.bookClub.imageUrl)
+                    : coverFallback}
+                  alt={inviteInfo.bookClub.name}
+                  className="w-full h-48 object-cover rounded-xl"
+                  onError={(e) => { (e.target as HTMLImageElement).src = coverFallback; }}
+                />
+              );
+            })()}
           </div>
 
           {/* Book Club Info */}

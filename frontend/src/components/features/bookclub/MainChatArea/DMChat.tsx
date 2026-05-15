@@ -10,6 +10,7 @@ import TypingIndicator from '../../../common/TypingIndicator';
 import { linkifyText } from '../chat/messageUtils';
 import apiClient from '@api/axios';
 import { getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 import logger from '@utils/logger';
 import { useConfirm, useToast } from '@hooks/useUIFeedback';
 import DMWelcomeScreen from './DMWelcomeScreen';
@@ -263,11 +264,11 @@ const DMChat = ({ otherUser, messages, onSendMessage, auth, setMessages, dmWs, r
       {/* DM Header */}
       <div className="bg-gray-800 border-b border-gray-700 px-3 py-2 flex items-center gap-2.5">
         <img
-          src={getProfileImageUrl(otherUser.profileImage) || '/images/default.svg'}
+          src={getProfileImageUrl(otherUser.profileImage) || getAvatarUrl(getAvatarSeed(otherUser))}
           alt={otherUser.name}
           className="w-8 h-8 rounded-full object-cover cursor-pointer"
           onClick={() => navigate(`/profile/${otherUser.id}`)}
-          onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
+          onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(otherUser)); }}
         />
         <div className="flex-1 min-w-0">
           <h2

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FiSettings as FiSettingsIcon, FiLock, FiUnlock, FiEyeOff, FiImage, FiTrash2, FiX, FiAlertTriangle } from 'react-icons/fi';
 import { getCollabImageUrl, BOOKCLUB_CATEGORIES } from '@config/constants';
+import { getBookclubCoverUrl, getBookclubSeed } from '@utils/avatar';
 import AdminApprovalPanel from '@components/features/bookclub/AdminApprovalPanel';
 import MemberManagement from '@components/features/bookclub/MemberManagement';
 
@@ -63,12 +64,17 @@ const BookclubSettingsPanel = ({
         <div>
           <label className="block text-xs font-medium text-gray-300 mb-1.5">Bookclub Image</label>
           <div className="relative group w-28 h-28 md:w-32 md:h-32">
-            <img
-              src={bookClub?.imageUrl ? getCollabImageUrl(bookClub.imageUrl) : '/images/default.svg'}
-              alt={bookClub?.name}
-              className="w-full h-full object-cover rounded-lg"
-              onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
-            />
+            {(() => {
+              const coverFallback = getBookclubCoverUrl(getBookclubSeed(bookClub));
+              return (
+                <img
+                  src={bookClub?.imageUrl ? getCollabImageUrl(bookClub.imageUrl) : coverFallback}
+                  alt={bookClub?.name}
+                  className="w-full h-full object-cover rounded-lg"
+                  onError={(e) => { (e.target as HTMLImageElement).src = coverFallback; }}
+                />
+              );
+            })()}
             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 rounded-lg">
               <button
                 type="button"

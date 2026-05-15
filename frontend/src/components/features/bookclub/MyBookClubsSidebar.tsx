@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { FiHome, FiSend, FiUsers, FiBook } from 'react-icons/fi';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getProfileImageUrl, getCollabImageUrl } from '@config/constants';
-import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
+import { getAvatarUrl, getAvatarSeed, getBookclubCoverUrl, getBookclubSeed } from '@utils/avatar';
 import StatusPopup from './StatusPopup';
 import { getStatusColor } from './statusUtils';
 
@@ -78,33 +78,33 @@ const MyBookClubsSidebar = ({ bookClubs, currentBookClubId, onSelectBookClub, on
             const badgeMessages = !isActive ? (unread?.unreadMessageCount ?? 0) : 0;
             const badgeSectionDot = !isActive && (unread?.unreadSections?.length ?? 0) > 0;
             const showBadge = badgeMessages > 0 || badgeSectionDot;
+
+            // Real uploaded image → show round bubble (Discord-style).
+            // No image → fall back to a generated *square* cover so it's
+            // visually distinct from the round user avatars elsewhere.
+            const hasImage = !!club.imageUrl;
+            const coverFallback = getBookclubCoverUrl(getBookclubSeed(club));
+            const shapeClass = hasImage ? 'rounded-full' : 'rounded-lg';
+
             return (
               <div key={club.id} className="relative flex-shrink-0">
                 <button
                   onClick={() => onSelectBookClub(club.id)}
                   onMouseEnter={(e) => handleMouseEnter(club, e)}
                   onMouseLeave={handleMouseLeave}
-                  className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm ${
+                  className={`w-12 h-12 ${shapeClass} flex items-center justify-center text-white font-bold text-sm overflow-hidden ${
                     isActive
-                      ? 'bg-indigo-700 ring-2 ring-indigo-500'
-                      : 'bg-gray-700 hover:bg-indigo-700'
+                      ? 'ring-2 ring-indigo-500'
+                      : 'hover:ring-2 hover:ring-indigo-500/40'
                   }`}
                   title=""
                 >
-                  {club.imageUrl ? (
-                    <img
-                      src={getCollabImageUrl(club.imageUrl)}
-                      alt={club.name}
-                      className="w-full h-full rounded-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLElement).style.display = 'none';
-                        if ((e.target as HTMLElement).nextSibling) ((e.target as HTMLElement).nextSibling as HTMLElement).style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <span className={club.imageUrl ? 'hidden' : ''}>
-                    {club.name.substring(0, 2).toUpperCase()}
-                  </span>
+                  <img
+                    src={hasImage ? getCollabImageUrl(club.imageUrl) : coverFallback}
+                    alt={club.name}
+                    className={`w-full h-full ${shapeClass} object-cover`}
+                    onError={(e) => { (e.target as HTMLImageElement).src = coverFallback; }}
+                  />
                 </button>
                 {showBadge && (
                   badgeMessages > 0 ? (
@@ -177,20 +177,22 @@ const MyBookClubsSidebar = ({ bookClubs, currentBookClubId, onSelectBookClub, on
               {/* Arrow */}
               <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-800 border-l border-b border-gray-600 rotate-45" />
               
-              {/* Club image + name */}
+              {/* Club image + name — same shape rules as the main bubble:
+                  round for real images, square for the generated cover. */}
               <div className="flex items-center gap-2.5 mb-2">
-                {hoveredClub.imageUrl ? (
-                  <img
-                    src={getCollabImageUrl(hoveredClub.imageUrl)}
-                    alt={hoveredClub.name}
-                    className="w-9 h-9 rounded-full object-cover flex-shrink-0"
-                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
-                  />
-                ) : (
-                  <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-                    {hoveredClub.name.substring(0, 2).toUpperCase()}
-                  </div>
-                )}
+                {(() => {
+                  const hasImage = !!hoveredClub.imageUrl;
+                  const coverFallback = getBookclubCoverUrl(getBookclubSeed(hoveredClub));
+                  const shapeClass = hasImage ? 'rounded-full' : 'rounded-md';
+                  return (
+                    <img
+                      src={hasImage ? getCollabImageUrl(hoveredClub.imageUrl) : coverFallback}
+                      alt={hoveredClub.name}
+                      className={`w-9 h-9 ${shapeClass} object-cover flex-shrink-0`}
+                      onError={(e) => { (e.target as HTMLImageElement).src = coverFallback; }}
+                    />
+                  );
+                })()}
                 <div className="min-w-0">
                   <p className="text-sm font-semibold truncate">{hoveredClub.name}</p>
                   {hoveredClub.category && (

@@ -63,10 +63,15 @@ export function useBookclubData(bookClubId) {
         setRooms(data.rooms || []);
 
         if (data.rooms?.length > 0) {
-          const accessibleRoom = data.rooms.find(
-            (r) => r.type !== 'PRIVATE' || r.isMember !== false,
-          );
-          setCurrentRoom(accessibleRoom || data.rooms[0]);
+          // Prefer the bookclub's default "general" room (Discord-style landing)
+          // over an arbitrary first-in-list room. Falls back to the first
+          // accessible room, then to whatever exists.
+          const isAccessible = (r) => r.type !== 'PRIVATE' || r.isMember !== false;
+          const defaultRoom = data.rooms.find((r) => r.isDefault && isAccessible(r))
+            || data.rooms.find((r) => r.name === 'general' && isAccessible(r))
+            || data.rooms.find(isAccessible)
+            || data.rooms[0];
+          setCurrentRoom(defaultRoom);
         }
       } catch (err) {
         if (cancelled) return;

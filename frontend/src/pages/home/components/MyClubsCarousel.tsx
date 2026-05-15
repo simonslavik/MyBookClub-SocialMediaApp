@@ -2,7 +2,7 @@ import { useState, useEffect, useContext, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiChevronLeft, FiChevronRight, FiUsers } from 'react-icons/fi';
 import { getCollabImageUrl, getProfileImageUrl } from '@config/constants';
-import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
+import { getAvatarUrl, getAvatarSeed, getBookclubCoverUrl, getBookclubSeed } from '@utils/avatar';
 import AuthContext from '@context/index';
 
 const DEFAULT_IMAGE = '/images/default.svg';
@@ -200,7 +200,7 @@ const ClubCard = ({ bookClub, scale, opacity, zIndex, isCenter, cardBookIndex, o
             alt={bookClub.name}
             className="w-full h-full object-cover transition-transform duration-500"
             loading="lazy"
-            onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_IMAGE; }}
+            onError={(e) => { (e.target as HTMLImageElement).src = getBookclubCoverUrl(getBookclubSeed(bookClub)); }}
           />
         ) : (
           <div

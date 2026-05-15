@@ -4,6 +4,7 @@ import AuthContext from '@context/index';
 import { bookclubAPI } from '@api/bookclub.api';
 import apiClient from '@api/axios';
 import { getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 import logger from '@utils/logger';
 import { useToast } from '@hooks/useUIFeedback';
 
@@ -234,7 +235,8 @@ const InviteModal = ({ bookClubId, bookClubName, bookClubMembers = [], currentUs
                     {searchResults.map(friend => {
                       const isAlreadyMember = isMember(friend.id);
                       const friendName = friend.username || friend.name || 'Unknown User';
-                      const friendImage = getProfileImageUrl(friend.profileImage) || '/images/default.svg';
+                      const friendFallback = getAvatarUrl(getAvatarSeed(friend));
+                      const friendImage = getProfileImageUrl(friend.profileImage) || friendFallback;
 
                       return (
                         <div
@@ -246,7 +248,7 @@ const InviteModal = ({ bookClubId, bookClubName, bookClubMembers = [], currentUs
                               src={friendImage}
                               alt={friendName}
                               className="w-7 h-7 rounded-full object-cover flex-shrink-0"
-                              onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
+                              onError={(e) => { (e.target as HTMLImageElement).src = friendFallback; }}
                             />
                             <div className="min-w-0">
                               <div className="text-[13px] text-gray-200 truncate">{friendName}</div>

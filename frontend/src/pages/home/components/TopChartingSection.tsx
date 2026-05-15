@@ -1,8 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { getCollabImageUrl } from '@config/constants';
+import { getBookclubCoverUrl, getBookclubSeed } from '@utils/avatar';
 import useScrollReveal from '@hooks/useScrollReveal';
-
-const DEFAULT_IMAGE = '/images/default.svg';
 
 /** Skeleton placeholder shown while clubs are loading. */
 const ClubCardSkeleton = () => (
@@ -26,13 +25,18 @@ const TopClubCard = ({ club }) => {
     >
       {/* Image area */}
       <div className="w-full aspect-[4/5] overflow-hidden bg-warmgray-300 dark:bg-gray-700">
-        <img
-          src={club.imageUrl ? getCollabImageUrl(club.imageUrl) : DEFAULT_IMAGE}
-          alt={club.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          loading="lazy"
-          onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_IMAGE; }}
-        />
+        {(() => {
+          const coverFallback = getBookclubCoverUrl(getBookclubSeed(club));
+          return (
+            <img
+              src={club.imageUrl ? getCollabImageUrl(club.imageUrl) : coverFallback}
+              alt={club.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              loading="lazy"
+              onError={(e) => { (e.target as HTMLImageElement).src = coverFallback; }}
+            />
+          );
+        })()}
       </div>
 
       {/* Caption */}

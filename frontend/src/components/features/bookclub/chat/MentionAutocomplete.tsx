@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 
 /**
  * MentionAutocomplete
@@ -87,10 +88,10 @@ const MentionAutocomplete = ({
               </div>
             ) : (
               <img
-                src={getProfileImageUrl(member.profileImage) || '/images/default.svg'}
+                src={getProfileImageUrl(member.profileImage) || getAvatarUrl(getAvatarSeed(member))}
                 alt={member.username}
                 className="w-7 h-7 rounded-full object-cover flex-shrink-0"
-                onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
+                onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(member)); }}
               />
             )}
             <span className="font-medium truncate">
