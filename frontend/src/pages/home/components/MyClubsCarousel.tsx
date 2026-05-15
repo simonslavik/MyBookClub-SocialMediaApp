@@ -214,15 +214,24 @@ const ClubCard = ({ bookClub, scale, opacity, zIndex, isCenter, cardBookIndex, o
 
       {/* Card body */}
       <div className="flex flex-col flex-1 px-4 pt-3 pb-4">
-        <h3 className="font-bold text-lg sm:text-xl leading-tight line-clamp-2" style={{ color: palette.text }}>
+        {/* Title — reserves space for exactly 2 lines so card layout doesn't
+            shift when titles wrap differently. */}
+        <h3
+          className="font-bold text-lg sm:text-xl leading-tight line-clamp-2"
+          style={{ color: palette.text, minHeight: 'calc(2 * 1.25 * 1.125rem)' }}
+        >
           {bookClub.name}
         </h3>
 
-        {bookClub.description && (
-          <p className="text-xs mt-1.5 line-clamp-2 leading-relaxed opacity-60" style={{ color: palette.text }}>
-            {bookClub.description}
-          </p>
-        )}
+        {/* Description — always renders the 2-line slot (even if empty) so the
+            books preview + members row align across cards regardless of
+            description length. */}
+        <p
+          className="text-xs mt-1.5 line-clamp-2 leading-relaxed opacity-60"
+          style={{ color: palette.text, minHeight: 'calc(2 * 1.625 * 0.75rem)' }}
+        >
+          {bookClub.description || ''}
+        </p>
 
         {/* Current books preview — text only */}
         {bookClub.currentBooks?.length > 0 && (
