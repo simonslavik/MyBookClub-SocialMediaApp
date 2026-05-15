@@ -68,6 +68,60 @@ export class BookClubService {
   }
 
   /**
+   * Get all clubs another user (`targetUserId`) is an ACTIVE member of, filtered
+   * for what `viewerId` is allowed to see. INVITE_ONLY clubs are hidden from
+   * viewers who aren't themselves members of that club, so a public profile
+   * view never leaks a private club's existence.
+   */
+  static async getClubsForUser(targetUserId: string, viewerId?: string) {
+    const memberships = await prisma.bookClubMember.findMany({
+      where: { userId: targetUserId, status: MembershipStatus.ACTIVE },
+      include: {
+        bookClub: {
+          include: {
+            _count: {
+              select: {
+                members: { where: { status: MembershipStatus.ACTIVE } },
+              },
+            },
+            // When a viewer is logged in, also pull *their* membership row for
+            // each club so we can decide whether to expose INVITE_ONLY clubs.
+            ...(viewerId
+              ? {
+                  members: {
+                    where: { userId: viewerId, status: MembershipStatus.ACTIVE },
+                    select: { id: true },
+                  },
+                }
+              : {}),
+          },
+        },
+      },
+      orderBy: { joinedAt: 'desc' },
+    });
+
+    return memberships
+      .filter(m => {
+        if (m.bookClub.visibility !== ClubVisibility.INVITE_ONLY) return true;
+        const viewerMembership = (m.bookClub as any).members as Array<{ id: string }> | undefined;
+        return !!viewerMembership && viewerMembership.length > 0;
+      })
+      .map(m => {
+        const { members: _viewerMembership, _count, ...club } = m.bookClub as any;
+        return {
+          ...club,
+          memberCount: _count.members,
+          role: m.role,
+          // `isMember` is the viewer's membership in this club, not the target's,
+          // so the frontend can label "Joined" vs "View" buttons correctly.
+          isMember: viewerId
+            ? !!(m.bookClub as any).members?.length
+            : false,
+        };
+      });
+  }
+
+  /**
    * Discover book clubs - Returns list based on visibility and user access
    */
   static async discoverClubs(userId?: string, categories?: string[]) {

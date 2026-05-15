@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { FiDownload, FiFile, FiX } from 'react-icons/fi';
 import { getCollabImageUrl } from '@config/constants';
 import logger from '@utils/logger';
@@ -7,6 +8,19 @@ import { useToast } from '@hooks/useUIFeedback';
 const MessageAttachment = ({ attachment, canDelete = false, onDelete, auth, isSender }: { attachment: any; canDelete?: boolean; onDelete?: (...args: any[]) => void; auth?: any; isSender?: boolean }) => {
   const [imageExpanded, setImageExpanded] = useState(false);
   const { toastError } = useToast();
+
+  // Lock background scroll + handle Escape while the lightbox is open.
+  useEffect(() => {
+    if (!imageExpanded) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setImageExpanded(false); };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [imageExpanded]);
 
   const isImage = attachment.mimetype.startsWith('image/');
 
@@ -76,13 +90,18 @@ const MessageAttachment = ({ attachment, canDelete = false, onDelete, auth, isSe
           </div>
         </div>
 
-        {/* Image Modal */}
-        {imageExpanded && (
+        {/* Image lightbox — portalled to <body> so it always paints above the
+            chat tree (reaction bars use z-50/z-[100], message context menu z-[60]).
+            Without the portal a parent transform/filter would also break
+            position: fixed and trap the modal inside the message bubble. */}
+        {imageExpanded && createPortal(
           <div
-            className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/90 z-[200] flex items-center justify-center p-4"
             onClick={() => setImageExpanded(false)}
+            role="dialog"
+            aria-modal="true"
           >
-            <div className="relative max-w-7xl max-h-full">
+            <div className="relative max-w-7xl max-h-full" onClick={(e) => e.stopPropagation()}>
               <img
                 src={getCollabImageUrl(attachment.url)}
                 alt={attachment.filename}
@@ -90,16 +109,15 @@ const MessageAttachment = ({ attachment, canDelete = false, onDelete, auth, isSe
                 onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
               />
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setImageExpanded(false);
-                }}
+                onClick={() => setImageExpanded(false)}
                 className="absolute top-4 right-4 bg-gray-900 bg-opacity-80 text-white p-2 rounded-full hover:bg-opacity-100"
+                aria-label="Close image"
               >
                 <FiX size={24} />
               </button>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </>
     );
