@@ -1,6 +1,6 @@
 /**
  * Email templates for notification emails.
- * Uses a consistent layout with the BookClubs branding.
+ * Uses a consistent layout with the MyBookClubs branding.
  */
 
 const BRAND_COLOR = '#78716c'; // stone-500
@@ -9,7 +9,7 @@ const BG_COLOR = '#fafaf9';    // stone-50
 const TEXT_COLOR = '#292524';   // stone-800
 const MUTED_COLOR = '#78716c'; // stone-500
 const BORDER_COLOR = '#d6d3d1'; // stone-300
-const APP_NAME = 'BookClubs';
+const APP_NAME = 'MyBookClubs';
 const APP_URL = process.env.APP_URL || 'http://localhost:5173';
 
 /**

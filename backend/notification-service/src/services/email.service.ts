@@ -17,7 +17,7 @@ let transporter: nodemailer.Transporter | null = null;
  * Required env vars:
  *   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS
  * Optional:
- *   SMTP_FROM (default: "BookClubs <noreply@bookclubs.app>")
+ *   SMTP_FROM (default: "MyBookClubs <noreply@mybookclubs.app>")
  *   SMTP_SECURE (default: true for port 465, false otherwise)
  */
 function getTransporter(): nodemailer.Transporter {
@@ -59,7 +59,7 @@ function getTransporter(): nodemailer.Transporter {
  * Send an email. Returns true if sent, false on failure.
  */
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
-  const from = process.env.SMTP_FROM || 'BookClubs <noreply@bookclubs.app>';
+  const from = process.env.SMTP_FROM || 'MyBookClubs <noreply@mybookclubs.app>';
 
   try {
     const transport = getTransporter();

@@ -1,7 +1,7 @@
 {
   "name": "gateway",
   "version": "1.0.0",
-  "description": "",
+  "description": "MyBookClubs API gateway — JWT auth, rate limiting (Redis), request proxying, Prometheus metrics",
   "main": "index.js",
   "scripts": {
     "dev": "nodemon",
