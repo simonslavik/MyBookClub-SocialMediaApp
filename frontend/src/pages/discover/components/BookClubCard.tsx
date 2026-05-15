@@ -117,17 +117,17 @@ const BookClubCard = ({ bookClub, bookIndex = 0, onBookIndexChange, friendIds, o
           </div>
         )}
 
-        {/* Members */}
-        {bookClub.members?.length > 0 && (
-          <div className="mt-auto pt-3">
-            <MemberAvatars
-              members={bookClub.members}
-              memberCount={bookClub.memberCount}
-              friendIds={friendIds}
-              onHoverMember={onHoverMember}
-            />
-          </div>
-        )}
+        {/* Members — always rendered so the row reserves space at the bottom
+            of the card. MemberAvatars internally falls back to a count-only
+            label ("N members") when no avatar data is available. */}
+        <div className="mt-auto pt-3 min-h-[2.25rem]">
+          <MemberAvatars
+            members={bookClub.members || []}
+            memberCount={bookClub.memberCount ?? bookClub.members?.length ?? 0}
+            friendIds={friendIds}
+            onHoverMember={onHoverMember}
+          />
+        </div>
       </div>
     </article>
   );

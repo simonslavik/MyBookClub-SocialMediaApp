@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiUsers } from 'react-icons/fi';
 import { getCollabImageUrl, getProfileImageUrl } from '@config/constants';
 import AuthContext from '@context/index';
 
@@ -104,13 +104,28 @@ const CurrentBooksPreview = ({ books, clubId, bookIdx, onChangeIndex }) => {
 };
 
 /** Member avatar stack shown at the bottom of a club card. */
-const MemberAvatars = ({ members, onHover, onLeave }) => {
+const MemberAvatars = ({ members, memberCount, onHover, onLeave }) => {
   const navigate = useNavigate();
+  const list = members || [];
+  const total = memberCount ?? list.length;
+
+  // Count-only fallback when avatar data is missing — keeps the bottom row
+  // populated so cards stay visually balanced.
+  if (list.length === 0) {
+    return (
+      <div className="mt-auto pt-3 flex items-center gap-2 text-stone-400">
+        <FiUsers size={14} />
+        <span className="text-xs font-medium">
+          {total} {total === 1 ? 'member' : 'members'}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-auto pt-3 flex items-center justify-between">
       <div className="flex -space-x-2">
-        {members.slice(0, 4).map((member) => (
+        {list.slice(0, 4).map((member) => (
           <div key={member.id} className="relative">
             <img
               src={getProfileImageUrl(member.profileImage) || DEFAULT_IMAGE}
@@ -123,14 +138,14 @@ const MemberAvatars = ({ members, onHover, onLeave }) => {
             />
           </div>
         ))}
-        {members.length > 4 && (
+        {total > list.length && (
           <div className="w-7 h-7 rounded-full border-2 border-white bg-stone-100 flex items-center justify-center text-[10px] font-bold text-stone-700">
-            +{members.length - 4}
+            +{total - list.length}
           </div>
         )}
       </div>
       <span className="text-xs text-gray-400 font-medium">
-        {members.length} {members.length === 1 ? 'member' : 'members'}
+        {total} {total === 1 ? 'member' : 'members'}
       </span>
     </div>
   );
@@ -252,14 +267,15 @@ const ClubCard = ({ bookClub, scale, opacity, zIndex, isCenter, cardBookIndex, o
           </div>
         )}
 
-        {/* Members */}
-        {bookClub.members?.length > 0 && (
-          <MemberAvatars
-            members={bookClub.members}
-            onHover={onMemberHover}
-            onLeave={onMemberLeave}
-          />
-        )}
+        {/* Members — always rendered so the row reserves space at the bottom
+            of the card. MemberAvatars internally falls back to a count-only
+            label ("N members") when no avatar data is available. */}
+        <MemberAvatars
+          members={bookClub.members}
+          memberCount={bookClub.memberCount ?? bookClub.members?.length ?? 0}
+          onHover={onMemberHover}
+          onLeave={onMemberLeave}
+        />
       </div>
     </div>
   );
