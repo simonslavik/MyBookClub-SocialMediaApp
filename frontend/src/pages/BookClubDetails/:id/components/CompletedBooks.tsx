@@ -1,6 +1,6 @@
 import { FiCheckCircle } from 'react-icons/fi';
 
-const DEFAULT_IMG = '/images/default.webp';
+const DEFAULT_IMG = '/images/default.svg';
 
 export default function CompletedBooks({ books }) {
     if (!books.length) return null;

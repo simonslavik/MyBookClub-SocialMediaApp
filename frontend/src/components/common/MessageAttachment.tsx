@@ -48,7 +48,7 @@ const MessageAttachment = ({ attachment, canDelete = false, onDelete, auth, isSe
             alt={attachment.filename}
             className="max-w-[200px] sm:max-w-xs md:max-w-sm max-h-48 md:max-h-64 rounded-md cursor-pointer hover:brightness-110 transition-colors border border-white/[0.06]"
             onClick={() => setImageExpanded(true)}
-            onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+            onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
           />
           <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1.5">
             <button
@@ -87,7 +87,7 @@ const MessageAttachment = ({ attachment, canDelete = false, onDelete, auth, isSe
                 src={getCollabImageUrl(attachment.url)}
                 alt={attachment.filename}
                 className="max-w-full max-h-[90vh] object-contain"
-                onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
               />
               <button
                 onClick={(e) => {

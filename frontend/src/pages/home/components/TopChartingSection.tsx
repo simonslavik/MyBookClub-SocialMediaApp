@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { getCollabImageUrl } from '@config/constants';
 import useScrollReveal from '@hooks/useScrollReveal';
 
-const DEFAULT_IMAGE = '/images/default.webp';
+const DEFAULT_IMAGE = '/images/default.svg';
 
 /** Skeleton placeholder shown while clubs are loading. */
 const ClubCardSkeleton = () => (

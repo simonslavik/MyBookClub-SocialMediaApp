@@ -110,10 +110,10 @@ const SuggestBookModal = ({ isOpen, onClose, bookClubId, auth, onBookSuggested }
             </div>
             <div className="bg-gray-700 rounded-lg p-4 flex gap-4">
               <img
-                src={selectedBook.coverUrl || '/images/default.webp'}
+                src={selectedBook.coverUrl || '/images/default.svg'}
                 alt={selectedBook.title}
                 className="w-20 h-28 object-cover rounded shadow-md"
-                onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
               />
               <div className="flex-1">
                 <h4 className="text-white font-semibold mb-1">{selectedBook.title}</h4>
@@ -167,10 +167,10 @@ const SuggestBookModal = ({ isOpen, onClose, bookClubId, auth, onBookSuggested }
                       className="bg-gray-700 hover:bg-gray-600 rounded-lg p-3 cursor-pointer transition-colors flex gap-3"
                     >
                       <img
-                        src={book.coverUrl || '/images/default.webp'}
+                        src={book.coverUrl || '/images/default.svg'}
                         alt={book.title}
                         className="w-12 h-16 object-cover rounded"
-                        onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                        onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
                       />
                       <div className="flex-1 min-w-0">
                         <h4 className="text-white font-semibold text-sm line-clamp-1">

@@ -82,10 +82,10 @@ const BookClubBookView = ({
           className="flex gap-2.5 cursor-pointer mb-2"
         >
           <img
-            src={bookClubBook.book?.coverUrl || '/images/default.webp'}
+            src={bookClubBook.book?.coverUrl || '/images/default.svg'}
             alt={bookClubBook.book?.title}
             className="w-14 h-20 object-cover rounded shadow"
-            onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+            onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
           />
           <div className="flex-1 min-w-0">
             <h4 className="text-white font-medium text-sm line-clamp-2 mb-0.5">

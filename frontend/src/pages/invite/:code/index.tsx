@@ -147,10 +147,10 @@ const InviteJoinPage = () => {
             <img
               src={inviteInfo.bookClub.imageUrl 
                 ? getCollabImageUrl(inviteInfo.bookClub.imageUrl) 
-                : '/images/default.webp'}
+                : '/images/default.svg'}
               alt={inviteInfo.bookClub.name}
               className="w-full h-48 object-cover rounded-xl"
-              onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+              onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
             />
           </div>
 

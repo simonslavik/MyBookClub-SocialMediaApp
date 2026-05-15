@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom';
 
-const DEFAULT_IMAGE = '/images/default.webp';
+const DEFAULT_IMAGE = '/images/default.svg';
 
 /**
  * Floating tooltip shown on member avatar hover.

@@ -151,10 +151,10 @@ const AddCurrentBookModal = ({ bookClubId, onClose, onBookAdded }) => {
                     className="flex gap-4 p-4 border rounded-lg hover:border-indigo-500 hover:shadow-lg transition-all text-left"
                   >
                     <img
-                      src={book.coverUrl || '/images/default.webp'}
+                      src={book.coverUrl || '/images/default.svg'}
                       alt={book.title}
                       className="w-20 h-28 object-cover rounded"
-                      onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                      onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
                     />
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-gray-900 line-clamp-2 mb-1">
@@ -188,7 +188,7 @@ const AddCurrentBookModal = ({ bookClubId, onClose, onBookAdded }) => {
               {/* Selected Book Preview */}
               <div className="flex gap-6 mb-8 p-6 bg-indigo-50 rounded-lg">
                 <img
-                  src={selectedBook.coverUrl || '/images/default.webp'}
+                  src={selectedBook.coverUrl || '/images/default.svg'}
                   alt={selectedBook.title}
                   className="w-32 h-48 object-cover rounded-lg shadow-lg"
                 />

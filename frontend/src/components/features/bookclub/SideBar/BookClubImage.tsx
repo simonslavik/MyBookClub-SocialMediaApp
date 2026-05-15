@@ -9,7 +9,7 @@ const BookClubImage = ({ bookClub, auth, uploadingImage, fileInputRef, handleIma
     return (
         <div className="relative mb-3 group">
                     <img 
-                      src={bookClub?.imageUrl ? getCollabImageUrl(bookClub.imageUrl) : '/images/default.webp'}
+                      src={bookClub?.imageUrl ? getCollabImageUrl(bookClub.imageUrl) : '/images/default.svg'}
                       alt={bookClub?.name}
                       className="w-full h-52 object-cover rounded"
                       onError={(e) => { (e.target as HTMLImageElement).src = '/images/IMG_2650.jpg'; }}

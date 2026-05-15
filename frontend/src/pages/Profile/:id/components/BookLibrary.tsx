@@ -118,11 +118,11 @@ function BookCard({ userBook, showShelf, isOwnProfile, onDelete, onView }) {
         <div className="group">
             <div className="relative rounded-xl overflow-hidden ring-1 ring-black/5 dark:ring-white/5 group-hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                 <img
-                    src={userBook.book.coverUrl || '/images/default.webp'}
+                    src={userBook.book.coverUrl || '/images/default.svg'}
                     alt={userBook.book.title}
                     className="w-full h-56 object-cover"
                     loading="lazy"
-                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
                 />
 
                 {/* Hover overlay */}

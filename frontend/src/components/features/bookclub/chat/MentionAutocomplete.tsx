@@ -87,10 +87,10 @@ const MentionAutocomplete = ({
               </div>
             ) : (
               <img
-                src={getProfileImageUrl(member.profileImage) || '/images/default.webp'}
+                src={getProfileImageUrl(member.profileImage) || '/images/default.svg'}
                 alt={member.username}
                 className="w-7 h-7 rounded-full object-cover flex-shrink-0"
-                onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
               />
             )}
             <span className="font-medium truncate">

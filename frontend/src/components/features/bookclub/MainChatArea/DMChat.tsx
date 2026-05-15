@@ -263,11 +263,11 @@ const DMChat = ({ otherUser, messages, onSendMessage, auth, setMessages, dmWs, r
       {/* DM Header */}
       <div className="bg-gray-800 border-b border-gray-700 px-3 py-2 flex items-center gap-2.5">
         <img
-          src={getProfileImageUrl(otherUser.profileImage) || '/images/default.webp'}
+          src={getProfileImageUrl(otherUser.profileImage) || '/images/default.svg'}
           alt={otherUser.name}
           className="w-8 h-8 rounded-full object-cover cursor-pointer"
           onClick={() => navigate(`/profile/${otherUser.id}`)}
-          onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+          onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
         />
         <div className="flex-1 min-w-0">
           <h2

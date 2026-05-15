@@ -1,7 +1,7 @@
 import { FiUsers, FiBook, FiArrowRight, FiClock } from 'react-icons/fi';
 import { getCollabImageUrl } from '@config/constants';
 
-const DEFAULT_IMG = '/images/default.webp';
+const DEFAULT_IMG = '/images/default.svg';
 
 export default function ClubHero({ bookClub, members, totalBooks, currentBooks, actionLabel, actionDisabled, onAction }) {
     const now = new Date();

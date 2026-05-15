@@ -58,10 +58,10 @@ const BookSuggestionDetailsModal = ({ suggestion, bookClubId, auth, members = []
             {/* Book Cover */}
             <div className="flex-shrink-0">
               <img
-                src={suggestion.book?.coverUrl || '/images/default.webp'}
+                src={suggestion.book?.coverUrl || '/images/default.svg'}
                 alt={suggestion.book?.title}
                 className="w-32 h-48 object-cover rounded shadow-lg"
-                onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
               />
             </div>
 

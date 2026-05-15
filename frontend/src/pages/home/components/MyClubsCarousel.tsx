@@ -4,7 +4,7 @@ import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { getCollabImageUrl, getProfileImageUrl } from '@config/constants';
 import AuthContext from '@context/index';
 
-const DEFAULT_IMAGE = '/images/default.webp';
+const DEFAULT_IMAGE = '/images/default.svg';
 
 // ─── Sub-components ──────────────────────────────────────────
 

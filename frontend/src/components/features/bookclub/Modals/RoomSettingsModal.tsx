@@ -214,7 +214,7 @@ const MembersTab = ({ room, bookClubId, allMembers, currentUserId, userRole }) =
                   className="flex items-center gap-2 px-3 py-2 rounded bg-gray-900 border border-gray-700"
                 >
                   <img
-                    src={getProfileImageUrl(userDetails?.profileImage) || '/images/default.webp'}
+                    src={getProfileImageUrl(userDetails?.profileImage) || '/images/default.svg'}
                     alt=""
                     className="w-7 h-7 rounded-full flex-shrink-0 object-cover"
                   />
@@ -274,7 +274,7 @@ const MembersTab = ({ room, bookClubId, allMembers, currentUserId, userRole }) =
                   className="flex items-center gap-2 px-3 py-2 hover:bg-gray-800 transition-colors"
                 >
                   <img
-                    src={getProfileImageUrl(member.profileImage) || '/images/default.webp'}
+                    src={getProfileImageUrl(member.profileImage) || '/images/default.svg'}
                     alt=""
                     className="w-6 h-6 rounded-full flex-shrink-0 object-cover"
                   />

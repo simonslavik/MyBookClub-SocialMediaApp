@@ -1,7 +1,7 @@
 import { FiBook } from 'react-icons/fi';
 import { getProfileImageUrl, getCollabImageUrl } from '@config/constants';
 
-const DEFAULT_IMG = '/images/default.webp';
+const DEFAULT_IMG = '/images/default.svg';
 
 export default function BookClubsGrid({ clubs, isOwnProfile, profileId, navigate, profileName }: any) {
     const count = clubs.length;

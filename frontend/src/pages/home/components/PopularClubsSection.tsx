@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { getCollabImageUrl } from '@config/constants';
 
-const DEFAULT_IMAGE = '/images/default.webp';
+const DEFAULT_IMAGE = '/images/default.svg';
 
 const RANK_STYLES = {
   0: { size: 'w-36 h-44', ring: 'ring-4 ring-yellow-400', badge: 'bg-yellow-500', emoji: '👑', textSize: 'text-sm' },

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FiSearch, FiX } from 'react-icons/fi';
 import { getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 import { userAPI } from '@api/user.api';
 import logger from '@utils/logger';
 
@@ -117,10 +118,10 @@ const DMSidebar = ({ conversations, friends = [], currentConversation, onSelectC
               className="w-full px-2 py-1.5 text-left transition-colors hover:bg-gray-700 flex items-center gap-2.5"
             >
               <img
-                src={getProfileImageUrl(user.profileImage) || '/images/default.webp'}
+                src={getProfileImageUrl(user.profileImage) || getAvatarUrl(getAvatarSeed(user))}
                 alt={user.name || user.username}
                 className="w-7 h-7 rounded-full object-cover flex-shrink-0"
-                onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(user)); }}
               />
               <div className="flex-1 min-w-0">
                 <span className="text-white text-[13px] truncate block">{user.name || user.username}</span>
@@ -155,10 +156,10 @@ const DMSidebar = ({ conversations, friends = [], currentConversation, onSelectC
               >
                 <div className="flex items-center gap-2.5">
                   <img
-                    src={getProfileImageUrl(conv.friend.profileImage) || '/images/default.webp'}
+                    src={getProfileImageUrl(conv.friend.profileImage) || getAvatarUrl(getAvatarSeed(conv.friend))}
                     alt={conv.friend.name || 'User'}
                     className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                    onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(conv.friend)); }}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">

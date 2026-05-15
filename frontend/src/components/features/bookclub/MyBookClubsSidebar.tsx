@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { FiHome, FiSend, FiUsers, FiBook } from 'react-icons/fi';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getProfileImageUrl, getCollabImageUrl } from '@config/constants';
+import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 import StatusPopup from './StatusPopup';
 import { getStatusColor } from './statusUtils';
 
@@ -117,10 +118,10 @@ const MyBookClubsSidebar = ({ bookClubs, currentBookClubId, onSelectBookClub, on
           >
             <div className="relative">
               <img
-                src={getProfileImageUrl(auth.user.profileImage) || '/images/default.webp'}
+                src={getProfileImageUrl(auth.user.profileImage) || getAvatarUrl(getAvatarSeed(auth.user))}
                 alt={auth.user.name}
                 className="w-10 h-10 rounded-full object-cover hover:bg-gray-50 cursor-pointer"
-                onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(auth.user)); }}
               />
               <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-gray-900 ${getStatusColor(auth.user.status || 'ONLINE')}`}></div>
             </div>
@@ -157,7 +158,7 @@ const MyBookClubsSidebar = ({ bookClubs, currentBookClubId, onSelectBookClub, on
                     src={getCollabImageUrl(hoveredClub.imageUrl)}
                     alt={hoveredClub.name}
                     className="w-9 h-9 rounded-full object-cover flex-shrink-0"
-                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
                   />
                 ) : (
                   <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">

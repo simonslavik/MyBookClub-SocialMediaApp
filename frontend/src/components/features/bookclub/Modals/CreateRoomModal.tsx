@@ -224,7 +224,7 @@ const CreateRoomModal = ({ isOpen, onClose, onCreateRoom, members, currentUserId
                       className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-gray-800 transition-colors text-left"
                     >
                       <img
-                        src={getProfileImageUrl(member.profileImage) || '/images/default.webp'}
+                        src={getProfileImageUrl(member.profileImage) || '/images/default.svg'}
                         alt=""
                         className="w-5 h-5 rounded-full object-cover"
                       />

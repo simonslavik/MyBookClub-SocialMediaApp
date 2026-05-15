@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { getProfileImageUrl } from '@config/constants';
 
-const DEFAULT_IMG = '/images/default.webp';
+const DEFAULT_IMG = '/images/default.svg';
 
 export default function MembersSidebar({ members, connectedUsers }) {
     const navigate = useNavigate();

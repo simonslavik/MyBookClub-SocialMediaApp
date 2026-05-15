@@ -72,10 +72,10 @@ const ConnectedUsersArea = (
                           onSendFriendRequest={handleSendFriendRequest}
                         >
                           <img 
-                            src={getProfileImageUrl(user.profileImage) || '/images/default.webp'} 
+                            src={getProfileImageUrl(user.profileImage) || '/images/default.svg'} 
                             alt={user.username} 
                             className="w-8 h-8 rounded-full object-cover"
-                            onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                            onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
                           />
                         </UserHoverCard>
                         <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-gray-800 ${getStatusColor(user.status || (isOnline ? 'ONLINE' : 'OFFLINE'))}`}></div>

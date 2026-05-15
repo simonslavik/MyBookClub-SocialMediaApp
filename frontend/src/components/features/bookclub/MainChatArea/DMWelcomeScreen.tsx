@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { FiSearch, FiCompass, FiPlusCircle, FiUsers, FiMessageCircle } from 'react-icons/fi';
 import { getProfileImageUrl } from '@config/constants';
 
-const DEFAULT_IMAGE = '/images/default.webp';
+const DEFAULT_IMAGE = '/images/default.svg';
 
 const DMWelcomeScreen = ({ auth, friends = [], conversations = [], onSelectConversation }) => {
   const navigate = useNavigate();

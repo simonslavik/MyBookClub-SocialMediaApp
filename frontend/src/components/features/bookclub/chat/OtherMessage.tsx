@@ -6,6 +6,7 @@ import ReactionBar from './ReactionBar';
 import ReplyPreview from './ReplyPreview';
 import MessageActions from './MessageActions';
 import { getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 import { renderMessageContent, formatTimestamp } from './messageUtils';
 import UserHoverCard from '../UserHoverCard';
 
@@ -53,11 +54,11 @@ const OtherMessage = ({
           className="flex-shrink-0 self-end"
         >
           <img
-            src={getProfileImageUrl(msg.profileImage) || '/images/default.webp'}
+            src={getProfileImageUrl(msg.profileImage) || getAvatarUrl(msg.userId || msg.username)}
             alt={msg.username}
             className="w-6 h-6 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-indigo-500 transition-all"
             onClick={() => msg.userId && navigate(`/profile/${msg.userId}`)}
-            onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+            onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(msg.userId || msg.username); }}
           />
         </UserHoverCard>
       )}

@@ -11,8 +11,8 @@ import {
   FiMoon,
 } from 'react-icons/fi';
 import { getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 
-const DEFAULT_AVATAR = '/images/default.webp';
 
 /** Auto-theme icon (sun + moon combo). */
 const AutoThemeIcon = ({ size = 20 }) => (
@@ -100,10 +100,10 @@ const MobileSidebar = forwardRef<HTMLDivElement, MobileSidebarProps>(({
         <div className="p-6 border-b border-warmgray-200 dark:border-gray-700 bg-warmgray-50 dark:bg-gray-900">
           <div className="flex items-center gap-3">
             <img
-              src={getProfileImageUrl(user.profileImage) || DEFAULT_AVATAR}
+              src={getProfileImageUrl(user.profileImage) || getAvatarUrl(getAvatarSeed(user))}
               alt="Profile"
               className="h-14 w-14 rounded-full object-cover border-2 border-warmgray-300"
-              onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
+              onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(user)); }}
             />
             <div>
               <p className="font-semibold text-gray-900 dark:text-gray-100">{user.name}</p>
@@ -136,10 +136,10 @@ const MobileSidebar = forwardRef<HTMLDivElement, MobileSidebarProps>(({
                 <div key={request.id} className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                   <div className="flex items-start gap-3">
                     <img
-                      src={getProfileImageUrl(request.user?.profileImage) || DEFAULT_AVATAR}
+                      src={getProfileImageUrl(request.user?.profileImage) || getAvatarUrl(getAvatarSeed(request.user))}
                       alt={request.user?.name}
                       className="h-10 w-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
-                      onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
+                      onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(request.user)); }}
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{request.user?.name}</p>

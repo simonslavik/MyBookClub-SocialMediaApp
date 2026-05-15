@@ -1,4 +1,4 @@
-const DEFAULT_IMAGE = '/images/default.webp';
+const DEFAULT_IMAGE = '/images/default.svg';
 
 const DetailsTab = ({ book, currentBookData }) => (
   <div className="max-w-3xl mx-auto">

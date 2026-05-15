@@ -7,12 +7,12 @@ import { useTheme } from '@context/ThemeContext';
 import LoginModule from '@components/common/modals/loginModule';
 import RegisterModule from '@components/common/modals/registerModule';
 import { getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 import apiClient from '@api/axios';
 import logger from '@utils/logger';
 import NotificationBell from '@components/features/notifications/NotificationBell';
 import MobileSidebar from './MobileSidebar';
 
-const DEFAULT_AVATAR = '/images/default.webp';
 
 const HomePageHeader = () => {
   const { auth, logout } = useContext(AuthContext);
@@ -173,10 +173,10 @@ const HomePageHeader = () => {
             <div className="ml-2 mt-2 relative" ref={profileDropdownRef}>
               <button onClick={handleProfileClick}>
                 <img
-                  src={getProfileImageUrl(auth.user.profileImage) || DEFAULT_AVATAR}
+                  src={getProfileImageUrl(auth.user.profileImage) || getAvatarUrl(getAvatarSeed(auth.user))}
                   alt="Profile"
                   className="h-7.5 w-7.5 rounded-full object-cover border-1 border-gray-200 cursor-pointer"
-                  onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
+                  onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(auth.user)); }}
                 />
               </button>
               {showDropdown && (

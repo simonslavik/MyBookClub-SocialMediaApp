@@ -2,7 +2,7 @@ import { FiUsers } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { getProfileImageUrl } from '@config/constants';
 
-const DEFAULT_IMAGE = '/images/default.webp';
+const DEFAULT_IMAGE = '/images/default.svg';
 
 /**
  * Avatar row shown at the bottom of a BookClubCard.

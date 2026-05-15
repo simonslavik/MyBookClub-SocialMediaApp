@@ -2,7 +2,7 @@ import { getCollabImageUrl } from '@config/constants';
 import CurrentlyReading from './CurrentlyReading';
 import MemberAvatars from './MemberAvatars';
 
-const DEFAULT_IMAGE = '/images/default.webp';
+const DEFAULT_IMAGE = '/images/default.svg';
 
 // ─── Pastel palette (matches home card) ──────────────────
 

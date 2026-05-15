@@ -214,10 +214,10 @@ const FriendsPage = () => {
                                         <div key={friend.id} className="flex flex-col items-center gap-2 p-4 bg-white dark:bg-gray-800 rounded-xl border border-warmgray-200 dark:border-gray-700 hover:shadow-md hover:border-stone-300 dark:hover:border-gray-600 transition-all group">
                                             <button onClick={() => navigate(`/profile/${friend.id}`)} className="flex flex-col items-center gap-2 cursor-pointer">
                                                 <img
-                                                    src={getProfileImageUrl(friend.profileImage) || '/images/default.webp'}
+                                                    src={getProfileImageUrl(friend.profileImage) || '/images/default.svg'}
                                                     alt={friend.name}
                                                     className="w-16 h-16 rounded-full object-cover ring-2 ring-warmgray-200 dark:ring-gray-600 group-hover:ring-stone-400 dark:group-hover:ring-gray-500 transition-all"
-                                                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                                                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
                                                 />
                                                 <span className="text-sm font-medium text-stone-700 dark:text-warmgray-200 text-center truncate w-full">
                                                     {friend.name || friend.username}
@@ -276,10 +276,10 @@ const FriendsPage = () => {
                                         <div key={request.id} className="flex items-center gap-3 p-4 bg-white dark:bg-gray-800 rounded-xl border border-warmgray-200 dark:border-gray-700">
                                             <button onClick={() => navigate(`/profile/${sender.id}`)} className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer">
                                                 <img
-                                                    src={getProfileImageUrl(sender.profileImage) || '/images/default.webp'}
+                                                    src={getProfileImageUrl(sender.profileImage) || '/images/default.svg'}
                                                     alt={sender.name}
                                                     className="w-11 h-11 rounded-full object-cover ring-2 ring-amber-200 dark:ring-amber-700 flex-shrink-0"
-                                                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                                                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
                                                 />
                                                 <div className="min-w-0">
                                                     <p className="text-sm font-semibold text-stone-700 dark:text-warmgray-200 truncate">{sender.name}</p>
@@ -359,10 +359,10 @@ const FriendsPage = () => {
                                         <div key={user.id} className="flex flex-col items-center gap-2 p-4 bg-white dark:bg-gray-800 rounded-xl border border-warmgray-200 dark:border-gray-700 hover:shadow-md hover:border-stone-300 dark:hover:border-gray-600 transition-all group">
                                             <button onClick={() => navigate(`/profile/${user.id}`)} className="flex flex-col items-center gap-2 cursor-pointer">
                                                 <img
-                                                    src={getProfileImageUrl(user.profileImage) || '/images/default.webp'}
+                                                    src={getProfileImageUrl(user.profileImage) || '/images/default.svg'}
                                                     alt={user.name}
                                                     className="w-16 h-16 rounded-full object-cover ring-2 ring-warmgray-200 dark:ring-gray-600 group-hover:ring-stone-400 dark:group-hover:ring-gray-500 transition-all"
-                                                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                                                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
                                                 />
                                                 <span className="text-sm font-medium text-stone-700 dark:text-warmgray-200 text-center truncate w-full">
                                                     {user.name || user.username}

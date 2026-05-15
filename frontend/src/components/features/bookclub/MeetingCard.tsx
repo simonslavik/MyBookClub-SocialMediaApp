@@ -4,6 +4,7 @@ import {
   FiCheck, FiHelpCircle, FiXCircle, FiMoreVertical
 } from 'react-icons/fi';
 import { getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 
 const PLATFORM_META = {
   zoom:        { icon: '📹', label: 'Zoom',        gradient: 'from-indigo-600 to-indigo-700' },
@@ -159,7 +160,7 @@ const MeetingCard = ({ meeting, currentUserId, allMembers, onRSVP, onEdit, onDel
             <span className="flex items-center gap-1.5 text-xs text-gray-500">
               Hosted by
               <img
-                src={getProfileImageUrl(host.profileImage) || '/images/default.webp'}
+                src={getProfileImageUrl(host.profileImage) || getAvatarUrl(getAvatarSeed(host))}
                 alt=""
                 className="w-4 h-4 rounded-full object-cover"
               />
@@ -251,7 +252,7 @@ const MeetingCard = ({ meeting, currentUserId, allMembers, onRSVP, onEdit, onDel
                       return (
                         <div key={r.userId} className="flex items-center gap-1.5 bg-gray-700/50 px-2 py-1 rounded-full">
                           <img
-                            src={getProfileImageUrl(member?.profileImage) || '/images/default.webp'}
+                            src={getProfileImageUrl(member?.profileImage) || getAvatarUrl(r.userId)}
                             alt=""
                             className="w-4 h-4 rounded-full object-cover"
                           />

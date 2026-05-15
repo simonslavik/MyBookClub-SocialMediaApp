@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { getProfileImageUrl } from '@config/constants';
 
-const DEFAULT_IMAGE = '/images/default.webp';
+const DEFAULT_IMAGE = '/images/default.svg';
 
 /** A single friend avatar card. */
 const FriendCard = ({ friend }) => {

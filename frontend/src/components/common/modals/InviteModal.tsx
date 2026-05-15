@@ -234,7 +234,7 @@ const InviteModal = ({ bookClubId, bookClubName, bookClubMembers = [], currentUs
                     {searchResults.map(friend => {
                       const isAlreadyMember = isMember(friend.id);
                       const friendName = friend.username || friend.name || 'Unknown User';
-                      const friendImage = getProfileImageUrl(friend.profileImage) || '/images/default.webp';
+                      const friendImage = getProfileImageUrl(friend.profileImage) || '/images/default.svg';
 
                       return (
                         <div
@@ -246,7 +246,7 @@ const InviteModal = ({ bookClubId, bookClubName, bookClubMembers = [], currentUs
                               src={friendImage}
                               alt={friendName}
                               className="w-7 h-7 rounded-full object-cover flex-shrink-0"
-                              onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                              onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
                             />
                             <div className="min-w-0">
                               <div className="text-[13px] text-gray-200 truncate">{friendName}</div>

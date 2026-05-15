@@ -122,10 +122,10 @@ const BookSuggestionsView = ({ bookClubId, auth, members = [], userRole, onSugge
                 {/* Book Cover and Info */}
                 <div className="flex gap-3 mb-3">
                   <img
-                    src={suggestion.book?.coverUrl || '/images/default.webp'}
+                    src={suggestion.book?.coverUrl || '/images/default.svg'}
                     alt={suggestion.book?.title}
                     className="w-16 h-24 object-cover rounded shadow"
-                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
                   />
                   <div className="flex-1 min-w-0">
                     <h3 className="text-white font-semibold text-sm line-clamp-2 mb-1">

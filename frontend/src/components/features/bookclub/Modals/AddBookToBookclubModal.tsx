@@ -151,10 +151,10 @@ const AddBookToBookclubModal = ({ bookClubId, onClose, onBookAdded }) => {
               </h3>
               <div className="flex gap-3 mb-3">
                 <img
-                  src={selectedBook.coverUrl || '/images/default.webp'}
+                  src={selectedBook.coverUrl || '/images/default.svg'}
                   alt={selectedBook.title}
                   className="w-14 h-20 object-cover rounded shadow"
-                  onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                  onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
                 />
                 <div className="flex-1">
                   <h4 className="text-white font-medium text-sm mb-0.5">{selectedBook.title}</h4>
@@ -254,10 +254,10 @@ const AddBookToBookclubModal = ({ bookClubId, onClose, onBookAdded }) => {
                     }`}
                   >
                     <img
-                      src={book.coverUrl || '/images/default.webp'}
+                      src={book.coverUrl || '/images/default.svg'}
                       alt={book.title}
                       className="w-16 h-24 object-cover rounded shadow-md flex-shrink-0"
-                      onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                      onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
                     />
                     <div className="flex-1 min-w-0">
                       <h4 className="text-white font-semibold text-sm line-clamp-2 mb-1">
