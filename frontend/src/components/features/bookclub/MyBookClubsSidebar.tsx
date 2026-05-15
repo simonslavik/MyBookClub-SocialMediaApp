@@ -79,12 +79,11 @@ const MyBookClubsSidebar = ({ bookClubs, currentBookClubId, onSelectBookClub, on
             const badgeSectionDot = !isActive && (unread?.unreadSections?.length ?? 0) > 0;
             const showBadge = badgeMessages > 0 || badgeSectionDot;
 
-            // Real uploaded image → show round bubble (Discord-style).
-            // No image → fall back to a generated *square* cover so it's
-            // visually distinct from the round user avatars elsewhere.
-            const hasImage = !!club.imageUrl;
+            // Always round in this sidebar (Discord-style). The generated
+            // bookclub cover SVG is square but gets clipped to a circle by
+            // the container — its colored stripes still read distinctly from
+            // the user avatars' marble pattern even inside the circle.
             const coverFallback = getBookclubCoverUrl(getBookclubSeed(club));
-            const shapeClass = hasImage ? 'rounded-full' : 'rounded-lg';
 
             return (
               <div key={club.id} className="relative flex-shrink-0">
@@ -92,7 +91,7 @@ const MyBookClubsSidebar = ({ bookClubs, currentBookClubId, onSelectBookClub, on
                   onClick={() => onSelectBookClub(club.id)}
                   onMouseEnter={(e) => handleMouseEnter(club, e)}
                   onMouseLeave={handleMouseLeave}
-                  className={`w-12 h-12 ${shapeClass} flex items-center justify-center text-white font-bold text-sm overflow-hidden ${
+                  className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden ${
                     isActive
                       ? 'ring-2 ring-indigo-500'
                       : 'hover:ring-2 hover:ring-indigo-500/40'
@@ -100,9 +99,9 @@ const MyBookClubsSidebar = ({ bookClubs, currentBookClubId, onSelectBookClub, on
                   title=""
                 >
                   <img
-                    src={hasImage ? getCollabImageUrl(club.imageUrl) : coverFallback}
+                    src={club.imageUrl ? getCollabImageUrl(club.imageUrl) : coverFallback}
                     alt={club.name}
-                    className={`w-full h-full ${shapeClass} object-cover`}
+                    className="w-full h-full rounded-full object-cover"
                     onError={(e) => { (e.target as HTMLImageElement).src = coverFallback; }}
                   />
                 </button>
@@ -177,18 +176,15 @@ const MyBookClubsSidebar = ({ bookClubs, currentBookClubId, onSelectBookClub, on
               {/* Arrow */}
               <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-800 border-l border-b border-gray-600 rotate-45" />
               
-              {/* Club image + name — same shape rules as the main bubble:
-                  round for real images, square for the generated cover. */}
+              {/* Club image + name — round to match the sidebar bubble. */}
               <div className="flex items-center gap-2.5 mb-2">
                 {(() => {
-                  const hasImage = !!hoveredClub.imageUrl;
                   const coverFallback = getBookclubCoverUrl(getBookclubSeed(hoveredClub));
-                  const shapeClass = hasImage ? 'rounded-full' : 'rounded-md';
                   return (
                     <img
-                      src={hasImage ? getCollabImageUrl(hoveredClub.imageUrl) : coverFallback}
+                      src={hoveredClub.imageUrl ? getCollabImageUrl(hoveredClub.imageUrl) : coverFallback}
                       alt={hoveredClub.name}
-                      className={`w-9 h-9 ${shapeClass} object-cover flex-shrink-0`}
+                      className="w-9 h-9 rounded-full object-cover flex-shrink-0"
                       onError={(e) => { (e.target as HTMLImageElement).src = coverFallback; }}
                     />
                   );

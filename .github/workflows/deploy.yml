@@ -120,11 +120,19 @@ jobs:
           CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
           CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
           CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+          # SMTP creds for transactional email (verification, password reset,
+          # meeting reminders). Without these the email service falls back to
+          # log-only and registration verification mails never reach the user.
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          SMTP_FROM: ${{ secrets.SMTP_FROM }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          envs: TAG,REGISTRY,IMAGE_PREFIX,CLOUDINARY_CLOUD_NAME,CLOUDINARY_API_KEY,CLOUDINARY_API_SECRET
+          envs: TAG,REGISTRY,IMAGE_PREFIX,CLOUDINARY_CLOUD_NAME,CLOUDINARY_API_KEY,CLOUDINARY_API_SECRET,SMTP_HOST,SMTP_PORT,SMTP_USER,SMTP_PASS,SMTP_FROM
           script: |
             DEPLOY_DIR="$HOME/app"
             mkdir -p "$DEPLOY_DIR"
@@ -141,6 +149,11 @@ jobs:
             _CLOUDINARY_CLOUD_NAME="$CLOUDINARY_CLOUD_NAME"
             _CLOUDINARY_API_KEY="$CLOUDINARY_API_KEY"
             _CLOUDINARY_API_SECRET="$CLOUDINARY_API_SECRET"
+            _SMTP_HOST="$SMTP_HOST"
+            _SMTP_PORT="$SMTP_PORT"
+            _SMTP_USER="$SMTP_USER"
+            _SMTP_PASS="$SMTP_PASS"
+            _SMTP_FROM="$SMTP_FROM"
 
             # ── Use fixed project name for volume consistency ──
             export COMPOSE_PROJECT_NAME="bookclub"
@@ -172,14 +185,19 @@ jobs:
             export REGISTRY="$_REGISTRY"
             export IMAGE_PREFIX="$_IMAGE_PREFIX"
 
-            # Override Cloudinary creds from GitHub Secrets when present.
+            # Override Cloudinary + SMTP creds from GitHub Secrets when present.
             # Empty values fall through to whatever .env.production already set.
             [ -n "$_CLOUDINARY_CLOUD_NAME" ] && export CLOUDINARY_CLOUD_NAME="$_CLOUDINARY_CLOUD_NAME"
             [ -n "$_CLOUDINARY_API_KEY" ]    && export CLOUDINARY_API_KEY="$_CLOUDINARY_API_KEY"
             [ -n "$_CLOUDINARY_API_SECRET" ] && export CLOUDINARY_API_SECRET="$_CLOUDINARY_API_SECRET"
+            [ -n "$_SMTP_HOST" ] && export SMTP_HOST="$_SMTP_HOST"
+            [ -n "$_SMTP_PORT" ] && export SMTP_PORT="$_SMTP_PORT"
+            [ -n "$_SMTP_USER" ] && export SMTP_USER="$_SMTP_USER"
+            [ -n "$_SMTP_PASS" ] && export SMTP_PASS="$_SMTP_PASS"
+            [ -n "$_SMTP_FROM" ] && export SMTP_FROM="$_SMTP_FROM"
 
             echo "── Deploying: $REGISTRY/$IMAGE_PREFIX/*:$TAG ──"
-            echo "── ENV check: POSTGRES_USER=${POSTGRES_USER:-MISSING} REDIS_PASSWORD=${REDIS_PASSWORD:+SET} JWT_SECRET=${JWT_SECRET:+SET} CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME:+SET} CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY:+SET} CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET:+SET} ──"
+            echo "── ENV check: POSTGRES_USER=${POSTGRES_USER:-MISSING} REDIS_PASSWORD=${REDIS_PASSWORD:+SET} JWT_SECRET=${JWT_SECRET:+SET} CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME:+SET} CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY:+SET} CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET:+SET} SMTP_HOST=${SMTP_HOST:+SET} SMTP_USER=${SMTP_USER:+SET} SMTP_PASS=${SMTP_PASS:+SET} ──"
 
             # ── Ensure SSL certificates exist (non-fatal) ──
             echo "── Checking SSL certificates ──"

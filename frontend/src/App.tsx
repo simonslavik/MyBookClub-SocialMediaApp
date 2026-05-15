@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom';
 import ErrorBoundary from '@components/common/ErrorBoundary';
 import PageTransition from '@components/common/PageTransition';
 import ProtectedRoute from '@components/common/ProtectedRoute';
+import EmailVerificationBanner from '@components/common/EmailVerificationBanner';
 
 // ─── Lazy-loaded page components (code-split per route) ──────
 const Home = lazy(() => import('@pages/home'));
@@ -29,6 +30,9 @@ const PageLoader = () => (
 function App() {
   return (
     <ErrorBoundary>
+      {/* Sticky cross-app banner — only renders for signed-in users with an
+          unverified email; self-hides when verified or after a 24h dismiss. */}
+      <EmailVerificationBanner />
       <Suspense fallback={<PageLoader />}>
         <PageTransition>
           <Routes>

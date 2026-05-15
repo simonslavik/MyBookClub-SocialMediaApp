@@ -194,27 +194,18 @@ const ClubCard = ({ bookClub, scale, opacity, zIndex, isCenter, cardBookIndex, o
     >
       {/* Top section — full-width image covering most of the card */}
       <div className="relative h-[220px] sm:h-[270px] flex-shrink-0 overflow-hidden rounded-t-2xl">
-        {bookClub.imageUrl ? (
-          <img
-            src={getCollabImageUrl(bookClub.imageUrl)}
-            alt={bookClub.name}
-            className="w-full h-full object-cover transition-transform duration-500"
-            loading="lazy"
-            onError={(e) => { (e.target as HTMLImageElement).src = getBookclubCoverUrl(getBookclubSeed(bookClub)); }}
-          />
-        ) : (
-          <div
-            className="w-full h-full flex items-center justify-center"
-            style={{ background: `linear-gradient(135deg, ${palette.text}22, ${palette.text}44)` }}
-          >
-            <span
-              className="font-display font-bold tracking-tight select-none"
-              style={{ fontSize: '5rem', color: palette.text, opacity: 0.55 }}
-            >
-              {bookClub.name.charAt(0).toUpperCase()}
-            </span>
-          </div>
-        )}
+        {(() => {
+          const coverFallback = getBookclubCoverUrl(getBookclubSeed(bookClub));
+          return (
+            <img
+              src={bookClub.imageUrl ? getCollabImageUrl(bookClub.imageUrl) : coverFallback}
+              alt={bookClub.name}
+              className="w-full h-full object-cover transition-transform duration-500"
+              loading="lazy"
+              onError={(e) => { (e.target as HTMLImageElement).src = coverFallback; }}
+            />
+          );
+        })()}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
 
         {/* Owner badge */}
