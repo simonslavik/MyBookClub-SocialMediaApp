@@ -1,9 +1,9 @@
 import { forwardRef } from 'react';
 import {
-  FiBell,
   FiMail,
   FiX,
   FiUser,
+  FiUsers,
   FiSettings,
   FiLogOut,
   FiPlusCircle,
@@ -48,6 +48,7 @@ const THEME_LABEL = { auto: 'Auto', dark: 'Dark', light: 'Light' };
  */
 interface MobileSidebarProps {
   user: any;
+  /** Just the count — request acceptance lives on the /people page now. */
   friendRequests: any[];
   mode: string;
   isDark: boolean;
@@ -55,7 +56,6 @@ interface MobileSidebarProps {
   onNavigate: (path: string) => void;
   onLogout: () => void;
   onCycleTheme: () => void;
-  onFriendAction: (requestId: any, action: any) => Promise<void>;
 }
 
 const MobileSidebar = forwardRef<HTMLDivElement, MobileSidebarProps>(({
@@ -67,7 +67,6 @@ const MobileSidebar = forwardRef<HTMLDivElement, MobileSidebarProps>(({
   onNavigate,
   onLogout,
   onCycleTheme,
-  onFriendAction,
 }, ref) => {
   const nav = (path) => {
     onNavigate(path);
@@ -112,62 +111,24 @@ const MobileSidebar = forwardRef<HTMLDivElement, MobileSidebarProps>(({
           </div>
         </div>
 
-        {/* Friend requests */}
-        <div className="border-b border-gray-200 dark:border-gray-700">
-          <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <FiBell className="text-gray-600 dark:text-gray-400" size={18} />
-              <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">Friend Requests</span>
-            </div>
+        {/* Navigation links — Friends entry replaces the old inline
+            Friend Requests section. The /people page already handles
+            requests via its tabs, so duplicating accept/decline UI here
+            was just bloat. The badge keeps the affordance for unseen
+            requests; tapping deep-links into the requests tab. */}
+        <nav className="py-2">
+          <button
+            onClick={() => nav(friendRequests.length > 0 ? '/people?tab=requests' : '/people')}
+            className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition flex items-center gap-3 border-b border-gray-100 dark:border-gray-700"
+          >
+            <FiUsers className="text-stone-600 dark:text-stone-400" size={20} />
+            <span className="font-medium dark:text-gray-200 flex-1">Friends</span>
             {friendRequests.length > 0 && (
-              <span className="bg-orange-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
-                {friendRequests.length}
+              <span className="bg-orange-500 text-white text-xs font-semibold min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center">
+                {friendRequests.length > 9 ? '9+' : friendRequests.length}
               </span>
             )}
-          </div>
-
-          {friendRequests.length === 0 ? (
-            <div className="px-4 py-4 text-center">
-              <p className="text-sm text-gray-500 dark:text-gray-400">No pending requests</p>
-            </div>
-          ) : (
-            <div className="max-h-64 overflow-y-auto">
-              {friendRequests.map((request) => (
-                <div key={request.id} className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-                  <div className="flex items-start gap-3">
-                    <img
-                      src={getProfileImageUrl(request.user?.profileImage) || getAvatarUrl(getAvatarSeed(request.user))}
-                      alt={request.user?.name}
-                      className="h-10 w-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
-                      onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(request.user)); }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{request.user?.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{request.user?.email}</p>
-                      <div className="mt-2 flex gap-2">
-                        <button
-                          onClick={() => onFriendAction(request.id, 'accept')}
-                          className="flex-1 px-3 py-1.5 bg-stone-600 text-white rounded-md hover:bg-stone-700 transition text-xs font-medium"
-                        >
-                          Accept
-                        </button>
-                        <button
-                          onClick={() => onFriendAction(request.id, 'reject')}
-                          className="flex-1 px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition text-xs font-medium"
-                        >
-                          Decline
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Navigation links */}
-        <nav className="py-2">
+          </button>
           {[
             { icon: FiMail, label: 'Messages', path: '/dm', color: 'text-stone-600 dark:text-stone-400' },
             { icon: FiUser, label: 'View Profile', path: `/profile/${user.id}`, color: 'text-stone-600 dark:text-stone-400' },

@@ -40,18 +40,6 @@ const HomePageHeader = () => {
     setShowDropdown((prev) => !prev);
   };
 
-  const handleFriendAction = useCallback(async (requestId, action) => {
-    try {
-      await apiClient.post(`/v1/friends/${action}`, { friendshipId: requestId });
-      // Refresh friend requests after action
-      const { data } = await apiClient.get('/v1/friends/requests');
-      const incomingRequests = (data.data || []).filter(r => r.friendId === auth?.user?.id);
-      setFriendRequests(incomingRequests);
-    } catch (err) {
-      logger.error(`Error ${action}ing friend request:`, err);
-    }
-  }, [auth?.user?.id]);
-
   // ─── Effects ────────────────────────────────────────────
 
   useEffect(() => {
@@ -241,7 +229,6 @@ const HomePageHeader = () => {
               onNavigate={navigate}
               onLogout={handleLogout}
               onCycleTheme={cycleTheme}
-              onFriendAction={handleFriendAction}
             />
           )}
         </>
