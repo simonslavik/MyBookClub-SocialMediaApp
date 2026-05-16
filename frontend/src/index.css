@@ -26,8 +26,14 @@
 @config "../tailwind.config.js";
 
 @layer base {
-  html {
+  /* `overflow-x-hidden` on both html and body — iOS Safari will sometimes
+     still horizontally scroll the body even when html clips, especially when
+     `position: fixed` children or wide flex strips overflow. Defending on
+     both ends is the only reliable fix. */
+  html,
+  body {
     @apply overflow-x-hidden;
+    max-width: 100vw;
   }
 
   body {

@@ -113,7 +113,10 @@ export const googleAuth = async (req: Request, res: Response) => {
                     googleId,
                     authProvider: 'google',
                     profileImage: picture || null,
-                    password: null // OAuth users don't need password
+                    password: null, // OAuth users don't need password
+                    // Google has already proven the user owns the address; no
+                    // point sending our own verification mail.
+                    emailVerified: true,
                 },
                 select: {
                     id: true,
@@ -126,7 +129,7 @@ export const googleAuth = async (req: Request, res: Response) => {
                     createdAt: true
                 }
             });
-            
+
             logger.info({
                 type: 'USER_REGISTERED_GOOGLE',
                 userId: user.id,
@@ -134,6 +137,32 @@ export const googleAuth = async (req: Request, res: Response) => {
                 name: user.name
             });
         } else {
+            // Self-heal: any Google user who was created before the fix above
+            // (or via account-link from an unverified local account) lands
+            // here with `emailVerified: false` — flip it on this login so the
+            // frontend gate stops blocking them. Idempotent — no-op for users
+            // that are already verified.
+            if (!user.emailVerified) {
+                user = await prisma.user.update({
+                    where: { id: user.id },
+                    data: { emailVerified: true },
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        googleId: true,
+                        authProvider: true,
+                        emailVerified: true,
+                        profileImage: true,
+                        createdAt: true
+                    }
+                });
+                logger.info({
+                    type: 'GOOGLE_EMAIL_AUTOVERIFIED',
+                    userId: user.id,
+                    email: user.email,
+                });
+            }
             logger.info({
                 type: 'USER_LOGIN_GOOGLE',
                 userId: user.id,

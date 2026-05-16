@@ -117,7 +117,7 @@ const HomePageHeader = () => {
   // ─── Render ─────────────────────────────────────────────
 
   return (
-    <div className="w-full h-14 md:h-13 bg-warmgray-50 dark:bg-gray-900 border-b border-warmgray-200 dark:border-gray-700 flex items-center gap-2 px-3 md:px-10 relative transition-colors duration-300 sticky top-0 left-0 z-50">
+    <div className="w-full h-12 md:h-13 bg-warmgray-50 dark:bg-gray-900 border-b border-warmgray-200 dark:border-gray-700 flex items-center gap-2 px-3 md:px-10 relative transition-colors duration-300 sticky top-0 left-0 z-50">
       {/* Logo — shrinks on mobile so it doesn't crowd the action buttons */}
       <button
         onClick={() => navigate('/')}
@@ -127,7 +127,7 @@ const HomePageHeader = () => {
         <img
           src="/images/Group 1 (Traced).png"
           alt="MyBookClubs"
-          className="h-9 md:h-12 w-auto dark:invert"
+          className="h-7 md:h-12 w-auto dark:invert"
         />
       </button>
 
@@ -256,13 +256,13 @@ const HomePageHeader = () => {
           </button>
           <button
             onClick={() => setOpenLogin(true)}
-            className="px-3 sm:px-5 py-1.5 border border-stone-800 dark:border-warmgray-200 text-stone-800 dark:text-warmgray-200 rounded-full hover:bg-stone-100 dark:hover:bg-gray-800 transition text-sm font-medium cursor-pointer whitespace-nowrap"
+            className="px-2.5 py-1 sm:px-5 sm:py-1.5 border border-stone-800 dark:border-warmgray-200 text-stone-800 dark:text-warmgray-200 rounded-full hover:bg-stone-100 dark:hover:bg-gray-800 transition text-xs sm:text-sm font-medium cursor-pointer whitespace-nowrap"
           >
             Log In
           </button>
           <button
             onClick={() => setOpenRegister(true)}
-            className="px-3 sm:px-5 py-1.5 bg-stone-800 dark:bg-warmgray-200 dark:text-stone-900 text-white rounded-full hover:bg-stone-700 dark:hover:bg-warmgray-300 transition text-sm font-medium cursor-pointer whitespace-nowrap"
+            className="px-2.5 py-1 sm:px-5 sm:py-1.5 bg-stone-800 dark:bg-warmgray-200 dark:text-stone-900 text-white rounded-full hover:bg-stone-700 dark:hover:bg-warmgray-300 transition text-xs sm:text-sm font-medium cursor-pointer whitespace-nowrap"
           >
             Sign Up
           </button>

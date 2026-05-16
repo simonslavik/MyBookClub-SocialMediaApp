@@ -45,7 +45,10 @@ const Home = () => {
   }, []);
 
   return (
-    <div>
+    // overflow-x-hidden kills the horizontal scrollbar on mobile that the
+    // many decorative `flex` rows below (logo / grass / flowers strips) and
+    // any wide carousel can otherwise trigger by overflowing the viewport.
+    <div className="overflow-x-hidden">
       <HomePageHeader />
 
       {/* ===== LOGGED-OUT LANDING PAGE ===== */}
