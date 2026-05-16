@@ -377,7 +377,7 @@ const DMChatPage = () => {
   };
 
   return (
-    <div className="flex h-dvh bg-gray-900">
+    <div className="warm-theme flex h-dvh bg-gray-900">
       {/* Mobile overlay backdrop */}
       {showMobileSidebar && (
         <div 

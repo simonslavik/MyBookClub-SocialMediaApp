@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HomePageHeader from '@components/layout/Header';
+import VideoShowcase from '@components/common/VideoShowcase';
 import useHomeData from '@hooks/useHomeData';
 import useScrollReveal from '@hooks/useScrollReveal';
 import {
@@ -55,6 +56,12 @@ const Home = () => {
       {!auth?.user && (
         <div className="min-h-screen bg-parchment dark:bg-gray-900 transition-colors duration-300">
           <HeroSection />
+
+          {/* Demo video showcase — drop the .mp4 at /public/videos/demo.mp4
+              (and an optional poster at /public/videos/demo-poster.jpg) and
+              this section starts playing it automatically. Until the file
+              exists it shows a polished "coming soon" placeholder. */}
+          <VideoShowcase />
 
           <Reveal className="flex justify-center -mt-8 dark:bg-gray-800">
             <img src="/images/logo4.png" alt="" className="h-14 opacity-60 dark:invert" />

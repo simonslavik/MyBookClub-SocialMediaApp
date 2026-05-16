@@ -94,6 +94,117 @@
     --color-stone-900: #1a1613;
     --color-stone-950: #110e0c;
   }
+
+  /* ── Warm theme scope (bookclub + DM interior) ───────────────
+     Applied as a class (.warm-theme) on the bookclub / DM root, this
+     scope remaps the gray + indigo Tailwind tokens to a brand palette
+     regardless of light/dark mode. The interior was hardcoded to
+     gray-900 / indigo-700 (Discord-clone), so flipping these CSS vars
+     at the root recolours every nested component without touching their
+     class lists.
+
+     Current palette: Scandi Light — warm cream surfaces + charcoal text
+     + a single dusty Scandinavian blue accent. Stockholm-startup look:
+     airy, minimal, lots of breathing room.
+
+     The trick that makes a single class swap flip the whole interior
+     from dark to light: invert the gray scale. The bookclub components
+     were written for dark mode (`bg-gray-900` = main background,
+     `text-white` = primary text). Within this scope:
+       - bg-gray-900 → near-white (was: nearly black)
+       - text-white  → charcoal   (was: pure white)
+       - text-gray-300 → muted grey (was: light grey)
+     Same semantic meaning per class, opposite literal value. */
+  .warm-theme {
+    color-scheme: light;
+
+    /* Bone — light theme with warm-neutral bone off-white BG (sits
+       between cool paper and warm linen — no green tint, no aggressive
+       cream). Readability pass v2: pushed gray-300..500 darker so
+       secondary / muted / placeholder text actually reads on the light
+       BG; pulled gray-600..700 darker too so borders + dividers don't
+       vanish. Gray scale INVERTED: low numbers = dark text, high = light
+       BG. Semantic per-class meaning preserved. */
+    --color-gray-50:  #14110f;
+    --color-gray-100: #1f1d1a;
+    --color-gray-200: #2f2c28;
+    --color-gray-300: #3d3a36;
+    --color-gray-400: #585450;
+    --color-gray-500: #78746f;
+    --color-gray-600: #9c9893;
+    --color-gray-700: #bbb7b1;
+    --color-gray-800: #d2cec8;
+    --color-gray-900: #e3dfd9;
+    --color-gray-950: #ede9e3;
+
+    /* Indigo accent → vivid magenta. Acne Studios / Issey Miyake
+       editorial energy. The whole ramp is pushed ~1 step darker than
+       the prior bone palette so that text-indigo-300/400 (used inline
+       for mentions, links, badges) actually reads on the light BG
+       instead of washing out to pink mist. Buttons (bg-indigo-500+)
+       remain saturated for the same pop. */
+    --color-indigo-50:  #fce4ef;
+    --color-indigo-100: #f6bdd8;
+    --color-indigo-200: #ec85b6;
+    --color-indigo-300: #d94d8f;
+    --color-indigo-400: #c12a73;
+    --color-indigo-500: #a31c5e;
+    --color-indigo-600: #82144a;
+    --color-indigo-700: #650f3a;
+    --color-indigo-800: #480a29;
+    --color-indigo-900: #2d061a;
+  }
+
+}
+
+/* ── Bone light-theme overrides ──────────────────────────────
+   The bookclub interior was written dark-first: `text-white` for body
+   copy, `bg-white/[0.04]` for translucent panel overlays. On a light
+   BG those become invisible. These rules remap them within the
+   `.warm-theme` scope only.
+
+   Critical: both blocks live OUTSIDE every `@layer` directive. Tailwind
+   v4 places `.text-white` and `bg-white/X` arbitrary values in
+   @layer utilities, which beats any rule inside @layer base regardless
+   of specificity. Top-level (layerless) wins. */
+
+/* text-white → near-black ink, except when it sits on a saturated dark
+   accent surface (indigo-4..9, stone-7..9) where pure white is still
+   the correct foreground. */
+.warm-theme .text-white {
+  color: #14110f;
+}
+.warm-theme :is(
+  [class*="bg-indigo-4"], [class*="bg-indigo-5"], [class*="bg-indigo-6"],
+  [class*="bg-indigo-7"], [class*="bg-indigo-8"], [class*="bg-indigo-9"],
+  [class*="bg-stone-7"], [class*="bg-stone-8"], [class*="bg-stone-9"]
+) .text-white,
+.warm-theme :is(
+  [class*="bg-indigo-4"], [class*="bg-indigo-5"], [class*="bg-indigo-6"],
+  [class*="bg-indigo-7"], [class*="bg-indigo-8"], [class*="bg-indigo-9"],
+  [class*="bg-stone-7"], [class*="bg-stone-8"], [class*="bg-stone-9"]
+).text-white {
+  color: #ffffff;
+}
+
+/* Translucent white overlays (file attachment chips, hover ghosts,
+   composer surfaces) were designed for a dark BG. On bone they vanish
+   into the page — swap them for a translucent dark overlay so the
+   panels still read as elevated. Opacity bumped from .06 → .09 so
+   inactive chips have clear edges; hover bumped to .14 so the
+   feedback is actually visible. */
+.warm-theme [class*="bg-white/"] {
+  background-color: rgba(0, 0, 0, 0.09);
+}
+.warm-theme [class*="hover:bg-white/"]:hover {
+  background-color: rgba(0, 0, 0, 0.14);
+}
+
+/* Borders authored as `border-white/X` (separator lines on dark
+   surfaces) need the same treatment — light borders on light BG
+   disappear. Use a soft dark line instead. */
+.warm-theme [class*="border-white/"] {
+  border-color: rgba(0, 0, 0, 0.1);
 }
 
 /* ── UI Feedback Animations ── */

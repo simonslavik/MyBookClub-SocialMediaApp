@@ -257,7 +257,10 @@ const BookClub = () => {
     // chrome (Safari address bar + bottom toolbar) doesn't push the message
     // input below the fold. h-screen=100vh is the *full* viewport including
     // browser chrome, which on iOS leaves you scrolling to find the Send btn.
-    <div className="flex h-dvh bg-gray-900">
+    //
+    // .warm-theme remaps gray/indigo Tailwind tokens to the cozy coffee +
+    // amber palette for everything inside this tree — see index.css.
+    <div className="warm-theme flex h-dvh bg-gray-900">
       {(showMobileLeftSidebar || showMobileRightSidebar) && (
         <div
           className="md:hidden fixed inset-0 bg-black/50 z-[70]"
