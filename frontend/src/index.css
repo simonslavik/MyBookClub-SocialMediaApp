@@ -55,6 +55,20 @@
     cursor: not-allowed;
   }
 
+  /* Light-mode readability bump for muted text on white surfaces.
+     Tailwind's default stone-400 (#a8a29e) only hits ~3.4:1 contrast
+     on white — fails AA for body text. Modals, dropdowns and card
+     subtitles across the app lean on stone-400/500 for secondary
+     copy, so the bump lifts them all in one place. Dark-mode keeps
+     its own warm-brown override block below — `html.dark` wins. */
+  html:not(.dark) {
+    --color-stone-300: #a8a29e;
+    --color-stone-400: #807a75;
+    --color-stone-500: #5a544f;
+    --color-gray-400:  #6b7280;
+    --color-gray-500:  #4b5563;
+  }
+
   .dark body,
   html.dark body {
     @apply bg-gray-900 text-gray-100;
@@ -120,20 +134,19 @@
 
     /* Bone — light theme with warm-neutral bone off-white BG (sits
        between cool paper and warm linen — no green tint, no aggressive
-       cream). Readability pass v2: pushed gray-300..500 darker so
-       secondary / muted / placeholder text actually reads on the light
-       BG; pulled gray-600..700 darker too so borders + dividers don't
-       vanish. Gray scale INVERTED: low numbers = dark text, high = light
-       BG. Semantic per-class meaning preserved. */
-    --color-gray-50:  #14110f;
-    --color-gray-100: #1f1d1a;
-    --color-gray-200: #2f2c28;
-    --color-gray-300: #3d3a36;
-    --color-gray-400: #585450;
-    --color-gray-500: #78746f;
-    --color-gray-600: #9c9893;
-    --color-gray-700: #bbb7b1;
-    --color-gray-800: #d2cec8;
+       cream). Readability pass v3: pushed every text-side tone (gray-50
+       through gray-500) one more step darker. Secondary copy now hits
+       near-AAA, muted clears AA cleanly, placeholders are clearly
+       visible. Borders darker so dividers don't vanish on bone. */
+    --color-gray-50:  #0a0907;
+    --color-gray-100: #14110f;
+    --color-gray-200: #221f1c;
+    --color-gray-300: #2e2b27;
+    --color-gray-400: #46433e;
+    --color-gray-500: #5e5a55;
+    --color-gray-600: #847f78;
+    --color-gray-700: #aca79f;
+    --color-gray-800: #c8c4bd;
     --color-gray-900: #e3dfd9;
     --color-gray-950: #ede9e3;
 
@@ -172,7 +185,7 @@
    accent surface (indigo-4..9, stone-7..9) where pure white is still
    the correct foreground. */
 .warm-theme .text-white {
-  color: #14110f;
+  color: #0a0907;
 }
 .warm-theme :is(
   [class*="bg-indigo-4"], [class*="bg-indigo-5"], [class*="bg-indigo-6"],

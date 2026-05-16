@@ -1,9 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HomePageHeader from '@components/layout/Header';
-import VideoShowcase from '@components/common/VideoShowcase';
 import useHomeData from '@hooks/useHomeData';
-import useScrollReveal from '@hooks/useScrollReveal';
 import {
   HeroSection,
   FeatureSection,
@@ -11,20 +9,6 @@ import {
   MyClubsCarousel,
   MemberTooltip,
 } from './components';
-
-/** Lightweight scroll-reveal wrapper for inline use */
-const Reveal = ({ children, className = '', delay = 0 }) => {
-  const { ref, isVisible } = useScrollReveal(0.2);
-  return (
-    <div
-      ref={ref}
-      className={`transition-all duration-700 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'} ${className}`}
-      style={{ transitionDelay: isVisible ? `${delay}ms` : '0ms' }}
-    >
-      {children}
-    </div>
-  );
-};
 
 const Home = () => {
   const {
@@ -57,17 +41,11 @@ const Home = () => {
         <div className="min-h-screen bg-parchment dark:bg-gray-900 transition-colors duration-300">
           <HeroSection />
 
-          {/* Demo video showcase — drop the .mp4 at /public/videos/demo.mp4
-              (and an optional poster at /public/videos/demo-poster.jpg) and
-              this section starts playing it automatically. Until the file
-              exists it shows a polished "coming soon" placeholder. */}
-          <VideoShowcase />
-
-          <Reveal className="flex justify-center -mt-8 dark:bg-gray-800">
+          <div className="flex justify-center -mt-8 dark:bg-gray-800">
             <img src="/images/logo4.png" alt="" className="h-14 opacity-60 dark:invert" />
             <img src="/images/logo4.png" alt="" className="h-14 opacity-60 dark:invert" />
             <img src="/images/logo4.png" alt="" className="h-14 opacity-60 dark:invert" />
-          </Reveal>
+          </div>
 
           <FeatureSection
             initial="C"
@@ -75,7 +53,7 @@ const Home = () => {
             bgClass="bg-[#F0EFEB] dark:bg-gray-800"
           />
 
-          <Reveal className="flex justify-center -mt-10 bg-parchment dark:bg-gray-900">
+          <div className="flex justify-center -mt-10 bg-parchment dark:bg-gray-900">
             <img src="/images/grass2.png" alt="" className="h-14 -ml-4 opacity-60 dark:invert" />
             <img src="/images/grass2.png" alt="" className="h-14 -ml-4 opacity-60 dark:invert" />
             <img src="/images/grass2.png" alt="" className="h-14 -ml-4 opacity-60 dark:invert" />
@@ -85,7 +63,7 @@ const Home = () => {
             <img src="/images/grass2.png" alt="" className="h-14 -ml-4 opacity-60 dark:invert" />
             <img src="/images/grass2.png" alt="" className="h-14 -ml-4 opacity-60 dark:invert" />
             <img src="/images/grass2.png" alt="" className="h-14 -ml-4 opacity-60 dark:invert" />
-          </Reveal>
+          </div>
 
           <FeatureSection
             initial="D"
@@ -94,7 +72,7 @@ const Home = () => {
             bgClass="bg-parchment dark:bg-gray-900"
           />
 
-          <Reveal className="flex justify-center bg-parchment dark:bg-gray-900">
+          <div className="flex justify-center bg-parchment dark:bg-gray-900">
             <img src="/images/flowers.png" alt="" className="h-14 -ml-1 opacity-60 dark:invert" />
             <img src="/images/flowers.png" alt="" className="h-14 -ml-1 opacity-60 dark:invert" />
             <img src="/images/flowers.png" alt="" className="h-14 -ml-1 opacity-60 dark:invert" />
@@ -110,7 +88,7 @@ const Home = () => {
             <img src="/images/flowers.png" alt="" className="h-14 -ml-1 opacity-60 dark:invert" />
             <img src="/images/flowers.png" alt="" className="h-14 -ml-1 opacity-60 dark:invert" />
             <img src="/images/flowers.png" alt="" className="h-14 -ml-1 opacity-60 dark:invert" />
-          </Reveal>
+          </div>
 
           <FeatureSection
             initial="T"
@@ -118,26 +96,26 @@ const Home = () => {
             bgClass="bg-[#F0EFEB] dark:bg-gray-800"
           />
 
-          <Reveal className="flex justify-center -mt-2 bg-parchment dark:bg-gray-900">
+          <div className="flex justify-center -mt-2 bg-parchment dark:bg-gray-900">
             <img src="/images/balls.png" alt="" className="h-14 -ml-1 opacity-60 dark:invert" />
             <img src="/images/balls.png" alt="" className="h-14 -ml-1 opacity-60 dark:invert" />
             <img src="/images/balls.png" alt="" className="h-14 -ml-1 opacity-60 dark:invert" />
             <img src="/images/balls.png" alt="" className="h-14 -ml-1 opacity-60 dark:invert" />
             <img src="/images/balls.png" alt="" className="h-14 -ml-1 opacity-60 dark:invert" />
 
-          </Reveal>
+          </div>
 
           <TopChartingSection bookClubs={bookClubs} />
 
           {/* Discover More CTA */}
-          <Reveal className="flex justify-center pb-20">
+          <div className="flex justify-center pb-20">
             <button
               onClick={() => navigate('/discover')}
               className="px-8 py-3 bg-stone-600 dark:bg-warmgray-300 dark:text-stone-900 text-white rounded-md hover:bg-stone-500 dark:hover:bg-warmgray-400 transition-colors text-sm font-medium cursor-pointer"
             >
               Discover More
             </button>
-          </Reveal>
+          </div>
         </div>
       )}
 

@@ -51,8 +51,8 @@ const ReactionBar = ({ reactions, currentUserId, onToggleReaction, members = [],
               }}
               className={`inline-flex items-center gap-0.5 px-1.5 py-0 rounded-full text-[10px] transition-all border ${
                 hasReacted
-                  ? 'bg-indigo-700/30 border-indigo-500 text-indigo-200 hover:bg-indigo-700/40'
-                  : 'bg-gray-700/50 border-gray-600 text-gray-300 hover:bg-gray-700'
+                  ? 'bg-indigo-500/15 border-indigo-500 text-indigo-700 hover:bg-indigo-500/25 font-semibold'
+                  : 'bg-gray-800 border-gray-600 text-gray-100 hover:bg-gray-700'
               }`}
               title={`${emoji} ${count}`}
             >
