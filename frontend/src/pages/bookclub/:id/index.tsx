@@ -253,7 +253,11 @@ const BookClub = () => {
 
   // ─── Main layout ───────────────────────────────────────
   return (
-    <div className="flex h-screen bg-gray-900">
+    // h-dvh (dynamic viewport height) instead of h-screen so mobile browser
+    // chrome (Safari address bar + bottom toolbar) doesn't push the message
+    // input below the fold. h-screen=100vh is the *full* viewport including
+    // browser chrome, which on iOS leaves you scrolling to find the Send btn.
+    <div className="flex h-dvh bg-gray-900">
       {(showMobileLeftSidebar || showMobileRightSidebar) && (
         <div
           className="md:hidden fixed inset-0 bg-black/50 z-[70]"
@@ -303,32 +307,41 @@ const BookClub = () => {
       </div>
 
       <div className="flex flex-1 min-w-0">
-        {/* Mobile top bar */}
-        <div className="md:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between bg-gray-800 border-b border-gray-700 px-3 py-2">
-          <button onClick={() => setShowMobileLeftSidebar(true)} className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors" aria-label="Open navigation">
-            <FiMenu size={20} />
+        {/* Mobile top bar — compact (40px) so it eats minimum vertical space.
+            Shows the bookclub name + entry points to both sidebars. */}
+        <div className="md:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between bg-gray-800 border-b border-gray-700 px-2 h-10">
+          <button onClick={() => setShowMobileLeftSidebar(true)} className="p-1.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded-md transition-colors" aria-label="Open navigation">
+            <FiMenu size={18} />
           </button>
-          <span className="text-white font-medium text-sm truncate mx-2">{bookClub?.name || 'Book Club'}</span>
-          <button onClick={() => setShowMobileRightSidebar(true)} className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors" aria-label="Open members panel">
-            <FiUsers size={20} />
+          <span className="text-white font-medium text-sm truncate mx-2">
+            {currentRoom?.name ? `#${currentRoom.name}` : (bookClub?.name || 'Book Club')}
+          </span>
+          <button onClick={() => setShowMobileRightSidebar(true)} className="p-1.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded-md transition-colors" aria-label="Open members panel">
+            <FiUsers size={18} />
           </button>
         </div>
 
         {/* ── Main content area ───────────────────────── */}
-        <div className="flex flex-col flex-1 min-w-0 pt-12 md:pt-0">
-          <BookclubHeader
-            showBooksHistory={is('books')}
-            showCalendar={is('calendar')}
-            showSuggestions={is('suggestions')}
-            showMeetings={is('meetings')}
-            showSettings={is('settings')}
-            currentRoom={currentRoom}
-            auth={auth}
-            onInviteClick={() => modals.open('invite')}
-            onSettingsClick={openSettings}
-            userRole={userRole}
-            pendingRequestsCount={pendingRequestsCount}
-          />
+        <div className="flex flex-col flex-1 min-w-0 pt-10 md:pt-0">
+          {/* On mobile: chat view already shows the room name in the top bar
+              above, so hide the duplicate header to claw back ~50px of chat
+              real estate. Special views (calendar/books/meetings/etc.) keep
+              the header so the invite/settings actions stay reachable. */}
+          <div className={isSpecialView ? 'block' : 'hidden md:block'}>
+            <BookclubHeader
+              showBooksHistory={is('books')}
+              showCalendar={is('calendar')}
+              showSuggestions={is('suggestions')}
+              showMeetings={is('meetings')}
+              showSettings={is('settings')}
+              currentRoom={currentRoom}
+              auth={auth}
+              onInviteClick={() => modals.open('invite')}
+              onSettingsClick={openSettings}
+              userRole={userRole}
+              pendingRequestsCount={pendingRequestsCount}
+            />
+          </div>
 
           <BookclubViewRouter
             is={is}

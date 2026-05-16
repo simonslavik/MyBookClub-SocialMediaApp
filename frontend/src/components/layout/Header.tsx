@@ -181,26 +181,30 @@ const HomePageHeader = () => {
                 />
               </button>
               {showDropdown && (
-                <div className="absolute right-4 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded shadow-lg z-10">
-                  <button onClick={() => { navigate(`/profile/${auth.user.id}`); setShowDropdown(false); }} className="px-4 py-2 border-b border-gray-300 dark:border-gray-700 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left dark:text-gray-200">
+                // right-0 aligns the dropdown's right edge with the avatar's
+                // right edge (was right-4, which inset it 16px and looked
+                // unmoored). z-[60] keeps it above the sticky header (z-50).
+                // overflow-hidden + rounded-lg gives a clean card silhouette.
+                <div className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-[60] overflow-hidden">
+                  <button onClick={() => { navigate(`/profile/${auth.user.id}`); setShowDropdown(false); }} className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 w-full text-left dark:text-gray-200">
                     View Profile
                   </button>
-                  <button onClick={() => navigate('/change-profile')} className="px-4 py-2 border-b border-gray-300 dark:border-gray-700 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left dark:text-gray-200">
+                  <button onClick={() => { navigate('/change-profile'); setShowDropdown(false); }} className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 w-full text-left dark:text-gray-200">
                     Change Profile Settings
                   </button>
-                  <button onClick={() => navigate('/create-bookclub')} className="px-4 py-2 border-b border-gray-300 dark:border-gray-700 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left dark:text-gray-200">
+                  <button onClick={() => { navigate('/create-bookclub'); setShowDropdown(false); }} className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 w-full text-left dark:text-gray-200">
                     Create Book Club
                   </button>
                   <button
                     onClick={cycleTheme}
-                    className="w-full text-left px-4 py-2 border-b border-gray-300 dark:border-gray-700 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-gray-200"
+                    className="w-full text-left px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-gray-200"
                   >
                     {themeIcon}
                     Theme: {themeLabel}
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-gray-700"
                   >
                     Logout
                   </button>

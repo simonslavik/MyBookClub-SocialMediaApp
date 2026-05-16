@@ -377,7 +377,7 @@ const DMChatPage = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-900">
+    <div className="flex h-dvh bg-gray-900">
       {/* Mobile overlay backdrop */}
       {showMobileSidebar && (
         <div 
@@ -415,7 +415,7 @@ const DMChatPage = () => {
         />
       </div>
       
-      <div className="flex flex-col flex-1 min-w-0 h-screen">
+      <div className="flex flex-col flex-1 min-w-0 h-dvh">
         {/* Mobile top bar */}
         <div className="md:hidden flex items-center bg-gray-800 border-b border-gray-700 px-3 py-2 flex-shrink-0">
           <button
