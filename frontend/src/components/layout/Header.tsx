@@ -117,16 +117,17 @@ const HomePageHeader = () => {
   // ─── Render ─────────────────────────────────────────────
 
   return (
-    <div className="w-full h-13 bg-warmgray-50 dark:bg-gray-900 border-b border-warmgray-200 dark:border-gray-700 flex items-center px-4 md:px-10 relative transition-colors duration-300 sticky top-0 left-0 z-50">
-      {/* Logo */}
+    <div className="w-full h-14 md:h-13 bg-warmgray-50 dark:bg-gray-900 border-b border-warmgray-200 dark:border-gray-700 flex items-center gap-2 px-3 md:px-10 relative transition-colors duration-300 sticky top-0 left-0 z-50">
+      {/* Logo — shrinks on mobile so it doesn't crowd the action buttons */}
       <button
         onClick={() => navigate('/')}
-        className={`cursor-pointer flex items-center gap-2`}
+        className="cursor-pointer flex items-center flex-shrink-0"
+        aria-label="MyBookClubs home"
       >
         <img
           src="/images/Group 1 (Traced).png"
           alt="MyBookClubs"
-          className="h-12 w-auto dark:invert"
+          className="h-9 md:h-12 w-auto dark:invert"
         />
       </button>
 
@@ -170,12 +171,12 @@ const HomePageHeader = () => {
             </button>
 
             {/* Profile dropdown */}
-            <div className="ml-2 mt-2 relative" ref={profileDropdownRef}>
-              <button onClick={handleProfileClick}>
+            <div className="ml-2 relative flex items-center" ref={profileDropdownRef}>
+              <button onClick={handleProfileClick} aria-label="Open profile menu">
                 <img
                   src={getProfileImageUrl(auth.user.profileImage) || getAvatarUrl(getAvatarSeed(auth.user))}
                   alt="Profile"
-                  className="h-7.5 w-7.5 rounded-full object-cover border-1 border-gray-200 cursor-pointer"
+                  className="h-8 w-8 rounded-full object-cover border border-gray-200 cursor-pointer"
                   onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(auth.user)); }}
                 />
               </button>
@@ -208,15 +209,21 @@ const HomePageHeader = () => {
             </div>
           </div>
 
-          {/* Mobile burger */}
-          <button
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="md:hidden ml-auto p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-          >
-            {showMobileMenu
-              ? <FiX size={24} className="dark:text-gray-200" />
-              : <FiMenu size={24} className="dark:text-gray-200" />}
-          </button>
+          {/* Mobile right cluster — bell stays one-tap accessible, burger
+              opens the rest of the nav. Auto pushed to right via ml-auto. */}
+          <div className="md:hidden ml-auto flex items-center gap-1">
+            <NotificationBell />
+            <button
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="p-2 -mr-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+              aria-label={showMobileMenu ? 'Close menu' : 'Open menu'}
+              aria-expanded={showMobileMenu}
+            >
+              {showMobileMenu
+                ? <FiX size={22} className="dark:text-gray-200" />
+                : <FiMenu size={22} className="dark:text-gray-200" />}
+            </button>
+          </div>
 
           {/* Mobile sidebar */}
           {showMobileMenu && (
@@ -238,22 +245,24 @@ const HomePageHeader = () => {
 
       {/* ── Guest Nav ── */}
       {!auth?.user && (
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+          {/* Discover hidden on the smallest screens — Sign Up funnels first-time
+              visitors through registration, where they discover clubs anyway. */}
           <button
             onClick={() => navigate('/discover')}
-            className="text-sm font-medium text-stone-700 dark:text-warmgray-200 hover:text-stone-900 dark:hover:text-white transition cursor-pointer"
+            className="hidden sm:inline-block text-sm font-medium text-stone-700 dark:text-warmgray-200 hover:text-stone-900 dark:hover:text-white transition cursor-pointer px-2"
           >
             Discover
           </button>
           <button
             onClick={() => setOpenLogin(true)}
-            className="px-5 py-1.5 border border-stone-800 dark:border-warmgray-200 text-stone-800 dark:text-warmgray-200 rounded-full hover:bg-stone-100 dark:hover:bg-gray-800 transition text-sm font-medium cursor-pointer"
+            className="px-3 sm:px-5 py-1.5 border border-stone-800 dark:border-warmgray-200 text-stone-800 dark:text-warmgray-200 rounded-full hover:bg-stone-100 dark:hover:bg-gray-800 transition text-sm font-medium cursor-pointer whitespace-nowrap"
           >
             Log In
           </button>
           <button
             onClick={() => setOpenRegister(true)}
-            className="px-5 py-1.5 bg-stone-800 dark:bg-warmgray-200 dark:text-stone-900 text-white rounded-full hover:bg-stone-700 dark:hover:bg-warmgray-300 transition text-sm font-medium cursor-pointer"
+            className="px-3 sm:px-5 py-1.5 bg-stone-800 dark:bg-warmgray-200 dark:text-stone-900 text-white rounded-full hover:bg-stone-700 dark:hover:bg-warmgray-300 transition text-sm font-medium cursor-pointer whitespace-nowrap"
           >
             Sign Up
           </button>
