@@ -1,246 +1,232 @@
-import { useState, useContext } from 'react';
-import { FiSearch, FiX, FiBook } from 'react-icons/fi';
+import { useState, useContext, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { FiSearch, FiX, FiBook, FiBookmark, FiBookOpen, FiCheckCircle, FiHeart, FiCheck } from 'react-icons/fi';
 import { AuthContext } from '@context/index';
 import apiClient from '@api/axios';
 import logger from '@utils/logger';
+
+const STATUS_OPTIONS = [
+  { key: 'want_to_read', label: 'Want to read', Icon: FiBookmark, accent: 'text-amber-500' },
+  { key: 'reading',      label: 'Reading now',  Icon: FiBookOpen, accent: 'text-emerald-500' },
+  { key: 'completed',    label: 'Finished',     Icon: FiCheckCircle, accent: 'text-stone-500' },
+  { key: 'favorite',     label: 'Favourite',    Icon: FiHeart,   accent: 'text-rose-500' },
+] as const;
+
+type StatusKey = typeof STATUS_OPTIONS[number]['key'];
 
 const AddBookToLibraryModal = ({ onClose, onBookAdded }) => {
   const { auth } = useContext(AuthContext);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [addingBookId, setAddingBookId] = useState(null);
-  const [successMessage, setSuccessMessage] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [addingBookId, setAddingBookId] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
-  const [addedBooks, setAddedBooks] = useState({}); // Track added books: { bookId: status }
+  // Tracks which books have been added in this session and their final status,
+  // so the user gets immediate visual feedback ("Added · Reading") instead of
+  // wondering if their tap registered.
+  const [addedBooks, setAddedBooks] = useState<Record<string, StatusKey>>({});
 
-  const searchBooks = async (e) => {
-    e.preventDefault();
+  // Body scroll lock + Escape close — applied while the modal is mounted.
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [onClose]);
+
+  const searchBooks = useCallback(async (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!query.trim()) return;
-
     setLoading(true);
     setError(null);
     setHasSearched(true);
-
     try {
       const { data } = await apiClient.get(`/v1/books/search?q=${encodeURIComponent(query)}&limit=20`);
-      
-      if (data.success) {
-        setResults(data.data || []);
-      } else {
-        setError('Failed to search books');
-      }
+      setResults(data.success ? (data.data || []) : []);
+      if (!data.success) setError('Failed to search books');
     } catch (err) {
-      setError('Network error. Please try again.');
       logger.error('Search error:', err);
+      setError('Network error. Please try again.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [query]);
 
-  const addToLibrary = async (googleBooksId, status) => {
+  const addToLibrary = useCallback(async (googleBooksId: string, status: StatusKey) => {
     if (!auth?.token) {
-      setError('Please login to add books to your library');
+      setError('Please log in to add books to your library.');
       return;
     }
-
     setAddingBookId(googleBooksId);
     setError(null);
-
     try {
       const { data } = await apiClient.post('/v1/user-books', { googleBooksId, status });
-
       if (data.success) {
-        // Mark this book as added with its status
         setAddedBooks(prev => ({ ...prev, [googleBooksId]: status }));
-        setSuccessMessage(`✓ Book added to ${status.replace('_', ' ')}!`);
-        setTimeout(() => setSuccessMessage(''), 2000);
-        
-        // Notify parent component that a book was added
-        if (onBookAdded) {
-          onBookAdded();
-        }
+        onBookAdded?.();
       } else {
         setError(data.error || 'Failed to add book');
       }
     } catch (err) {
-      setError('Network error. Please try again.');
       logger.error('Add book error:', err);
+      setError('Network error. Please try again.');
     } finally {
       setAddingBookId(null);
     }
-  };
+  }, [auth?.token, onBookAdded]);
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col transition-colors duration-300">
-        {/* Header */}
-        <div className="bg-stone-700 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-            <FiBook />
-            Add Books to Your Library
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-150"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Add books to your library"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white dark:bg-gray-900 w-full sm:max-w-3xl sm:max-h-[85vh] h-[92vh] sm:h-auto sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-black/5 dark:ring-white/10 animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200"
+      >
+        {/* Header — minimal: title + close. No coloured banner, lets the
+            content breathe instead of dominating with brand chrome. */}
+        <header className="flex items-center justify-between px-5 py-4 border-b border-stone-100 dark:border-gray-800 flex-shrink-0">
+          <h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">
+            Add to your library
           </h2>
           <button
             onClick={onClose}
-            className="text-white hover:bg-white/20 rounded-full p-2 transition-colors"
+            className="p-1.5 -mr-1.5 text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            aria-label="Close"
           >
-            <FiX size={24} />
+            <FiX size={20} />
           </button>
-        </div>
+        </header>
 
-        <div className="flex-1 overflow-y-auto p-6">
-          {/* Search Form */}
-          <form onSubmit={searchBooks} className="mb-6">
-            <div className="flex gap-2">
-              <div className="flex-1 relative">
-                <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search for books by title, author, or ISBN..."
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-stone-500 outline-none bg-white dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
-                  autoFocus
-                />
-              </div>
+        {/* Search */}
+        <form onSubmit={searchBooks} className="px-5 pt-4 pb-3 flex-shrink-0">
+          <div className="relative">
+            <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by title, author, or ISBN…"
+              className="w-full pl-10 pr-10 py-3 rounded-xl bg-stone-100 dark:bg-gray-800 text-sm text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-600 transition"
+              autoFocus
+            />
+            {query && (
               <button
-                type="submit"
-                disabled={loading || !query.trim()}
-                className="px-6 py-3 bg-stone-700 hover:bg-stone-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-semibold"
+                type="button"
+                onClick={() => { setQuery(''); setResults([]); setHasSearched(false); }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded transition-colors"
+                aria-label="Clear search"
               >
-                {loading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    Searching...
-                  </div>
-                ) : (
-                  'Search'
-                )}
+                <FiX size={14} />
               </button>
-            </div>
-          </form>
+            )}
+          </div>
+        </form>
 
-          {/* Messages */}
-          {error && (
-            <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-400 rounded-lg">
-              {error}
-            </div>
-          )}
+        {/* Inline error — keeps height predictable */}
+        {error && (
+          <div className="mx-5 mb-3 px-4 py-2.5 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 text-sm rounded-lg flex-shrink-0">
+            {error}
+          </div>
+        )}
 
-          {successMessage && (
-            <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 text-green-700 dark:text-green-400 rounded-lg">
-              {successMessage}
-            </div>
-          )}
-
-          {/* Empty State - Before Search */}
-          {!hasSearched && results.length === 0 && (
-            <div className="text-center py-16">
-              <FiSearch className="mx-auto text-6xl text-gray-300 dark:text-gray-600 mb-4" />
-              <h3 className="text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">Search for Books</h3>
-              <p className="text-gray-500 dark:text-gray-400">Enter a title, author, or ISBN to find books</p>
+        {/* Body — only this region scrolls */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-5">
+          {loading && (
+            <div className="flex justify-center py-12">
+              <div className="w-7 h-7 border-2 border-stone-300 border-t-stone-700 dark:border-gray-700 dark:border-t-gray-300 rounded-full animate-spin" />
             </div>
           )}
 
-          {/* No Results - After Search */}
-          {hasSearched && !loading && results.length === 0 && query.trim() && (
-            <div className="text-center py-16">
-              <svg className="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No books found</h3>
-              <p className="text-gray-500 dark:text-gray-400">Try searching with different keywords</p>
+          {!loading && !hasSearched && (
+            <div className="text-center py-16 text-stone-400 dark:text-stone-500">
+              <FiBook className="mx-auto mb-3" size={36} />
+              <p className="text-sm">Find a book to add to your library.</p>
             </div>
           )}
 
-          {/* Results Grid */}
-          {results.length > 0 && (
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Found {results.length} book{results.length !== 1 ? 's' : ''}
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {results.map((book) => (
-                  <div
-                    key={book.googleBooksId}
-                    className="bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-200 dark:border-gray-600"
-                  >
-                    {/* Book Cover */}
-                    <div className="relative h-48 bg-gray-200 flex items-center justify-center">
+          {!loading && hasSearched && results.length === 0 && (
+            <div className="text-center py-16 text-stone-400 dark:text-stone-500">
+              <p className="text-sm">No books matched <span className="font-medium text-stone-600 dark:text-stone-300">&ldquo;{query}&rdquo;</span></p>
+              <p className="text-xs mt-1">Try a different keyword or author.</p>
+            </div>
+          )}
+
+          {!loading && results.length > 0 && (
+            <ul className="divide-y divide-stone-100 dark:divide-gray-800">
+              {results.map((book: any) => {
+                const isAdding = addingBookId === book.googleBooksId;
+                const addedStatus = addedBooks[book.googleBooksId];
+                const addedOption = STATUS_OPTIONS.find(s => s.key === addedStatus);
+                return (
+                  <li key={book.googleBooksId} className="py-3 flex items-start gap-3">
+                    {/* Cover */}
+                    <div className="w-12 h-16 sm:w-14 sm:h-20 rounded bg-stone-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {book.coverUrl ? (
                         <img
                           src={book.coverUrl}
-                          alt={book.title}
-                          className="h-full w-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLElement).style.display = 'none';
-                            ((e.target as HTMLElement).nextSibling as HTMLElement).style.display = 'flex';
-                          }}
+                          alt=""
+                          className="w-full h-full object-cover"
+                          onError={(e) => { (e.target as HTMLImageElement).style.visibility = 'hidden'; }}
                         />
-                      ) : null}
-                      <div className="hidden flex-col items-center justify-center p-4 text-gray-400">
-                        <FiBook className="text-4xl mb-2" />
-                        <span className="text-xs">No cover</span>
-                      </div>
+                      ) : (
+                        <FiBook className="text-stone-400" size={20} />
+                      )}
                     </div>
 
-                    {/* Book Info */}
-                    <div className="p-4">
-                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 mb-1 text-sm min-h-[2.5rem]">
+                    {/* Title + author + actions */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 line-clamp-2 leading-snug">
                         {book.title}
                       </h3>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 truncate">{book.author}</p>
-                      
-                      {book.pageCount && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                          {book.pageCount} pages
-                        </p>
-                      )}
+                      <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 truncate">
+                        {book.author}
+                        {book.pageCount && <span className="text-stone-400 dark:text-stone-500"> · {book.pageCount}p</span>}
+                      </p>
 
-                      {/* Action Buttons */}
-                      <div className="space-y-2">
-                        <button
-                          onClick={() => addToLibrary(book.googleBooksId, 'want_to_read')}
-                          disabled={addingBookId === book.googleBooksId}
-                          className="w-full px-3 py-2 text-xs font-semibold bg-stone-700 text-white rounded-lg hover:bg-stone-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-                        >
-                          {addingBookId === book.googleBooksId ? 'Adding...' : '📚 Want to Read'}
-                        </button>
-                        
-                        <div className="grid grid-cols-3 gap-1.5">
-                          <button
-                            onClick={() => addToLibrary(book.googleBooksId, 'reading')}
-                            disabled={addingBookId === book.googleBooksId}
-                            className="px-2 py-1.5 text-xs font-semibold bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400 transition-colors"
-                          >
-                            📖 Reading
-                          </button>
-                          <button
-                            onClick={() => addToLibrary(book.googleBooksId, 'completed')}
-                            disabled={addingBookId === book.googleBooksId}
-                            className="px-2 py-1.5 text-xs font-semibold bg-stone-700 text-white rounded hover:bg-stone-800 disabled:bg-gray-400 transition-colors"
-                          >
-                            ✅ Read
-                          </button>
-                          <button
-                            onClick={() => addToLibrary(book.googleBooksId, 'favorite')}
-                            disabled={addingBookId === book.googleBooksId}
-                            className="px-2 py-1.5 text-xs font-semibold bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-gray-400 transition-colors"
-                          >
-                            ❤️ Fav
-                          </button>
+                      {/* Status row — 4 icon-only chips. Once added, the row
+                          collapses to a confirmation pill so the user knows
+                          the action took without us blocking re-categorisation. */}
+                      {addedOption ? (
+                        <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium">
+                          <FiCheck size={12} />
+                          Added · {addedOption.label}
                         </div>
-                      </div>
+                      ) : (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {STATUS_OPTIONS.map(({ key, label, Icon, accent }) => (
+                            <button
+                              key={key}
+                              onClick={() => addToLibrary(book.googleBooksId, key)}
+                              disabled={isAdding}
+                              title={label}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-stone-100 hover:bg-stone-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-stone-700 dark:text-stone-200 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <Icon className={accent} size={12} />
+                              <span className="hidden sm:inline">{label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+                  </li>
+                );
+              })}
+            </ul>
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
