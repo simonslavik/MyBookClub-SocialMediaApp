@@ -21,7 +21,11 @@ const TopClubCard = ({ club }) => {
   return (
     <button
       onClick={() => navigate(`/bookclubpage/${club.id}`)}
-      className="flex flex-col bg-parchment-light dark:bg-gray-800 p-5 pb-8 shadow-md hover:shadow-xl transition-all duration-300 group cursor-pointer"
+      // w-full forces the <button> to fill its grid cell — otherwise it
+      // sizes to its image's intrinsic width, so a card with the small
+      // 80×80 SVG fallback shrinks while cards with real Cloudinary images
+      // (~1000px wide) blow out wider, breaking the grid alignment.
+      className="w-full flex flex-col bg-parchment-light dark:bg-gray-800 p-5 pb-8 shadow-md hover:shadow-xl transition-all duration-300 group cursor-pointer"
     >
       {/* Image area */}
       <div className="w-full aspect-[4/5] overflow-hidden bg-warmgray-300 dark:bg-gray-700">
@@ -76,7 +80,7 @@ const TopChartingSection = ({ bookClubs = [] }) => {
             : topClubs.map((club, i) => (
                 <div
                   key={club.id}
-                  className={`transition-all duration-700 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+                  className={`w-full transition-all duration-700 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
                   style={{ transitionDelay: isVisible ? `${200 + i * 150}ms` : '0ms' }}
                 >
                   <TopClubCard club={club} />
