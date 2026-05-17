@@ -129,43 +129,67 @@
        - text-white  → charcoal   (was: pure white)
        - text-gray-300 → muted grey (was: light grey)
      Same semantic meaning per class, opposite literal value. */
+  /* Bright Tailwind accent colors (yellow-400, green-400, red-400…)
+     are tuned for dark-mode body copy. On the cream bone BG they wash
+     out and stars/success-dates/error labels become barely visible.
+     Within `.warm-theme` we override the -400 shade of each accent
+     family to its corresponding -700 (much darker), so existing
+     `text-yellow-400`, `text-green-400`, etc. occurrences across the
+     bookclub interior pop clearly without touching every component. */
+  .warm-theme {
+    --color-yellow-400:  #a16207;
+    --color-amber-400:   #b45309;
+    --color-orange-400:  #c2410c;
+    --color-red-400:     #b91c1c;
+    --color-rose-400:    #be123c;
+    --color-pink-400:    #be185d;
+    --color-fuchsia-400: #a21caf;
+    --color-purple-400:  #7e22ce;
+    --color-violet-400:  #6d28d9;
+    --color-blue-400:    #1d4ed8;
+    --color-sky-400:     #0369a1;
+    --color-cyan-400:    #0e7490;
+    --color-teal-400:    #0f766e;
+    --color-emerald-400: #047857;
+    --color-green-400:   #15803d;
+    --color-lime-400:    #4d7c0f;
+  }
+
   .warm-theme {
     color-scheme: light;
 
-    /* Bone — light theme with warm-neutral bone off-white BG (sits
-       between cool paper and warm linen — no green tint, no aggressive
-       cream). Readability pass v3: pushed every text-side tone (gray-50
-       through gray-500) one more step darker. Secondary copy now hits
-       near-AAA, muted clears AA cleanly, placeholders are clearly
-       visible. Borders darker so dividers don't vanish on bone. */
-    --color-gray-50:  #0a0907;
-    --color-gray-100: #14110f;
-    --color-gray-200: #221f1c;
-    --color-gray-300: #2e2b27;
-    --color-gray-400: #46433e;
-    --color-gray-500: #5e5a55;
-    --color-gray-600: #847f78;
-    --color-gray-700: #aca79f;
-    --color-gray-800: #c8c4bd;
-    --color-gray-900: #e3dfd9;
-    --color-gray-950: #ede9e3;
+    /* Paper White — very near-white BG with only a barely-perceptible
+       warm tint (no cream, no linen). Panels are light warm-gray with
+       a clear ~10% step from BG so cards lift visibly without feeling
+       loud. Text near-black across the board for maximum legibility.
+       Calm library / archive feel — like clean printer paper. */
+    --color-gray-50:  #000000;
+    --color-gray-100: #0c0c0a;
+    --color-gray-200: #181814;
+    --color-gray-300: #22221d;
+    --color-gray-400: #2e2e28;
+    --color-gray-500: #45453d;
+    --color-gray-600: #6c6c61;
+    --color-gray-700: #b4b3a9;
+    --color-gray-800: #d6d5cc;
+    --color-gray-900: #f6f5f0;
+    --color-gray-950: #fbfaf6;
 
-    /* Indigo accent → vivid magenta. Acne Studios / Issey Miyake
-       editorial energy. The whole ramp is pushed ~1 step darker than
-       the prior bone palette so that text-indigo-300/400 (used inline
-       for mentions, links, badges) actually reads on the light BG
-       instead of washing out to pink mist. Buttons (bg-indigo-500+)
-       remain saturated for the same pop. */
-    --color-indigo-50:  #fce4ef;
-    --color-indigo-100: #f6bdd8;
-    --color-indigo-200: #ec85b6;
-    --color-indigo-300: #d94d8f;
-    --color-indigo-400: #c12a73;
-    --color-indigo-500: #a31c5e;
-    --color-indigo-600: #82144a;
-    --color-indigo-700: #650f3a;
-    --color-indigo-800: #480a29;
-    --color-indigo-900: #2d061a;
+    /* Indigo accent → dusty indigo blue. Calm, professional, library-
+       like — a true blue but de-saturated (no vibrant cobalt energy).
+       text-indigo-400 hits ~7:1 on paper white. Buttons (-500/-600)
+       use deeper navy with pure white text for clear CTAs without
+       a "loud" feel. */
+    --color-indigo-50:  #ebeef5;
+    --color-indigo-100: #d3d9e8;
+    --color-indigo-200: #a8b4ce;
+    --color-indigo-300: #7689b0;
+    --color-indigo-400: #4c628f;
+    --color-indigo-500: #3a4e75;
+    --color-indigo-600: #2d3e5e;
+    --color-indigo-700: #233048;
+    --color-indigo-800: #182236;
+    --color-indigo-900: #0f1622;
   }
 
 }
@@ -181,43 +205,82 @@
    @layer utilities, which beats any rule inside @layer base regardless
    of specificity. Top-level (layerless) wins. */
 
-/* text-white → near-black ink, except when it sits on a saturated dark
-   accent surface (indigo-4..9, stone-7..9) where pure white is still
-   the correct foreground. */
+/* text-white → near-black ink by default. The exception list covers
+   every saturated colored BG (-400 and above) plus the dark end of the
+   neutral ramps (-700 and above) — those are still dark enough that
+   pure white remains the correct foreground. Without this, calendar
+   pills like `bg-emerald-600 text-white` or `bg-violet-500 text-white`
+   would render BLACK text on a saturated colored ground, killing
+   contrast on every meeting/book chip. */
 .warm-theme .text-white {
-  color: #0a0907;
+  color: #000000;
 }
 .warm-theme :is(
-  [class*="bg-indigo-4"], [class*="bg-indigo-5"], [class*="bg-indigo-6"],
-  [class*="bg-indigo-7"], [class*="bg-indigo-8"], [class*="bg-indigo-9"],
+  [class*="bg-red-4"], [class*="bg-red-5"], [class*="bg-red-6"], [class*="bg-red-7"], [class*="bg-red-8"], [class*="bg-red-9"],
+  [class*="bg-orange-4"], [class*="bg-orange-5"], [class*="bg-orange-6"], [class*="bg-orange-7"], [class*="bg-orange-8"], [class*="bg-orange-9"],
+  [class*="bg-amber-5"], [class*="bg-amber-6"], [class*="bg-amber-7"], [class*="bg-amber-8"], [class*="bg-amber-9"],
+  [class*="bg-yellow-6"], [class*="bg-yellow-7"], [class*="bg-yellow-8"], [class*="bg-yellow-9"],
+  [class*="bg-lime-6"], [class*="bg-lime-7"], [class*="bg-lime-8"], [class*="bg-lime-9"],
+  [class*="bg-green-5"], [class*="bg-green-6"], [class*="bg-green-7"], [class*="bg-green-8"], [class*="bg-green-9"],
+  [class*="bg-emerald-5"], [class*="bg-emerald-6"], [class*="bg-emerald-7"], [class*="bg-emerald-8"], [class*="bg-emerald-9"],
+  [class*="bg-teal-5"], [class*="bg-teal-6"], [class*="bg-teal-7"], [class*="bg-teal-8"], [class*="bg-teal-9"],
+  [class*="bg-cyan-6"], [class*="bg-cyan-7"], [class*="bg-cyan-8"], [class*="bg-cyan-9"],
+  [class*="bg-sky-5"], [class*="bg-sky-6"], [class*="bg-sky-7"], [class*="bg-sky-8"], [class*="bg-sky-9"],
+  [class*="bg-blue-5"], [class*="bg-blue-6"], [class*="bg-blue-7"], [class*="bg-blue-8"], [class*="bg-blue-9"],
+  [class*="bg-indigo-4"], [class*="bg-indigo-5"], [class*="bg-indigo-6"], [class*="bg-indigo-7"], [class*="bg-indigo-8"], [class*="bg-indigo-9"],
+  [class*="bg-violet-5"], [class*="bg-violet-6"], [class*="bg-violet-7"], [class*="bg-violet-8"], [class*="bg-violet-9"],
+  [class*="bg-purple-5"], [class*="bg-purple-6"], [class*="bg-purple-7"], [class*="bg-purple-8"], [class*="bg-purple-9"],
+  [class*="bg-fuchsia-5"], [class*="bg-fuchsia-6"], [class*="bg-fuchsia-7"], [class*="bg-fuchsia-8"], [class*="bg-fuchsia-9"],
+  [class*="bg-pink-5"], [class*="bg-pink-6"], [class*="bg-pink-7"], [class*="bg-pink-8"], [class*="bg-pink-9"],
+  [class*="bg-rose-5"], [class*="bg-rose-6"], [class*="bg-rose-7"], [class*="bg-rose-8"], [class*="bg-rose-9"],
+  [class*="bg-slate-7"], [class*="bg-slate-8"], [class*="bg-slate-9"],
+  [class*="bg-zinc-7"], [class*="bg-zinc-8"], [class*="bg-zinc-9"],
+  [class*="bg-neutral-7"], [class*="bg-neutral-8"], [class*="bg-neutral-9"],
   [class*="bg-stone-7"], [class*="bg-stone-8"], [class*="bg-stone-9"]
 ) .text-white,
 .warm-theme :is(
-  [class*="bg-indigo-4"], [class*="bg-indigo-5"], [class*="bg-indigo-6"],
-  [class*="bg-indigo-7"], [class*="bg-indigo-8"], [class*="bg-indigo-9"],
+  [class*="bg-red-4"], [class*="bg-red-5"], [class*="bg-red-6"], [class*="bg-red-7"], [class*="bg-red-8"], [class*="bg-red-9"],
+  [class*="bg-orange-4"], [class*="bg-orange-5"], [class*="bg-orange-6"], [class*="bg-orange-7"], [class*="bg-orange-8"], [class*="bg-orange-9"],
+  [class*="bg-amber-5"], [class*="bg-amber-6"], [class*="bg-amber-7"], [class*="bg-amber-8"], [class*="bg-amber-9"],
+  [class*="bg-yellow-6"], [class*="bg-yellow-7"], [class*="bg-yellow-8"], [class*="bg-yellow-9"],
+  [class*="bg-lime-6"], [class*="bg-lime-7"], [class*="bg-lime-8"], [class*="bg-lime-9"],
+  [class*="bg-green-5"], [class*="bg-green-6"], [class*="bg-green-7"], [class*="bg-green-8"], [class*="bg-green-9"],
+  [class*="bg-emerald-5"], [class*="bg-emerald-6"], [class*="bg-emerald-7"], [class*="bg-emerald-8"], [class*="bg-emerald-9"],
+  [class*="bg-teal-5"], [class*="bg-teal-6"], [class*="bg-teal-7"], [class*="bg-teal-8"], [class*="bg-teal-9"],
+  [class*="bg-cyan-6"], [class*="bg-cyan-7"], [class*="bg-cyan-8"], [class*="bg-cyan-9"],
+  [class*="bg-sky-5"], [class*="bg-sky-6"], [class*="bg-sky-7"], [class*="bg-sky-8"], [class*="bg-sky-9"],
+  [class*="bg-blue-5"], [class*="bg-blue-6"], [class*="bg-blue-7"], [class*="bg-blue-8"], [class*="bg-blue-9"],
+  [class*="bg-indigo-4"], [class*="bg-indigo-5"], [class*="bg-indigo-6"], [class*="bg-indigo-7"], [class*="bg-indigo-8"], [class*="bg-indigo-9"],
+  [class*="bg-violet-5"], [class*="bg-violet-6"], [class*="bg-violet-7"], [class*="bg-violet-8"], [class*="bg-violet-9"],
+  [class*="bg-purple-5"], [class*="bg-purple-6"], [class*="bg-purple-7"], [class*="bg-purple-8"], [class*="bg-purple-9"],
+  [class*="bg-fuchsia-5"], [class*="bg-fuchsia-6"], [class*="bg-fuchsia-7"], [class*="bg-fuchsia-8"], [class*="bg-fuchsia-9"],
+  [class*="bg-pink-5"], [class*="bg-pink-6"], [class*="bg-pink-7"], [class*="bg-pink-8"], [class*="bg-pink-9"],
+  [class*="bg-rose-5"], [class*="bg-rose-6"], [class*="bg-rose-7"], [class*="bg-rose-8"], [class*="bg-rose-9"],
+  [class*="bg-slate-7"], [class*="bg-slate-8"], [class*="bg-slate-9"],
+  [class*="bg-zinc-7"], [class*="bg-zinc-8"], [class*="bg-zinc-9"],
+  [class*="bg-neutral-7"], [class*="bg-neutral-8"], [class*="bg-neutral-9"],
   [class*="bg-stone-7"], [class*="bg-stone-8"], [class*="bg-stone-9"]
 ).text-white {
   color: #ffffff;
 }
 
 /* Translucent white overlays (file attachment chips, hover ghosts,
-   composer surfaces) were designed for a dark BG. On bone they vanish
-   into the page — swap them for a translucent dark overlay so the
-   panels still read as elevated. Opacity bumped from .06 → .09 so
-   inactive chips have clear edges; hover bumped to .14 so the
-   feedback is actually visible. */
+   composer surfaces, OtherMessage bubbles) were designed for a dark
+   BG. On paper white they vanish — replace with a soft neutral-warm
+   overlay so chat bubbles + file chips read as quietly elevated
+   panels without a chromatic tint that fights the near-white base. */
 .warm-theme [class*="bg-white/"] {
-  background-color: rgba(0, 0, 0, 0.09);
+  background-color: rgba(40, 40, 32, 0.14);
 }
 .warm-theme [class*="hover:bg-white/"]:hover {
-  background-color: rgba(0, 0, 0, 0.14);
+  background-color: rgba(40, 40, 32, 0.22);
 }
 
 /* Borders authored as `border-white/X` (separator lines on dark
    surfaces) need the same treatment — light borders on light BG
-   disappear. Use a soft dark line instead. */
+   disappear. v5: bumped to .25 so dividers are unmistakably visible. */
 .warm-theme [class*="border-white/"] {
-  border-color: rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.25);
 }
 
 /* ── UI Feedback Animations ── */
