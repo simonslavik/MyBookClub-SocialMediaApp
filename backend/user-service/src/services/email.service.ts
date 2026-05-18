@@ -46,136 +46,221 @@ const getTransporter = () => {
 
 /**
  * Send email verification
+ *
+ * Styling note: all critical button styles (background, color,
+ * padding, border) are inlined directly on the <a> tag. Gmail —
+ * especially the mobile clients — strips most rules from <head><style>,
+ * which is what was making the previous CTA render as bright blue
+ * background with default-blue underlined link text (invisible).
+ * Inline + !important + table-based layout = bulletproof across
+ * Gmail, Outlook, Apple Mail, ProtonMail, Yahoo.
  */
 export const sendVerificationEmail = async (email: string, token: string, name: string) => {
   const verificationUrl = `${FRONTEND_URL}/verify-email?token=${token}`;
-  
+
   const mailOptions = {
     from: EMAIL_FROM,
     to: email,
-    subject: 'Verify Your Email Address',
+    subject: 'Verify your email — MyBookClubs',
     html: `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Verify Email</title>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: #4F46E5; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-          .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
-          .button { display: inline-block; padding: 12px 30px; background: #4F46E5; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0; }
-          .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>Welcome to Our Platform!</h1>
-          </div>
-          <div class="content">
-            <p>Hi ${name},</p>
-            <p>Thank you for creating an account! Please verify your email address to get started.</p>
-            <p style="text-align: center;">
-              <a href="${verificationUrl}" class="button">Verify Email Address</a>
-            </p>
-            <p>Or copy and paste this link into your browser:</p>
-            <p style="word-break: break-all; color: #6b7280; font-size: 14px;">${verificationUrl}</p>
-            <p><strong>This link will expire in 24 hours.</strong></p>
-            <p>If you didn't create an account, you can safely ignore this email.</p>
-          </div>
-          <div class="footer">
-            <p>This is an automated email. Please do not reply to this message.</p>
-          </div>
-        </div>
-      </body>
-      </html>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify your email</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f5f1ea;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f5f1ea;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:520px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(60,40,20,0.06);">
+          <!-- Brand strip -->
+          <tr>
+            <td style="padding:32px 40px 8px 40px;">
+              <p style="margin:0;font-size:13px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#928470;">MyBookClubs</p>
+            </td>
+          </tr>
+
+          <!-- Heading -->
+          <tr>
+            <td style="padding:8px 40px 0 40px;">
+              <h1 style="margin:0;font-size:24px;line-height:1.3;color:#1a1612;font-weight:700;">Confirm your email</h1>
+            </td>
+          </tr>
+
+          <!-- Body copy -->
+          <tr>
+            <td style="padding:16px 40px 8px 40px;">
+              <p style="margin:0 0 14px 0;font-size:15px;line-height:1.6;color:#3d3830;">Hi ${name},</p>
+              <p style="margin:0;font-size:15px;line-height:1.6;color:#3d3830;">Click the button below to verify your email address and finish setting up your account.</p>
+            </td>
+          </tr>
+
+          <!-- CTA button — table-based, all styles inline + !important so
+               Gmail / Outlook can't strip them. -->
+          <tr>
+            <td style="padding:28px 40px 8px 40px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center" bgcolor="#1a1612" style="border-radius:10px;background-color:#1a1612;">
+                    <a href="${verificationUrl}"
+                       target="_blank"
+                       style="display:inline-block;padding:14px 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#ffffff !important;text-decoration:none !important;border-radius:10px;background-color:#1a1612;mso-padding-alt:0;">
+                      Verify email
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Fallback link -->
+          <tr>
+            <td style="padding:24px 40px 0 40px;">
+              <p style="margin:0 0 6px 0;font-size:13px;line-height:1.6;color:#6a6051;">Or open this link in your browser:</p>
+              <p style="margin:0;word-break:break-all;font-size:12px;line-height:1.5;color:#928470;">
+                <a href="${verificationUrl}" style="color:#928470;text-decoration:underline;">${verificationUrl}</a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Meta info -->
+          <tr>
+            <td style="padding:28px 40px 32px 40px;">
+              <p style="margin:0;font-size:13px;line-height:1.6;color:#6a6051;">This link expires in 24 hours. If you didn't create an account, you can safely ignore this email.</p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 40px;border-top:1px solid #ede9e1;background-color:#faf7f1;">
+              <p style="margin:0;font-size:12px;line-height:1.5;color:#928470;text-align:center;">Automated message from MyBookClubs. Please do not reply.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
     `,
-    text: `
-      Hi ${name},
-      
-      Thank you for creating an account! Please verify your email address by clicking the link below:
-      
-      ${verificationUrl}
-      
-      This link will expire in 24 hours.
-      
-      If you didn't create an account, you can safely ignore this email.
-    `,
+    text: `Hi ${name},
+
+Confirm your email to finish setting up your MyBookClubs account.
+
+Verify here: ${verificationUrl}
+
+This link expires in 24 hours. If you didn't create an account, you can ignore this email.`,
   };
 
   return sendEmail(mailOptions, 'EMAIL_VERIFICATION');
 };
 
 /**
- * Send password reset email
+ * Send password reset email — same bulletproof inline-style template
+ * as the verification mail, just with reset-specific copy.
  */
 export const sendPasswordResetEmail = async (email: string, token: string, name: string) => {
   const resetUrl = `${FRONTEND_URL}/reset-password?token=${token}`;
-  
+
   const mailOptions = {
     from: EMAIL_FROM,
     to: email,
-    subject: 'Reset Your Password',
+    subject: 'Reset your password — MyBookClubs',
     html: `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Reset Password</title>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: #DC2626; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-          .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
-          .button { display: inline-block; padding: 12px 30px; background: #DC2626; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0; }
-          .warning { background: #FEF3C7; border-left: 4px solid #F59E0B; padding: 12px; margin: 20px 0; }
-          .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>Password Reset Request</h1>
-          </div>
-          <div class="content">
-            <p>Hi ${name},</p>
-            <p>We received a request to reset your password. Click the button below to create a new password:</p>
-            <p style="text-align: center;">
-              <a href="${resetUrl}" class="button">Reset Password</a>
-            </p>
-            <p>Or copy and paste this link into your browser:</p>
-            <p style="word-break: break-all; color: #6b7280; font-size: 14px;">${resetUrl}</p>
-            <div class="warning">
-              <strong>⚠️ Security Note:</strong>
-              <ul style="margin: 5px 0;">
-                <li>This link will expire in 1 hour</li>
-                <li>The link can only be used once</li>
-                <li>If you didn't request this, please ignore this email</li>
-              </ul>
-            </div>
-          </div>
-          <div class="footer">
-            <p>This is an automated email. Please do not reply to this message.</p>
-          </div>
-        </div>
-      </body>
-      </html>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset your password</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f5f1ea;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f5f1ea;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:520px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(60,40,20,0.06);">
+          <tr>
+            <td style="padding:32px 40px 8px 40px;">
+              <p style="margin:0;font-size:13px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#928470;">MyBookClubs</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:8px 40px 0 40px;">
+              <h1 style="margin:0;font-size:24px;line-height:1.3;color:#1a1612;font-weight:700;">Reset your password</h1>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:16px 40px 8px 40px;">
+              <p style="margin:0 0 14px 0;font-size:15px;line-height:1.6;color:#3d3830;">Hi ${name},</p>
+              <p style="margin:0;font-size:15px;line-height:1.6;color:#3d3830;">We received a request to reset your password. Click the button below to choose a new one.</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:28px 40px 8px 40px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center" bgcolor="#1a1612" style="border-radius:10px;background-color:#1a1612;">
+                    <a href="${resetUrl}"
+                       target="_blank"
+                       style="display:inline-block;padding:14px 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#ffffff !important;text-decoration:none !important;border-radius:10px;background-color:#1a1612;mso-padding-alt:0;">
+                      Reset password
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:24px 40px 0 40px;">
+              <p style="margin:0 0 6px 0;font-size:13px;line-height:1.6;color:#6a6051;">Or open this link in your browser:</p>
+              <p style="margin:0;word-break:break-all;font-size:12px;line-height:1.5;color:#928470;">
+                <a href="${resetUrl}" style="color:#928470;text-decoration:underline;">${resetUrl}</a>
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:24px 40px 0 40px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background-color:#fef7e7;border-left:3px solid #d4a015;border-radius:6px;">
+                <tr>
+                  <td style="padding:12px 14px;">
+                    <p style="margin:0 0 6px 0;font-size:13px;font-weight:600;color:#7a5a08;">Security note</p>
+                    <p style="margin:0;font-size:12px;line-height:1.55;color:#7a5a08;">This link expires in 1 hour and can be used once. If you didn't request a reset, you can ignore this email.</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:28px 40px 32px 40px;"></td>
+          </tr>
+
+          <tr>
+            <td style="padding:20px 40px;border-top:1px solid #ede9e1;background-color:#faf7f1;">
+              <p style="margin:0;font-size:12px;line-height:1.5;color:#928470;text-align:center;">Automated message from MyBookClubs. Please do not reply.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
     `,
-    text: `
-      Hi ${name},
-      
-      We received a request to reset your password. Click the link below to create a new password:
-      
-      ${resetUrl}
-      
-      This link will expire in 1 hour and can only be used once.
-      
-      If you didn't request this password reset, please ignore this email.
-    `,
+    text: `Hi ${name},
+
+We received a request to reset your MyBookClubs password.
+
+Reset here: ${resetUrl}
+
+This link expires in 1 hour and can be used once. If you didn't request a reset, ignore this email.`,
   };
 
   return sendEmail(mailOptions, 'PASSWORD_RESET');
