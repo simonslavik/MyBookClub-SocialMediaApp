@@ -1,32 +1,20 @@
 import { useState, useMemo } from 'react';
-import { FiCalendar, FiClock, FiEdit2 } from 'react-icons/fi';
+import { FiEdit2 } from 'react-icons/fi';
 
-// Derive initial schedule values from props (no useEffect needed)
-const deriveSchedule = (currentBookData) => {
+const deriveSchedule = (currentBookData: any) => {
   let start = '';
   let end = '';
   let days = 30;
-
-  if (currentBookData?.startDate) {
-    start = new Date(currentBookData.startDate).toISOString().split('T')[0];
-  }
-  if (currentBookData?.endDate) {
-    end = new Date(currentBookData.endDate).toISOString().split('T')[0];
-  }
+  if (currentBookData?.startDate) start = new Date(currentBookData.startDate).toISOString().split('T')[0];
+  if (currentBookData?.endDate) end = new Date(currentBookData.endDate).toISOString().split('T')[0];
   if (currentBookData?.startDate && currentBookData?.endDate) {
     const diffMs = Math.abs(new Date(currentBookData.endDate).getTime() - new Date(currentBookData.startDate).getTime());
     days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
   }
-
   return { start, end, days };
 };
 
-const ScheduleTab = ({
-  currentBookData,
-  book,
-  onUpdateSchedule,
-  submitting,
-}) => {
+const ScheduleTab = ({ currentBookData, book, onUpdateSchedule, submitting }: any) => {
   const initial = useMemo(() => deriveSchedule(currentBookData), [currentBookData]);
 
   const [editingSchedule, setEditingSchedule] = useState(false);
@@ -34,8 +22,7 @@ const ScheduleTab = ({
   const [endDate, setEndDate] = useState(initial.end);
   const [readingDays, setReadingDays] = useState(initial.days);
 
-  // Auto-calculate end date when start or days change (derived, not effect)
-  const handleStartDateChange = (value) => {
+  const handleStartDateChange = (value: string) => {
     setStartDate(value);
     if (value && readingDays > 0) {
       const d = new Date(value);
@@ -44,7 +31,7 @@ const ScheduleTab = ({
     }
   };
 
-  const handleReadingDaysChange = (value) => {
+  const handleReadingDaysChange = (value: string) => {
     const days = parseInt(value) || 0;
     setReadingDays(days);
     if (startDate && days > 0) {
@@ -74,48 +61,42 @@ const ScheduleTab = ({
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Reading Schedule</h3>
+        <p className="text-xs uppercase tracking-wider font-semibold text-stone-500 dark:text-stone-400">Reading schedule</p>
         {!editingSchedule && (
           <button
             onClick={() => setEditingSchedule(true)}
-            className="flex items-center gap-1 px-2 py-1 text-xs text-gray-300 hover:text-white hover:bg-gray-700 rounded transition-colors"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           >
-            <FiEdit2 size={11} />
+            <FiEdit2 size={12} />
             Edit
           </button>
         )}
       </div>
 
       {editingSchedule ? (
-        <div className="space-y-3 bg-white/[0.04] border border-white/[0.06] p-3 rounded-md">
-          {/* Start Date */}
+        <div className="space-y-4 p-4 rounded-xl bg-stone-50 dark:bg-gray-800/60 ring-1 ring-stone-200/60 dark:ring-gray-800">
           <div>
-            <label className="block text-xs font-medium text-gray-300 mb-1">
-              <FiCalendar className="inline mr-1.5" size={11} />
-              Start Date
-            </label>
+            <label className="block text-[11px] uppercase tracking-wider font-semibold text-stone-500 dark:text-stone-400 mb-1.5">Start date</label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => handleStartDateChange(e.target.value)}
-              className="w-full px-2.5 py-1.5 bg-gray-700 border border-gray-600 rounded text-white text-xs focus:ring-2 focus:ring-indigo-500 outline-none [color-scheme:dark]"
+              className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-900 ring-1 ring-stone-200 dark:ring-gray-700 text-sm text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-600 transition"
             />
           </div>
 
-          {/* Reading Duration */}
           <div>
-            <label className="block text-xs font-medium text-gray-300 mb-1">
-              <FiClock className="inline mr-1.5" size={11} />
-              Reading Duration (days)
+            <label className="block text-[11px] uppercase tracking-wider font-semibold text-stone-500 dark:text-stone-400 mb-1.5">
+              Reading duration <span className="font-normal normal-case tracking-normal text-stone-400 dark:text-stone-500">— {readingDays} days</span>
             </label>
-            <div className="flex gap-2 items-center">
+            <div className="flex items-center gap-3">
               <input
                 type="range"
                 min="7"
                 max="90"
                 value={readingDays}
                 onChange={(e) => handleReadingDaysChange(e.target.value)}
-                className="flex-1 accent-indigo-500"
+                className="flex-1 accent-stone-900 dark:accent-stone-100"
               />
               <input
                 type="number"
@@ -123,75 +104,68 @@ const ScheduleTab = ({
                 max="90"
                 value={readingDays}
                 onChange={(e) => handleReadingDaysChange(e.target.value)}
-                className="w-16 px-2 py-1.5 bg-gray-700 border border-gray-600 rounded text-white text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-16 px-2 py-1.5 rounded-lg bg-white dark:bg-gray-900 ring-1 ring-stone-200 dark:ring-gray-700 text-sm text-stone-900 dark:text-stone-100 text-center focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-600 transition tabular-nums"
               />
             </div>
           </div>
 
-          {/* End Date */}
           <div>
-            <label className="block text-xs font-medium text-gray-300 mb-1">
-              Target Completion Date
-            </label>
+            <label className="block text-[11px] uppercase tracking-wider font-semibold text-stone-500 dark:text-stone-400 mb-1.5">Target completion</label>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-2.5 py-1.5 bg-gray-700 border border-gray-600 rounded text-white text-xs focus:ring-2 focus:ring-indigo-500 outline-none [color-scheme:dark]"
+              className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-900 ring-1 ring-stone-200 dark:ring-gray-700 text-sm text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-600 transition"
             />
           </div>
 
-          {/* Actions */}
           <div className="flex gap-2 pt-1">
             <button
               onClick={() => setEditingSchedule(false)}
-              className="flex-1 px-3 py-1.5 text-xs text-gray-300 bg-gray-700 hover:bg-gray-600 rounded transition-colors"
+              className="flex-1 px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={submitting || !startDate || !endDate}
-              className="flex-1 px-3 py-1.5 text-xs bg-indigo-700 text-white rounded hover:bg-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 px-4 py-2 text-sm font-semibold bg-stone-900 hover:bg-stone-800 dark:bg-stone-100 dark:hover:bg-white text-white dark:text-stone-900 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
             >
-              {submitting ? 'Saving…' : 'Save Changes'}
+              {submitting && <span className="w-4 h-4 border-2 border-current border-r-transparent rounded-full animate-spin" />}
+              {submitting ? 'Saving…' : 'Save changes'}
             </button>
           </div>
         </div>
       ) : (
-        <div className="bg-white/[0.04] border border-white/[0.06] rounded-md p-3">
-          <div className="grid grid-cols-2 gap-3 mb-3">
+        <div className="p-4 rounded-xl bg-stone-50 dark:bg-gray-800/60 ring-1 ring-stone-200/60 dark:ring-gray-800">
+          <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <p className="text-[11px] text-gray-500 mb-0.5">Start Date</p>
-              <p className="text-sm font-medium text-gray-100">
+              <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-0.5">Start date</p>
+              <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">
                 {currentBookData?.startDate
-                  ? new Date(currentBookData.startDate).toLocaleDateString('en-US', {
-                      month: 'long', day: 'numeric', year: 'numeric',
-                    })
+                  ? new Date(currentBookData.startDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
                   : '—'}
               </p>
             </div>
             <div>
-              <p className="text-[11px] text-gray-500 mb-0.5">End Date</p>
-              <p className="text-sm font-medium text-gray-100">
+              <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-0.5">End date</p>
+              <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">
                 {currentBookData?.endDate
-                  ? new Date(currentBookData.endDate).toLocaleDateString('en-US', {
-                      month: 'long', day: 'numeric', year: 'numeric',
-                    })
+                  ? new Date(currentBookData.endDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
                   : '—'}
               </p>
             </div>
           </div>
 
           {book?.pageCount && (
-            <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/[0.06]">
-              <div className="text-center">
-                <p className="text-xl font-semibold text-indigo-400">{calculatePagesPerDay()}</p>
-                <p className="text-[11px] text-gray-500 mt-0.5">Pages per day</p>
+            <div className="grid grid-cols-2 gap-3 pt-4 border-t border-stone-200/60 dark:border-gray-800">
+              <div className="text-center p-3 rounded-lg bg-white dark:bg-gray-900 ring-1 ring-stone-200/60 dark:ring-gray-800">
+                <p className="text-2xl font-bold text-stone-900 dark:text-stone-100 tabular-nums">{calculatePagesPerDay()}</p>
+                <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">Pages per day</p>
               </div>
-              <div className="text-center">
-                <p className="text-xl font-semibold text-indigo-400">{calculateDaysRemaining()}</p>
-                <p className="text-[11px] text-gray-500 mt-0.5">Days remaining</p>
+              <div className="text-center p-3 rounded-lg bg-white dark:bg-gray-900 ring-1 ring-stone-200/60 dark:ring-gray-800">
+                <p className="text-2xl font-bold text-stone-900 dark:text-stone-100 tabular-nums">{calculateDaysRemaining()}</p>
+                <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">Days remaining</p>
               </div>
             </div>
           )}

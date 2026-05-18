@@ -18,6 +18,7 @@ const DMChatPage = lazy(() => import('@pages/DMChat'));
 const FindPeople = lazy(() => import('@pages/people'));
 const ResetPasswordPage = lazy(() => import('@pages/ResetPassword'));
 const VerifyEmailPage = lazy(() => import('@pages/VerifyEmail'));
+const VerifyRequiredPage = lazy(() => import('@pages/VerifyRequired'));
 
 /** Minimal fallback while a lazy chunk loads. */
 const PageLoader = () => (
@@ -45,6 +46,7 @@ function App() {
             <Route path="/people" element={<ProtectedRoute><FindPeople /></ProtectedRoute>} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/verify-required" element={<VerifyRequiredPage />} />
           </Routes>
         </PageTransition>
       </Suspense>

@@ -1,11 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { getProfileImageUrl } from '@config/constants';
-
-const DEFAULT_IMAGE = '/images/default.webp';
+import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 
 /** A single friend avatar card. */
 const FriendCard = ({ friend }) => {
   const navigate = useNavigate();
+  const fallback = getAvatarUrl(getAvatarSeed(friend));
 
   return (
     <button
@@ -13,10 +13,10 @@ const FriendCard = ({ friend }) => {
       className="flex flex-col items-center gap-2 p-3 bg-white dark:bg-gray-800 rounded-xl border border-warmgray-200 dark:border-gray-700 hover:shadow-md hover:border-stone-300 dark:hover:border-gray-600 transition-all cursor-pointer group w-24 flex-shrink-0"
     >
       <img
-        src={getProfileImageUrl(friend.profileImage) || DEFAULT_IMAGE}
+        src={getProfileImageUrl(friend.profileImage) || fallback}
         alt={friend.name || friend.username}
         className="w-12 h-12 rounded-full object-cover ring-2 ring-warmgray-200 dark:ring-gray-600 group-hover:ring-stone-400 transition-all"
-        onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_IMAGE; }}
+        onError={(e) => { (e.target as HTMLImageElement).src = fallback; }}
       />
       <span className="text-xs font-medium text-stone-700 dark:text-warmgray-200 text-center truncate w-full group-hover:text-stone-500 dark:group-hover:text-white transition-colors">
         {friend.name || friend.username}
@@ -28,6 +28,7 @@ const FriendCard = ({ friend }) => {
 /** A single suggested-user card with "Add" / "Pending" action. */
 const SuggestedUserCard = ({ user, onSendRequest }) => {
   const navigate = useNavigate();
+  const fallback = getAvatarUrl(getAvatarSeed(user));
 
   return (
     <div className="flex flex-col items-center gap-2 p-3 bg-white dark:bg-gray-800 rounded-xl border border-warmgray-200 dark:border-gray-700 hover:shadow-md hover:border-stone-300 dark:hover:border-gray-600 transition-all group w-24 flex-shrink-0">
@@ -36,10 +37,10 @@ const SuggestedUserCard = ({ user, onSendRequest }) => {
         className="flex flex-col items-center gap-1 cursor-pointer"
       >
         <img
-          src={getProfileImageUrl(user.profileImage) || DEFAULT_IMAGE}
+          src={getProfileImageUrl(user.profileImage) || fallback}
           alt={user.name}
           className="w-12 h-12 rounded-full object-cover ring-2 ring-warmgray-200 dark:ring-gray-600 group-hover:ring-emerald-400 transition-all"
-          onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_IMAGE; }}
+          onError={(e) => { (e.target as HTMLImageElement).src = fallback; }}
         />
         <span className="text-xs font-medium text-stone-700 dark:text-warmgray-200 text-center truncate w-full">
           {user.name}

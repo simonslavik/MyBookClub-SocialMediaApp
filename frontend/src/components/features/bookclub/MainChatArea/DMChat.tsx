@@ -10,6 +10,7 @@ import TypingIndicator from '../../../common/TypingIndicator';
 import { linkifyText } from '../chat/messageUtils';
 import apiClient from '@api/axios';
 import { getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 import logger from '@utils/logger';
 import { useConfirm, useToast } from '@hooks/useUIFeedback';
 import DMWelcomeScreen from './DMWelcomeScreen';
@@ -25,8 +26,12 @@ const DMChat = ({ otherUser, messages, onSendMessage, auth, setMessages, dmWs, r
   const fileUploadRef = useRef(null);
   const menuRef = useRef(null);
   const inputRef = useRef(null);
-  const prevMessageCountRef = useRef(messages.length);
+  // Start at -1 so the first render with messages already populated still
+  // trips the "messages grew" branch and scrolls to bottom — the old
+  // `useRef(messages.length)` swallowed that case for cached conversations.
+  const prevMessageCountRef = useRef(-1);
   const isLoadingOlderRef = useRef(false);
+  const didInitialScrollRef = useRef(false);
   const lastTypingSentRef = useRef(0);
   const navigate = useNavigate();
   const { confirm } = useConfirm();
@@ -65,20 +70,38 @@ const DMChat = ({ otherUser, messages, onSendMessage, auth, setMessages, dmWs, r
     return { groupWithPrevious, isLastInGroup };
   };
 
-  // Scroll only on new messages (not when prepending older ones)
+  // Reset the "have we scrolled yet" flag whenever the user switches
+  // conversations, so opening a DM re-runs the bottom-anchor logic instead
+  // of landing the user partway up the previous transcript.
   useEffect(() => {
-    if (messages.length > prevMessageCountRef.current && !isLoadingOlderRef.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+    didInitialScrollRef.current = false;
+    prevMessageCountRef.current = -1;
+  }, [otherUser?.id]);
+
+  // Pin to the bottom on (a) initial mount with messages present, (b) when
+  // a brand-new message arrives. Skip when older messages are being
+  // prepended. Uses container scrollTop instead of scrollIntoView — more
+  // reliable than `behavior: 'instant'` which some browsers ignore.
+  useEffect(() => {
+    if (isLoadingOlderRef.current) {
+      isLoadingOlderRef.current = false;
+      prevMessageCountRef.current = messages.length;
+      return;
     }
-    isLoadingOlderRef.current = false;
+
+    const isInitialPopulate = !didInitialScrollRef.current && messages.length > 0;
+    const isNewMessage = didInitialScrollRef.current && messages.length > prevMessageCountRef.current;
+
+    if (isInitialPopulate || isNewMessage) {
+      requestAnimationFrame(() => {
+        const container = messagesContainerRef.current;
+        if (container) container.scrollTop = container.scrollHeight;
+      });
+      didInitialScrollRef.current = true;
+    }
+
     prevMessageCountRef.current = messages.length;
   }, [messages]);
-
-  useEffect(() => {
-    if (otherUser) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
-    }
-  }, [otherUser]);
 
   // Scroll-to-top detection for loading older messages
   useEffect(() => {
@@ -263,11 +286,11 @@ const DMChat = ({ otherUser, messages, onSendMessage, auth, setMessages, dmWs, r
       {/* DM Header */}
       <div className="bg-gray-800 border-b border-gray-700 px-3 py-2 flex items-center gap-2.5">
         <img
-          src={getProfileImageUrl(otherUser.profileImage) || '/images/default.webp'}
+          src={getProfileImageUrl(otherUser.profileImage) || getAvatarUrl(getAvatarSeed(otherUser))}
           alt={otherUser.name}
           className="w-8 h-8 rounded-full object-cover cursor-pointer"
           onClick={() => navigate(`/profile/${otherUser.id}`)}
-          onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+          onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(otherUser)); }}
         />
         <div className="flex-1 min-w-0">
           <h2

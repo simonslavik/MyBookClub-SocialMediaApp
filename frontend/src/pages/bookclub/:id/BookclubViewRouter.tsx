@@ -40,8 +40,8 @@ const BookclubViewRouter = ({
   handleStatusChange, handleRateBook, handleRemoveRating,
   // chat
   messages, setMessages, currentRoom, ws, friends, handleSendFriendRequest,
-  connectedUsers, lastReadAt, hasMoreMessages, loadingOlder, loadOlderMessages,
-  setReplyingTo,
+  connectedUsers, lastReadAt, hasMoreMessages, loadingOlder, loadingMessages,
+  loadOlderMessages, setReplyingTo,
 }) => {
   if (is('settings')) {
     return (
@@ -118,6 +118,7 @@ const BookclubViewRouter = ({
       friends={friends} onSendFriendRequest={handleSendFriendRequest}
       connectedUsers={connectedUsers} lastReadAt={lastReadAt}
       hasMoreMessages={hasMoreMessages} loadingOlder={loadingOlder}
+      loadingMessages={loadingMessages}
       onLoadOlder={loadOlderMessages}
     />
   );

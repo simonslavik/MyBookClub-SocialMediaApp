@@ -5,6 +5,7 @@ import AuthContext from '@context/index';
 import { FiImage, FiX, FiTrash2, FiUser, FiLock } from 'react-icons/fi';
 import ChangePasswordModal from '@components/common/modals/ChangePasswordModal';
 import { getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 import logger from '@utils/logger';
 
 const ChangeProfilePage = () => {
@@ -203,7 +204,7 @@ const ChangeProfilePage = () => {
                                         src={imagePreview} 
                                         alt="Profile Preview" 
                                         className="w-32 h-32 rounded-full object-cover border-4 border-stone-200"
-                                        onError={(e) => { (e.target as HTMLImageElement).src = '/images/default-avatar.png'; }}
+                                        onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(auth?.user)); }}
                                     />
                                     {/* Only show delete button if user has a custom profile image or selected a new one */}
                                     {(currentProfileImage || selectedImage) && (

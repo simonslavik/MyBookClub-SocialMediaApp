@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { WATERMARK_TEXT } from './watermarkText';
 
@@ -8,12 +7,6 @@ import { WATERMARK_TEXT } from './watermarkText';
  */
 const HeroSection = () => {
   const navigate = useNavigate();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setMounted(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
 
   return (
   <section className="relative overflow-hidden px-6 md:px-16 py-16 md:py-20">
@@ -24,8 +17,14 @@ const HeroSection = () => {
       </p>
     </div>
 
-    <div className={`relative z-10 flex flex-col md:flex-row items-center gap-10 md:gap-16 transition-all duration-1000 ease-out ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-      <div className="w-full md:w-1/2">
+    {/* Mount-only entrance — `animate-fade-up` starts at opacity 0 +
+        translateY 12px and animates to its final state once. Crucially
+        these run synchronously at page load (above the fold), so the
+        animation never gates scrolling on content below — unlike the
+        old IntersectionObserver-based Reveal wrappers which hid every
+        below-fold section until 700ms after they came into view. */}
+    <div className="relative z-10 flex flex-col md:flex-row items-center gap-10 md:gap-16">
+      <div className="w-full md:w-1/2 animate-fade-up">
         <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold leading-[1.05] text-stone-900 dark:text-warmgray-100 tracking-tight">
           &ldquo;Connect With<br />Your Fellow<br />BookLovers&rdquo;
         </h1>
@@ -34,19 +33,30 @@ const HeroSection = () => {
           <img src="/images/logo5.png" alt="MyBookClubs" className="h-9 mt-2 opacity-70 dark:invert" />
           <img src="/images/logo5.png" alt="MyBookClubs" className="w-8   opacity-60 dark:invert" />
           <img src="/images/logo5.png" alt="MyBookClubs" className="h-12 mt-4 opacity-50 dark:invert" />
-          
+
         </div>
       </div>
 
-      {/* Image placeholder */}
-      <div className={`w-full md:w-1/2 aspect-[4/3] bg-stone-700 dark:bg-gray-700 rounded-sm overflow-hidden transition-all duration-1000 delay-300 ease-out ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-        <div className="w-full h-full bg-stone-700 dark:bg-gray-700" />
+      {/* Hero screenshot — chat shot fits the "Connect with fellow
+          BookLovers" tagline best (real conversation, real users). The
+          faux-browser frame (rounded card + subtle ring + shadow) lifts
+          it from "raw screenshot" to "this is a real product". */}
+      <div className="w-full md:w-1/2 animate-fade-up stagger-2">
+        <div className="relative rounded-2xl overflow-hidden bg-stone-100 dark:bg-gray-800 ring-1 ring-black/10 dark:ring-white/10 shadow-2xl">
+          <img
+            src="/images/bookclub-chat.png"
+            alt="MyBookClub real-time chat in a Murakami book club"
+            className="w-full h-auto block"
+            loading="eager"
+          />
+        </div>
       </div>
 
     </div>
 
-    {/* CTA buttons */}
-    <div className={`relative z-10 flex justify-center gap-4 mt-12 transition-all duration-700 delay-500 ease-out ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+    {/* CTA buttons — last in the stagger so the eye lands on them after
+        reading the headline + image. */}
+    <div className="relative z-10 flex justify-center gap-4 mt-12 animate-fade-up stagger-4">
       <button
         onClick={() => window.dispatchEvent(new Event('open-login'))}
         className="px-8 py-3 bg-stone-800 dark:bg-warmgray-200 text-white dark:text-stone-900 rounded-md hover:bg-stone-700 dark:hover:bg-warmgray-300 transition-colors text-sm font-medium cursor-pointer"

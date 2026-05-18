@@ -89,6 +89,46 @@ export class BookClubController {
   }
 
   /**
+   * Per-club unread summary for the sidebar bubbles. Returns one entry per
+   * club the authenticated user belongs to, with message counts + section dots.
+   */
+  static async getUnreadSummary(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user?.userId;
+      if (!userId) {
+        return res.status(401).json({ success: false, message: 'Authentication required' });
+      }
+
+      const summary = await BookClubService.getUnreadSummary(userId);
+      res.json({ success: true, summary });
+    } catch (error: any) {
+      logger.error('ERROR_GET_UNREAD_SUMMARY', { error: error.message });
+      res.status(500).json({ success: false, message: 'Failed to fetch unread summary' });
+    }
+  }
+
+  /**
+   * Get clubs another user (`:userId`) is an ACTIVE member of, scoped to what
+   * the requesting viewer is allowed to see (INVITE_ONLY clubs are hidden
+   * from non-members). Used by the public profile page.
+   */
+  static async getClubsForUser(req: Request, res: Response) {
+    try {
+      const targetUserId = req.params.userId;
+      if (!targetUserId) {
+        return res.status(400).json({ success: false, message: 'userId is required' });
+      }
+      const viewerId = (req as any).user?.userId as string | undefined;
+
+      const clubs = await BookClubService.getClubsForUser(targetUserId, viewerId);
+      res.json({ success: true, bookClubs: clubs });
+    } catch (error: any) {
+      logger.error('ERROR_GET_CLUBS_FOR_USER', { error: error.message });
+      res.status(500).json({ success: false, message: 'Failed to fetch user clubs' });
+    }
+  }
+
+  /**
    * Get club preview (public endpoint for PUBLIC/PRIVATE clubs)
    */
   static async getClubPreview(req: Request, res: Response) {

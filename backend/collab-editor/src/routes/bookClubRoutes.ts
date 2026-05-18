@@ -21,9 +21,17 @@ router.get('/:id/preview', optionalAuthMiddleware, BookClubController.getClubPre
 // Join via invite code
 router.post('/join-by-invite/:code', authMiddleware, BookClubController.joinByInvite);
 
+// Clubs another user is a member of (public profile view).
+// Auth is optional so unauthenticated visitors see PUBLIC/PRIVATE clubs;
+// authenticated viewers additionally see INVITE_ONLY clubs they share.
+router.get('/users/:userId', optionalAuthMiddleware, BookClubController.getClubsForUser);
+
 // ===== PROTECTED ROUTES (auth required) =====
 // Get user's own bookclubs
 router.get('/my', authMiddleware, BookClubController.getMyClubs);
+
+// Per-club unread summary for the sidebar bubbles
+router.get('/unread-summary', authMiddleware, BookClubController.getUnreadSummary);
 
 // Create new bookclub
 router.post('/', authMiddleware, validate(createClubSchema), BookClubController.createClub);

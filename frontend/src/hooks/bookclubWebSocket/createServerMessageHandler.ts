@@ -12,6 +12,7 @@ interface Handlers {
   setUnreadSections: Dispatch<SetStateAction<Set<string>>>;
   setLastReadAt: (v: string | null) => void;
   setLoadingOlder: (v: boolean) => void;
+  setLoadingMessages: (v: boolean) => void;
   noteTyping: (userId: string, username: string) => void;
   currentRoomIdRef: MutableRefObject<string | null>;
   toastError: (msg: string) => void;
@@ -35,6 +36,7 @@ export function createServerMessageHandler(handlers: Handlers) {
       // Side-effects on the other state slices.
       switch (data.type) {
         case 'init':
+          handlers.setLoadingMessages(false);
           handlers.setHasMoreMessages(data.hasMore || false);
           handlers.setConnectedUsers(data.users || []);
           if (data.members) handlers.setBookClubMembers(data.members);
@@ -67,6 +69,7 @@ export function createServerMessageHandler(handlers: Handlers) {
           break;
 
         case 'room-switched':
+          handlers.setLoadingMessages(false);
           handlers.setUnreadRooms((prev) => {
             const next = new Set(prev);
             next.delete(data.roomId || handlers.currentRoomIdRef.current);

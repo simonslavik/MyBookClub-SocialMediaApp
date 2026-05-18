@@ -1,7 +1,6 @@
 import { FiEdit2, FiMessageCircle, FiUserPlus, FiUserCheck, FiClock, FiBook, FiUsers, FiCalendar } from 'react-icons/fi';
 import { getProfileImageUrl } from '@config/constants';
-
-const DEFAULT_IMG = '/images/default.webp';
+import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 
 export default function ProfileHero({
     profile, isOwnProfile,
@@ -22,11 +21,11 @@ export default function ProfileHero({
                     <div className="relative flex-shrink-0">
                         <div className="w-32 h-32 md:w-36 md:h-36 rounded-2xl overflow-hidden ring-4 ring-white/10 bg-stone-700">
                             <img
-                                src={imagePreview || getProfileImageUrl(profile.profileImage) || DEFAULT_IMG}
+                                src={imagePreview || getProfileImageUrl(profile.profileImage) || getAvatarUrl(getAvatarSeed(profile))}
                                 alt={profile.name}
                                 className={`w-full h-full object-cover ${isOwnProfile ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
                                 onClick={() => isOwnProfile && fileInputRef.current?.click()}
-                                onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_IMG; }}
+                                onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(profile)); }}
                             />
                         </div>
                         {uploadingImage && (

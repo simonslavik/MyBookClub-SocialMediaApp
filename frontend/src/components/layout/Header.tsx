@@ -7,12 +7,12 @@ import { useTheme } from '@context/ThemeContext';
 import LoginModule from '@components/common/modals/loginModule';
 import RegisterModule from '@components/common/modals/registerModule';
 import { getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 import apiClient from '@api/axios';
 import logger from '@utils/logger';
 import NotificationBell from '@components/features/notifications/NotificationBell';
 import MobileSidebar from './MobileSidebar';
 
-const DEFAULT_AVATAR = '/images/default.webp';
 
 const HomePageHeader = () => {
   const { auth, logout } = useContext(AuthContext);
@@ -39,18 +39,6 @@ const HomePageHeader = () => {
   const handleProfileClick = () => {
     setShowDropdown((prev) => !prev);
   };
-
-  const handleFriendAction = useCallback(async (requestId, action) => {
-    try {
-      await apiClient.post(`/v1/friends/${action}`, { friendshipId: requestId });
-      // Refresh friend requests after action
-      const { data } = await apiClient.get('/v1/friends/requests');
-      const incomingRequests = (data.data || []).filter(r => r.friendId === auth?.user?.id);
-      setFriendRequests(incomingRequests);
-    } catch (err) {
-      logger.error(`Error ${action}ing friend request:`, err);
-    }
-  }, [auth?.user?.id]);
 
   // ─── Effects ────────────────────────────────────────────
 
@@ -117,16 +105,17 @@ const HomePageHeader = () => {
   // ─── Render ─────────────────────────────────────────────
 
   return (
-    <div className="w-full h-13 bg-warmgray-50 dark:bg-gray-900 border-b border-warmgray-200 dark:border-gray-700 flex items-center px-4 md:px-10 relative transition-colors duration-300 sticky top-0 left-0 z-50">
-      {/* Logo */}
+    <div className="w-full h-12 md:h-13 bg-warmgray-50 dark:bg-gray-900 border-b border-warmgray-200 dark:border-gray-700 flex items-center gap-2 px-3 md:px-10 relative transition-colors duration-300 sticky top-0 left-0 z-50">
+      {/* Logo — shrinks on mobile so it doesn't crowd the action buttons */}
       <button
         onClick={() => navigate('/')}
-        className={`cursor-pointer flex items-center gap-2`}
+        className="cursor-pointer flex items-center flex-shrink-0"
+        aria-label="MyBookClubs home"
       >
         <img
           src="/images/Group 1 (Traced).png"
           alt="MyBookClubs"
-          className="h-12 w-auto dark:invert"
+          className="h-7 md:h-12 w-auto dark:invert"
         />
       </button>
 
@@ -170,36 +159,40 @@ const HomePageHeader = () => {
             </button>
 
             {/* Profile dropdown */}
-            <div className="ml-2 mt-2 relative" ref={profileDropdownRef}>
-              <button onClick={handleProfileClick}>
+            <div className="ml-2 relative flex items-center" ref={profileDropdownRef}>
+              <button onClick={handleProfileClick} aria-label="Open profile menu">
                 <img
-                  src={getProfileImageUrl(auth.user.profileImage) || DEFAULT_AVATAR}
+                  src={getProfileImageUrl(auth.user.profileImage) || getAvatarUrl(getAvatarSeed(auth.user))}
                   alt="Profile"
-                  className="h-7.5 w-7.5 rounded-full object-cover border-1 border-gray-200 cursor-pointer"
-                  onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
+                  className="h-8 w-8 rounded-full object-cover border border-gray-200 cursor-pointer"
+                  onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(auth.user)); }}
                 />
               </button>
               {showDropdown && (
-                <div className="absolute right-4 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded shadow-lg z-10">
-                  <button onClick={() => { navigate(`/profile/${auth.user.id}`); setShowDropdown(false); }} className="px-4 py-2 border-b border-gray-300 dark:border-gray-700 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left dark:text-gray-200">
+                // right-0 aligns the dropdown's right edge with the avatar's
+                // right edge (was right-4, which inset it 16px and looked
+                // unmoored). z-[60] keeps it above the sticky header (z-50).
+                // overflow-hidden + rounded-lg gives a clean card silhouette.
+                <div className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-[60] overflow-hidden">
+                  <button onClick={() => { navigate(`/profile/${auth.user.id}`); setShowDropdown(false); }} className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 w-full text-left dark:text-gray-200">
                     View Profile
                   </button>
-                  <button onClick={() => navigate('/change-profile')} className="px-4 py-2 border-b border-gray-300 dark:border-gray-700 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left dark:text-gray-200">
+                  <button onClick={() => { navigate('/change-profile'); setShowDropdown(false); }} className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 w-full text-left dark:text-gray-200">
                     Change Profile Settings
                   </button>
-                  <button onClick={() => navigate('/create-bookclub')} className="px-4 py-2 border-b border-gray-300 dark:border-gray-700 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left dark:text-gray-200">
+                  <button onClick={() => { navigate('/create-bookclub'); setShowDropdown(false); }} className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 w-full text-left dark:text-gray-200">
                     Create Book Club
                   </button>
                   <button
                     onClick={cycleTheme}
-                    className="w-full text-left px-4 py-2 border-b border-gray-300 dark:border-gray-700 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-gray-200"
+                    className="w-full text-left px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-gray-200"
                   >
                     {themeIcon}
                     Theme: {themeLabel}
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-gray-700"
                   >
                     Logout
                   </button>
@@ -208,15 +201,21 @@ const HomePageHeader = () => {
             </div>
           </div>
 
-          {/* Mobile burger */}
-          <button
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="md:hidden ml-auto p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-          >
-            {showMobileMenu
-              ? <FiX size={24} className="dark:text-gray-200" />
-              : <FiMenu size={24} className="dark:text-gray-200" />}
-          </button>
+          {/* Mobile right cluster — bell stays one-tap accessible, burger
+              opens the rest of the nav. Auto pushed to right via ml-auto. */}
+          <div className="md:hidden ml-auto flex items-center gap-1">
+            <NotificationBell />
+            <button
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="p-2 -mr-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+              aria-label={showMobileMenu ? 'Close menu' : 'Open menu'}
+              aria-expanded={showMobileMenu}
+            >
+              {showMobileMenu
+                ? <FiX size={22} className="dark:text-gray-200" />
+                : <FiMenu size={22} className="dark:text-gray-200" />}
+            </button>
+          </div>
 
           {/* Mobile sidebar */}
           {showMobileMenu && (
@@ -230,7 +229,6 @@ const HomePageHeader = () => {
               onNavigate={navigate}
               onLogout={handleLogout}
               onCycleTheme={cycleTheme}
-              onFriendAction={handleFriendAction}
             />
           )}
         </>
@@ -238,22 +236,24 @@ const HomePageHeader = () => {
 
       {/* ── Guest Nav ── */}
       {!auth?.user && (
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+          {/* Discover hidden on the smallest screens — Sign Up funnels first-time
+              visitors through registration, where they discover clubs anyway. */}
           <button
             onClick={() => navigate('/discover')}
-            className="text-sm font-medium text-stone-700 dark:text-warmgray-200 hover:text-stone-900 dark:hover:text-white transition cursor-pointer"
+            className="hidden sm:inline-block text-sm font-medium text-stone-700 dark:text-warmgray-200 hover:text-stone-900 dark:hover:text-white transition cursor-pointer px-2"
           >
             Discover
           </button>
           <button
             onClick={() => setOpenLogin(true)}
-            className="px-5 py-1.5 border border-stone-800 dark:border-warmgray-200 text-stone-800 dark:text-warmgray-200 rounded-full hover:bg-stone-100 dark:hover:bg-gray-800 transition text-sm font-medium cursor-pointer"
+            className="px-2.5 py-1 sm:px-5 sm:py-1.5 border border-stone-800 dark:border-warmgray-200 text-stone-800 dark:text-warmgray-200 rounded-full hover:bg-stone-100 dark:hover:bg-gray-800 transition text-xs sm:text-sm font-medium cursor-pointer whitespace-nowrap"
           >
             Log In
           </button>
           <button
             onClick={() => setOpenRegister(true)}
-            className="px-5 py-1.5 bg-stone-800 dark:bg-warmgray-200 dark:text-stone-900 text-white rounded-full hover:bg-stone-700 dark:hover:bg-warmgray-300 transition text-sm font-medium cursor-pointer"
+            className="px-2.5 py-1 sm:px-5 sm:py-1.5 bg-stone-800 dark:bg-warmgray-200 dark:text-stone-900 text-white rounded-full hover:bg-stone-700 dark:hover:bg-warmgray-300 transition text-xs sm:text-sm font-medium cursor-pointer whitespace-nowrap"
           >
             Sign Up
           </button>

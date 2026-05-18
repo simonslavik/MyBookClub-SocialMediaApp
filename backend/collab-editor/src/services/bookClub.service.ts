@@ -68,6 +68,172 @@ export class BookClubService {
   }
 
   /**
+   * Per-bookclub unread summary for the sidebar bubbles.
+   *
+   * Returns one entry per club the user is an ACTIVE member of:
+   *   { clubId, unreadMessageCount, unreadSections, hasUnread }
+   *
+   * `unreadMessageCount`  — messages newer than the user's RoomRead.lastReadAt
+   *                          across every room they can see in the club, excluding
+   *                          their own messages and system messages.
+   * `unreadSections`      — names of sections (`books`/`suggestions`/`meetings`/
+   *                          `calendar`) whose latest activity is newer than the
+   *                          user's last viewing of that section.
+   *
+   * Single-pass design: 4 queries total regardless of how many clubs/rooms the
+   * user has — heavy work is grouped server-side.
+   */
+  static async getUnreadSummary(userId: string) {
+    const memberships = await prisma.bookClubMember.findMany({
+      where: { userId, status: MembershipStatus.ACTIVE },
+      select: {
+        bookClubId: true,
+        joinedAt: true,
+        bookClub: {
+          select: {
+            rooms: { select: { id: true, bookClubId: true } },
+          },
+        },
+      },
+    });
+
+    if (memberships.length === 0) return [];
+
+    const allRoomIds = memberships.flatMap(m => m.bookClub.rooms.map(r => r.id));
+    const allClubIds = memberships.map(m => m.bookClubId);
+    const roomToClub = new Map<string, string>();
+    for (const m of memberships) {
+      for (const r of m.bookClub.rooms) roomToClub.set(r.id, m.bookClubId);
+    }
+    // Fall back to membership joinedAt for rooms the user has never opened —
+    // we only care about activity *after* they joined the club.
+    const joinedAtByClub = new Map(memberships.map(m => [m.bookClubId, m.joinedAt]));
+
+    const [roomReads, sectionReads, sectionActivities] = await Promise.all([
+      prisma.roomRead.findMany({
+        where: { userId, roomId: { in: allRoomIds } },
+        select: { roomId: true, lastReadAt: true },
+      }),
+      prisma.sectionRead.findMany({
+        where: { userId, clubId: { in: allClubIds } },
+        select: { clubId: true, section: true, lastViewedAt: true },
+      }),
+      prisma.sectionActivity.findMany({
+        where: { clubId: { in: allClubIds } },
+        select: { clubId: true, section: true, lastActivityAt: true, lastActivityBy: true },
+      }),
+    ]);
+
+    const roomReadMap = new Map(roomReads.map(rr => [rr.roomId, rr.lastReadAt]));
+    const sectionReadMap = new Map(
+      sectionReads.map(sr => [`${sr.clubId}:${sr.section}`, sr.lastViewedAt]),
+    );
+
+    // Count unread messages per room in a single grouped query.
+    const cutoffByRoom: Array<{ roomId: string; cutoff: Date }> = allRoomIds.map(roomId => ({
+      roomId,
+      cutoff: roomReadMap.get(roomId) ?? joinedAtByClub.get(roomToClub.get(roomId)!) ?? new Date(0),
+    }));
+
+    // Build OR clauses — Prisma doesn't allow per-row date filters in a single
+    // groupBy, so we compose an OR list and group the result client-side.
+    const unreadGrouped = await prisma.message.groupBy({
+      by: ['roomId'],
+      where: {
+        roomId: { in: allRoomIds },
+        userId: { not: userId },
+        isSystem: false,
+        OR: cutoffByRoom.map(c => ({
+          roomId: c.roomId,
+          createdAt: { gt: c.cutoff },
+        })),
+      },
+      _count: true,
+    });
+
+    const unreadByRoom = new Map(unreadGrouped.map(g => [g.roomId, g._count as number]));
+
+    return allClubIds.map(clubId => {
+      const rooms = memberships.find(m => m.bookClubId === clubId)!.bookClub.rooms;
+      const unreadMessageCount = rooms.reduce(
+        (sum, r) => sum + (unreadByRoom.get(r.id) ?? 0),
+        0,
+      );
+
+      const unreadSections = sectionActivities
+        .filter(sa => sa.clubId === clubId && sa.lastActivityBy !== userId)
+        .filter(sa => {
+          const lastViewed = sectionReadMap.get(`${clubId}:${sa.section}`)
+            ?? joinedAtByClub.get(clubId)
+            ?? new Date(0);
+          return sa.lastActivityAt > lastViewed;
+        })
+        .map(sa => sa.section);
+
+      return {
+        clubId,
+        unreadMessageCount,
+        unreadSections,
+        hasUnread: unreadMessageCount > 0 || unreadSections.length > 0,
+      };
+    });
+  }
+
+  /**
+   * Get all clubs another user (`targetUserId`) is an ACTIVE member of, filtered
+   * for what `viewerId` is allowed to see. INVITE_ONLY clubs are hidden from
+   * viewers who aren't themselves members of that club, so a public profile
+   * view never leaks a private club's existence.
+   */
+  static async getClubsForUser(targetUserId: string, viewerId?: string) {
+    const memberships = await prisma.bookClubMember.findMany({
+      where: { userId: targetUserId, status: MembershipStatus.ACTIVE },
+      include: {
+        bookClub: {
+          include: {
+            _count: {
+              select: {
+                members: { where: { status: MembershipStatus.ACTIVE } },
+              },
+            },
+            // When a viewer is logged in, also pull *their* membership row for
+            // each club so we can decide whether to expose INVITE_ONLY clubs.
+            ...(viewerId
+              ? {
+                  members: {
+                    where: { userId: viewerId, status: MembershipStatus.ACTIVE },
+                    select: { id: true },
+                  },
+                }
+              : {}),
+          },
+        },
+      },
+      orderBy: { joinedAt: 'desc' },
+    });
+
+    return memberships
+      .filter(m => {
+        if (m.bookClub.visibility !== ClubVisibility.INVITE_ONLY) return true;
+        const viewerMembership = (m.bookClub as any).members as Array<{ id: string }> | undefined;
+        return !!viewerMembership && viewerMembership.length > 0;
+      })
+      .map(m => {
+        const { members: _viewerMembership, _count, ...club } = m.bookClub as any;
+        return {
+          ...club,
+          memberCount: _count.members,
+          role: m.role,
+          // `isMember` is the viewer's membership in this club, not the target's,
+          // so the frontend can label "Joined" vs "View" buttons correctly.
+          isMember: viewerId
+            ? !!(m.bookClub as any).members?.length
+            : false,
+        };
+      });
+  }
+
+  /**
    * Discover book clubs - Returns list based on visibility and user access
    */
   static async discoverClubs(userId?: string, categories?: string[]) {

@@ -1,305 +1,281 @@
-import React, { useState, useContext, useEffect } from 'react';
+import { useState, useContext, useEffect, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import apiClient from '@api/axios';
-import { useNavigate } from "react-router-dom";
 import AuthContext from '@context/index';
-import { FiX } from 'react-icons/fi';
+import { FiX, FiUser, FiMail, FiLock, FiBook, FiCheck } from 'react-icons/fi';
 import { GoogleLogin } from '@react-oauth/google';
 import logger from '@utils/logger';
 
+// Password rule definitions — kept inline so the live checklist below
+// renders from a single source of truth.
+const PASSWORD_RULES: Array<{ label: string; test: (s: string) => boolean }> = [
+  { label: '8+ characters',    test: (s) => s.length >= 8 },
+  { label: 'Uppercase letter', test: (s) => /[A-Z]/.test(s) },
+  { label: 'Lowercase letter', test: (s) => /[a-z]/.test(s) },
+  { label: 'Number',           test: (s) => /[0-9]/.test(s) },
+  { label: 'Special char',     test: (s) => /[!@#$%^&*(),.?":{}|<>]/.test(s) },
+];
+
 const RegisterModule = ({ onClose, onSwitchToLogin }) => {
-    const navigate = useNavigate();
-    const { setAuth } = useContext(AuthContext);
+  const { setAuth } = useContext(AuthContext);
 
-    // Lock body scroll while modal is open
-    useEffect(() => {
-        const original = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        return () => { document.body.style.overflow = original; };
-    }, []);
-    const [form, setForm] = useState({ name: '', email: '', password: '' });
-    const [errors, setErrors] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState('');
+  const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [errors, setErrors] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
 
-    const validate = () => {
-        const errs = [];
-        if (!form.name || form.name.trim().length < 3) errs.push('Name must be at least 3 characters');
-        if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.push('Valid email is required');
-        
-        // Enhanced password validation
-        if (!form.password || form.password.length < 8) {
-            errs.push('Password must be at least 8 characters');
-        } else {
-            if (!/[A-Z]/.test(form.password)) errs.push('Password must contain at least one uppercase letter');
-            if (!/[a-z]/.test(form.password)) errs.push('Password must contain at least one lowercase letter');
-            if (!/[0-9]/.test(form.password)) errs.push('Password must contain at least one number');
-            if (!/[!@#$%^&*(),.?":{}|<>]/.test(form.password)) errs.push('Password must contain at least one special character');
-        }
-        
-        return errs;
+  // Body scroll lock + Escape close.
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose?.(); };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKey);
     };
+  }, [onClose]);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        // Clear previous messages/errors when user edits fields
-        setMessage('');
-        setErrors([]);
-        setForm(prev => ({ ...prev, [name]: value }));
-    };
+  // Live per-rule satisfied state — drives both validation + the visual chips.
+  const ruleStates = useMemo(
+    () => PASSWORD_RULES.map(r => ({ ...r, ok: r.test(form.password) })),
+    [form.password]
+  );
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setMessage('');
-        const v = validate();
-        if (v.length) {
-            setErrors(v);
-            return;
-        }
-        setErrors([]);
-        setLoading(true);
-        try {
-            const res = await apiClient.post('/v1/auth/register', form);
+  const validate = () => {
+    const errs: string[] = [];
+    if (!form.name || form.name.trim().length < 3) errs.push('Name must be at least 3 characters');
+    if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.push('Enter a valid email address');
+    if (!form.password) errs.push('Password is required');
+    else if (ruleStates.some(r => !r.ok)) errs.push('Password does not meet all requirements');
+    return errs;
+  };
 
-            // Refresh token is now an HttpOnly cookie set by the response —
-            // we only extract the access token + user from the body.
-            const responseData = res?.data?.data || res?.data;
-            const accessToken = responseData?.accessToken || res?.data?.accessToken || res?.data?.token;
-            const user = responseData?.user || res?.data?.user;
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setMessage('');
+    setErrors([]);
+    setForm(prev => ({ ...prev, [name]: value }));
+  };
 
-            if (!accessToken || !user) {
-                logger.error('Missing required data - accessToken:', !!accessToken, 'user:', !!user);
-                setErrors(['Registration succeeded but received incomplete data from server']);
-                return;
-            }
+  const handleSubmit = useCallback(async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setMessage('');
+    const v = validate();
+    if (v.length) { setErrors(v); return; }
+    setErrors([]);
+    setLoading(true);
+    try {
+      const res = await apiClient.post('/v1/auth/register', form);
+      const responseData = res?.data?.data || res?.data;
+      const accessToken = responseData?.accessToken || res?.data?.accessToken || res?.data?.token;
+      const user = responseData?.user || res?.data?.user;
+      if (!accessToken || !user) {
+        logger.error('Missing required data');
+        setErrors(['Registration succeeded but received incomplete data from server']);
+        return;
+      }
+      setAuth({ token: accessToken, user });
+      onClose?.();
+      if (user.emailVerified === false) {
+        window.location.assign('/verify-required');
+      } else {
+        window.location.reload();
+      }
+    } catch (err: any) {
+      const respMsg = err?.response?.data?.message;
+      const respErrors = err?.response?.data?.errors;
+      if (respErrors && Array.isArray(respErrors)) setErrors(respErrors);
+      else setMessage(respMsg || 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
+  }, [form, setAuth, onClose, ruleStates]);
 
-            setAuth({ token: accessToken, user });
-            
-            onClose?.();
-            window.location.reload();
-        } catch (err) {
-            const respMsg = err?.response?.data?.message;
-            const respErrors = err?.response?.data?.errors;
-            if (respErrors && Array.isArray(respErrors)) setErrors(respErrors);
-            else setMessage(respMsg || 'Registration failed');
-        } finally {
-            setLoading(false);
-        }
-    };
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true); setErrors([]); setMessage('');
+    try {
+      const res = await apiClient.post('/v1/auth/google', { credential: credentialResponse.credential });
+      const responseData = res?.data?.data || res?.data;
+      const accessToken = responseData?.accessToken || res?.data?.accessToken;
+      const user = responseData?.user || res?.data?.user;
+      if (accessToken && user) {
+        setAuth({ token: accessToken, user });
+        onClose?.();
+        window.location.reload();
+      } else {
+        setErrors(['Google registration succeeded but received incomplete data from server']);
+      }
+    } catch (err: any) {
+      setErrors([err?.response?.data?.message || 'Google registration failed']);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // Handle Google OAuth registration (same endpoint as login)
-    const handleGoogleSuccess = async (credentialResponse) => {
-        setLoading(true);
-        setErrors([]);
-        setMessage('');
-        
-        try {
-            const res = await apiClient.post('/v1/auth/google', {
-                credential: credentialResponse.credential
-            });
+  const handleGoogleError = () => {
+    logger.error('Google Sign-In error');
+    setErrors(['Google authentication failed. Please check that popups are not blocked and try again.']);
+  };
 
-            const responseData = res?.data?.data || res?.data;
-            const accessToken = responseData?.accessToken || res?.data?.accessToken;
-            const user = responseData?.user || res?.data?.user;
-
-            if (accessToken && user) {
-                setAuth({ token: accessToken, user });
-                onClose?.();
-                window.location.reload();
-            } else {
-                setErrors(['Google registration succeeded but received incomplete data from server']);
-            }
-        } catch (err) {
-            const respMsg = err?.response?.data?.message;
-            setErrors([respMsg || 'Google registration failed']);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleGoogleError = () => {
-        logger.error('Google Sign-In error');
-        console.error('[Google OAuth] Registration failed. Origin:', window.location.origin);
-        setErrors(['Google authentication failed. Please check that popups are not blocked and try again.']);
-    };
-
-    return (
-        <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto py-8' onClick={onClose}>
-            <div className='bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md relative transition-colors duration-300 my-auto mx-4' onClick={(e) => e.stopPropagation()}>
-                {/* Close Button */}
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-                >
-                    <FiX size={24} />
-                </button>
-
-                {/* Header */}
-                <div className="mb-2 text-center">
-                    <h2 className='text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2'>Create Account</h2>
-                    <p className='text-gray-600 dark:text-gray-400'>Join our bookclub community</p>
-                </div>
-
-                {/* Global error list */}
-                {errors && errors.length > 0 && (
-                    <div role="alert" className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-400 px-4 py-3 rounded-lg mb-4">
-                        <strong className="font-semibold block mb-2">Please fix the following:</strong>
-                        <ul className="list-disc list-inside space-y-1">
-                            {errors.map((err, i) => (
-                                <li key={i} className="text-sm">{err}</li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-
-                {/* Informational / success message */}
-                {message && (
-                    <div role="status" className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 text-green-800 dark:text-green-400 px-4 py-3 rounded-lg mb-4">
-                        {message}
-                    </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="space-y-2">
-                    <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Username
-                        </label>
-                        <input 
-                            id="name"
-                            name="name" 
-                            value={form.name} 
-                            onChange={handleChange} 
-                            placeholder="Enter your username" 
-                            className='w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all outline-none bg-white dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400'
-                        />
-                    </div>
-
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Email Address
-                        </label>
-                        <input 
-                            id="email"
-                            name="email" 
-                            type="email"
-                            value={form.email} 
-                            onChange={handleChange} 
-                            placeholder="email@example.com" 
-                            className='w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all outline-none bg-white dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400'
-                        />
-                    </div>
-
-                    <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Password
-                        </label>
-                        <input 
-                            id="password"
-                            name="password" 
-                            type="password" 
-                            value={form.password} 
-                            onChange={handleChange} 
-                            placeholder="Choose a strong password" 
-                            className='w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all outline-none bg-white dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400'
-                        />
-                        
-                        {/* Password Requirements */}
-                        <div className="mt-2 space-y-1">
-                            <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Password must contain:</p>
-                            <div className="flex items-center gap-2">
-                                <div className={`w-1.5 h-1.5 rounded-full ${form.password.length >= 8 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                <span className={`text-xs ${form.password.length >= 8 ? 'text-green-600' : 'text-gray-500'}`}>
-                                    At least 8 characters
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className={`w-1.5 h-1.5 rounded-full ${/[A-Z]/.test(form.password) ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                <span className={`text-xs ${/[A-Z]/.test(form.password) ? 'text-green-600' : 'text-gray-500'}`}>
-                                    One uppercase letter
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className={`w-1.5 h-1.5 rounded-full ${/[a-z]/.test(form.password) ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                <span className={`text-xs ${/[a-z]/.test(form.password) ? 'text-green-600' : 'text-gray-500'}`}>
-                                    One lowercase letter
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className={`w-1.5 h-1.5 rounded-full ${/[0-9]/.test(form.password) ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                <span className={`text-xs ${/[0-9]/.test(form.password) ? 'text-green-600' : 'text-gray-500'}`}>
-                                    One number
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className={`w-1.5 h-1.5 rounded-full ${/[!@#$%^&*(),.?":{}|<>]/.test(form.password) ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                <span className={`text-xs ${/[!@#$%^&*(),.?":{}|<>]/.test(form.password) ? 'text-green-600' : 'text-gray-500'}`}>
-                                    One special character (!@#$%^&*...)
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button 
-                        type="submit" 
-                        disabled={loading} 
-                        className='w-full bg-stone-700 hover:bg-stone-800 text-white font-semibold py-3 px-6 rounded-lg transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg mt-6'
-                    >
-                        {loading ? (
-                            <span className="flex items-center justify-center">
-                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Creating account...
-                            </span>
-                        ) : 'Create Account'}
-                    </button>
-                </form>
-
-                {/* Google OAuth Button */}
-                <div className="mt-6">
-                    <div className="relative mb-4">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
-                        </div>
-                        <div className="relative flex justify-center text-sm">
-                            <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">Or sign up with</span>
-                        </div>
-                    </div>
-                    
-                    <div className="flex justify-center">
-                        <GoogleLogin
-                            onSuccess={handleGoogleSuccess}
-                            onError={handleGoogleError}
-                            useOneTap
-                            theme="outline"
-                            size="large"
-                            text="signup_with"
-                            shape="rectangular"
-                            width="100%"
-                        />
-                    </div>
-                </div>
-
-                {/* Divider */}
-                <div className="relative my-6">
-                    <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
-                    </div>
-                    <div className="relative flex justify-center text-sm">
-                        <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">Already have an account?</span>
-                    </div>
-                </div>
-
-                {/* Login Link */}
-                <button 
-                    onClick={onSwitchToLogin}
-                    className='w-full border-2 border-stone-700 dark:border-stone-500 text-stone-700 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-gray-700 font-semibold py-3 px-6 rounded-lg transition-all transform hover:scale-[1.02]'
-                >
-                    Sign In
-                </button>
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-150"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Create account"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white dark:bg-gray-900 w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200"
+      >
+        {/* Header */}
+        <header className="flex items-start justify-between px-6 pt-6 pb-2 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex w-10 h-10 rounded-xl bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 items-center justify-center">
+              <FiBook size={18} />
+            </span>
+            <div>
+              <h2 className="text-xl font-semibold text-stone-900 dark:text-stone-100 leading-tight">Create account</h2>
+              <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">Join the bookclub community</p>
             </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 -mr-1.5 text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            aria-label="Close"
+          >
+            <FiX size={20} />
+          </button>
+        </header>
+
+        {/* Body */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-6 pt-3">
+          {errors.length > 0 && (
+            <div role="alert" className="mb-4 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 text-sm">
+              <ul className="space-y-1">
+                {errors.map((err, i) => <li key={i}>{err}</li>)}
+              </ul>
+            </div>
+          )}
+
+          {message && (
+            <div role="status" className="mb-4 px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-sm">
+              {message}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-3">
+            {/* Username */}
+            <label className="relative block cursor-text">
+              <FiUser className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" size={16} />
+              <input
+                id="name"
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                placeholder="Username"
+                autoComplete="username"
+                className="w-full pl-10 pr-3 py-3 rounded-xl bg-stone-100 dark:bg-gray-800 text-sm text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-600 transition"
+              />
+            </label>
+
+            {/* Email */}
+            <label className="relative block cursor-text">
+              <FiMail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" size={16} />
+              <input
+                id="email"
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="email@example.com"
+                autoComplete="email"
+                className="w-full pl-10 pr-3 py-3 rounded-xl bg-stone-100 dark:bg-gray-800 text-sm text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-600 transition"
+              />
+            </label>
+
+            {/* Password */}
+            <label className="relative block cursor-text">
+              <FiLock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" size={16} />
+              <input
+                id="password"
+                name="password"
+                type="password"
+                value={form.password}
+                onChange={handleChange}
+                placeholder="Choose a strong password"
+                autoComplete="new-password"
+                className="w-full pl-10 pr-3 py-3 rounded-xl bg-stone-100 dark:bg-gray-800 text-sm text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-600 transition"
+              />
+            </label>
+
+            {/* Live password requirements — wraps as a row of compact chips
+                instead of a 5-line list, so it doesn't dominate the modal. */}
+            {form.password.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-0.5">
+                {ruleStates.map((r) => (
+                  <span
+                    key={r.label}
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors ${
+                      r.ok
+                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
+                        : 'bg-stone-100 text-stone-500 dark:bg-gray-800 dark:text-stone-400'
+                    }`}
+                  >
+                    {r.ok && <FiCheck size={11} />}
+                    {r.label}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full px-4 py-3 mt-1 text-sm font-semibold bg-stone-900 hover:bg-stone-800 dark:bg-stone-100 dark:hover:bg-white text-white dark:text-stone-900 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+            >
+              {loading && <span className="w-4 h-4 border-2 border-current border-r-transparent rounded-full animate-spin" />}
+              {loading ? 'Creating account…' : 'Create account'}
+            </button>
+          </form>
+
+          {/* Single compact divider */}
+          <div className="relative my-5 flex items-center">
+            <div className="flex-grow border-t border-stone-200 dark:border-gray-800" />
+            <span className="px-3 text-[11px] uppercase tracking-wider text-stone-400 dark:text-stone-500 font-medium">or</span>
+            <div className="flex-grow border-t border-stone-200 dark:border-gray-800" />
+          </div>
+
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              useOneTap
+              theme="outline"
+              size="large"
+              text="signup_with"
+              shape="rectangular"
+              width="100%"
+            />
+          </div>
+
+          {/* Switch-to-login — inline link */}
+          <p className="text-center text-sm text-stone-500 dark:text-stone-400 mt-6">
+            Already have an account?{' '}
+            <button
+              onClick={onSwitchToLogin}
+              className="font-semibold text-stone-900 dark:text-stone-100 hover:underline"
+            >
+              Sign in
+            </button>
+          </p>
         </div>
-    );
+      </div>
+    </div>,
+    document.body
+  );
 };
 
 export default RegisterModule;

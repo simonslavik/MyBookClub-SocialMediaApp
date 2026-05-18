@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { FiX, FiHash, FiLock, FiVolume2, FiUsers, FiTrash2, FiAlertTriangle, FiSearch, FiUserPlus, FiUserMinus, FiSettings, FiShield } from 'react-icons/fi';
 import { bookclubAPI } from '@api/bookclub.api';
 import { getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 import logger from '@utils/logger';
 
 const ROOM_TYPES = [
@@ -214,7 +215,7 @@ const MembersTab = ({ room, bookClubId, allMembers, currentUserId, userRole }) =
                   className="flex items-center gap-2 px-3 py-2 rounded bg-gray-900 border border-gray-700"
                 >
                   <img
-                    src={getProfileImageUrl(userDetails?.profileImage) || '/images/default.webp'}
+                    src={getProfileImageUrl(userDetails?.profileImage) || getAvatarUrl(getAvatarSeed(userDetails || { id: member.userId }))}
                     alt=""
                     className="w-7 h-7 rounded-full flex-shrink-0 object-cover"
                   />
@@ -274,7 +275,7 @@ const MembersTab = ({ room, bookClubId, allMembers, currentUserId, userRole }) =
                   className="flex items-center gap-2 px-3 py-2 hover:bg-gray-800 transition-colors"
                 >
                   <img
-                    src={getProfileImageUrl(member.profileImage) || '/images/default.webp'}
+                    src={getProfileImageUrl(member.profileImage) || getAvatarUrl(getAvatarSeed(member))}
                     alt=""
                     className="w-6 h-6 rounded-full flex-shrink-0 object-cover"
                   />

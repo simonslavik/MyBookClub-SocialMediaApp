@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { FiBook, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
-const DEFAULT_IMG = '/images/default.webp';
+const DEFAULT_IMG = '/images/default.svg';
 const fmtDate = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
 function calcProgress(book) {

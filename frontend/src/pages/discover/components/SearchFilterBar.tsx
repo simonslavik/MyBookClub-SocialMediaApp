@@ -9,9 +9,12 @@ import { BOOKCLUB_CATEGORIES } from '@config/constants';
 const SearchFilterBar = ({ searchQuery, onSearchChange, selectedCategories, onToggleCategory }) => (
   <div className="max-w-7xl mx-auto px-5 md:px-8 -mt-7">
     <div className="rounded-2xl">
-      {/* Search input */}
-      <div className="relative">
-        <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 text-lg" />
+      {/* Search input — wrapped in a <label> so a click anywhere in the
+          padded chrome (icon area, end padding, even the border edge)
+          focuses the input. The icon itself uses `pointer-events-none`
+          so it doesn't intercept the click. */}
+      <label className="relative block cursor-text">
+        <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 text-lg pointer-events-none" />
         <input
           type="text"
           placeholder="Search for book clubs..."
@@ -21,17 +24,22 @@ const SearchFilterBar = ({ searchQuery, onSearchChange, selectedCategories, onTo
         />
         {searchQuery && (
           <button
+            type="button"
             onClick={() => onSearchChange('')}
             className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors"
           >
             <FiX className="text-lg" />
           </button>
         )}
-      </div>
+      </label>
 
-      {/* Category pills */}
-      <div className="mt-5">
-        <div className="flex items-center gap-2 mb-3">
+      {/* Category pills — header label hidden on mobile (the pills are
+          self-explanatory) and the row switches from wrap (desktop) to a
+          single horizontally-scrollable strip (mobile). 16 categories
+          wrapped to 4-5 rows of pills was eating too much vertical space
+          before the user even saw a club card. */}
+      <div className="mt-4 md:mt-5">
+        <div className="hidden sm:flex items-center gap-2 mb-3">
           <FiFilter className="text-stone-500 dark:text-gray-400" size={14} />
           <span className="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-gray-400 font-outfit">
             Categories
@@ -42,14 +50,14 @@ const SearchFilterBar = ({ searchQuery, onSearchChange, selectedCategories, onTo
             </span>
           )}
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-nowrap sm:flex-wrap gap-2 overflow-x-auto sm:overflow-visible -mx-5 px-5 sm:mx-0 sm:px-0 pb-1 sm:pb-0 scrollbar-hide">
           {BOOKCLUB_CATEGORIES.map((cat) => {
             const isActive = selectedCategories.includes(cat);
             return (
               <button
                 key={cat}
                 onClick={() => onToggleCategory(cat)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 font-outfit ${
+                className={`flex-shrink-0 px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 font-outfit whitespace-nowrap ${
                   isActive
                     ? 'bg-stone-800 dark:bg-warmgray-200 text-white dark:text-stone-900 shadow-md'
                     : 'bg-stone-100 dark:bg-gray-700 text-stone-600 dark:text-gray-300 hover:bg-stone-200 dark:hover:bg-gray-600'

@@ -1,8 +1,7 @@
 import { getCollabImageUrl } from '@config/constants';
+import { getBookclubCoverUrl, getBookclubSeed } from '@utils/avatar';
 import CurrentlyReading from './CurrentlyReading';
 import MemberAvatars from './MemberAvatars';
-
-const DEFAULT_IMAGE = '/images/default.webp';
 
 // ─── Pastel palette (matches home card) ──────────────────
 
@@ -39,27 +38,18 @@ const BookClubCard = ({ bookClub, bookIndex = 0, onBookIndexChange, friendIds, o
     >
       {/* Cover image */}
       <div className="relative h-[220px] flex-shrink-0 overflow-hidden rounded-t-2xl">
-        {bookClub.imageUrl ? (
-          <img
-            src={getCollabImageUrl(bookClub.imageUrl)}
-            alt={bookClub.name}
-            className="w-full h-full object-cover transition-transform duration-500"
-            loading="lazy"
-            onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_IMAGE; }}
-          />
-        ) : (
-          <div
-            className="w-full h-full flex items-center justify-center"
-            style={{ background: `linear-gradient(135deg, ${palette.text}22, ${palette.text}44)` }}
-          >
-            <span
-              className="font-display font-bold tracking-tight select-none"
-              style={{ fontSize: '5rem', color: palette.text, opacity: 0.55 }}
-            >
-              {bookClub.name.charAt(0).toUpperCase()}
-            </span>
-          </div>
-        )}
+        {(() => {
+          const coverFallback = getBookclubCoverUrl(getBookclubSeed(bookClub));
+          return (
+            <img
+              src={bookClub.imageUrl ? getCollabImageUrl(bookClub.imageUrl) : coverFallback}
+              alt={bookClub.name}
+              className="w-full h-full object-cover transition-transform duration-500"
+              loading="lazy"
+              onError={(e) => { (e.target as HTMLImageElement).src = coverFallback; }}
+            />
+          );
+        })()}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
 
         {/* Visibility badge */}
@@ -84,15 +74,24 @@ const BookClubCard = ({ bookClub, bookIndex = 0, onBookIndexChange, friendIds, o
 
       {/* Card body */}
       <div className="flex flex-col flex-1 px-4 pt-3 pb-5">
-        <h3 className="font-bold text-lg leading-tight line-clamp-2" style={{ color: palette.text }}>
+        {/* Title — reserves space for exactly 2 lines so cards never shift
+            their bottom rows depending on whether the title wraps. */}
+        <h3
+          className="font-bold text-lg leading-tight line-clamp-2"
+          style={{ color: palette.text, minHeight: 'calc(2 * 1.25 * 1.125rem)' }}
+        >
           {bookClub.name}
         </h3>
 
-        {bookClub.description && (
-          <p className="text-xs mt-1.5 line-clamp-2 leading-relaxed opacity-60" style={{ color: palette.text }}>
-            {bookClub.description}
-          </p>
-        )}
+        {/* Description — always renders the 2-line slot (even if empty) so the
+            "Currently Reading" + members rows align across cards regardless of
+            description length. */}
+        <p
+          className="text-xs mt-1.5 line-clamp-2 leading-relaxed opacity-60"
+          style={{ color: palette.text, minHeight: 'calc(2 * 1.625 * 0.75rem)' }}
+        >
+          {bookClub.description || ''}
+        </p>
 
         {bookClub.currentBooks?.length > 0 && (
           <CurrentlyReading
@@ -108,17 +107,17 @@ const BookClubCard = ({ bookClub, bookIndex = 0, onBookIndexChange, friendIds, o
           </div>
         )}
 
-        {/* Members */}
-        {bookClub.members?.length > 0 && (
-          <div className="mt-auto pt-3">
-            <MemberAvatars
-              members={bookClub.members}
-              memberCount={bookClub.memberCount}
-              friendIds={friendIds}
-              onHoverMember={onHoverMember}
-            />
-          </div>
-        )}
+        {/* Members — always rendered so the row reserves space at the bottom
+            of the card. MemberAvatars internally falls back to a count-only
+            label ("N members") when no avatar data is available. */}
+        <div className="mt-auto pt-3 min-h-[2.25rem]">
+          <MemberAvatars
+            members={bookClub.members || []}
+            memberCount={bookClub.memberCount ?? bookClub.members?.length ?? 0}
+            friendIds={friendIds}
+            onHoverMember={onHoverMember}
+          />
+        </div>
       </div>
     </article>
   );

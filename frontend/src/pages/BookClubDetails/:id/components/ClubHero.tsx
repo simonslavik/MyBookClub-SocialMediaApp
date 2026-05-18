@@ -1,7 +1,6 @@
 import { FiUsers, FiBook, FiArrowRight, FiClock } from 'react-icons/fi';
 import { getCollabImageUrl } from '@config/constants';
-
-const DEFAULT_IMG = '/images/default.webp';
+import { getBookclubCoverUrl, getBookclubSeed } from '@utils/avatar';
 
 export default function ClubHero({ bookClub, members, totalBooks, currentBooks, actionLabel, actionDisabled, onAction }) {
     const now = new Date();
@@ -15,18 +14,17 @@ export default function ClubHero({ bookClub, members, totalBooks, currentBooks, 
         <section className="bg-stone-800 dark:bg-gray-950">
             <div className="max-w-5xl mx-auto px-5 md:px-8 py-10 md:py-16 flex flex-col md:flex-row items-center gap-6 md:gap-10">
                 {/* Club image */}
-                {bookClub?.imageUrl ? (
-                    <img
-                        src={getCollabImageUrl(bookClub.imageUrl)}
-                        alt={bookClub.name}
-                        className="w-28 h-28 md:w-36 md:h-36 rounded-2xl object-cover ring-4 ring-white/10 flex-shrink-0"
-                        onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_IMG; }}
-                    />
-                ) : (
-                    <div className="w-28 h-28 md:w-36 md:h-36 rounded-2xl bg-white/10 flex items-center justify-center flex-shrink-0">
-                        <FiBook className="text-white/40 text-5xl" />
-                    </div>
-                )}
+                {(() => {
+                    const coverFallback = getBookclubCoverUrl(getBookclubSeed(bookClub));
+                    return (
+                        <img
+                            src={bookClub?.imageUrl ? getCollabImageUrl(bookClub.imageUrl) : coverFallback}
+                            alt={bookClub?.name}
+                            className="w-28 h-28 md:w-36 md:h-36 rounded-2xl object-cover ring-4 ring-white/10 flex-shrink-0"
+                            onError={(e) => { (e.target as HTMLImageElement).src = coverFallback; }}
+                        />
+                    );
+                })()}
 
                 {/* Info */}
                 <div className="flex-1 text-center md:text-left">

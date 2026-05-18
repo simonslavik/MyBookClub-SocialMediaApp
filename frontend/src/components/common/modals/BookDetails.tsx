@@ -3,6 +3,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { FiX } from 'react-icons/fi';
 import logger from '@utils/logger';
+import { stripHtml } from '@utils/text';
 
 const BookDetailsModal = ({ onClose, book }) => {
   return createPortal(
@@ -25,10 +26,10 @@ const BookDetailsModal = ({ onClose, book }) => {
             {/* Book Info */}
             <div className="flex gap-6 mb-6">
               <img
-                src={book?.coverUrl || '/images/default.webp'}
+                src={book?.coverUrl || '/images/default.svg'}
                 alt={book?.title}
                 className="w-48 h-72 object-cover rounded-lg shadow-lg flex-shrink-0"
-                onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
               />
               <div className="flex-1">
                 <h3 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-3">
@@ -55,7 +56,7 @@ const BookDetailsModal = ({ onClose, book }) => {
               <div className="mb-6">
                 <h4 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">About this book</h4>
                 <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
-                  {book.description}
+                  {stripHtml(book.description)}
                 </p>
               </div>
             )}

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 import { userAPI } from '@api/user.api';
 import { STATUS_OPTIONS, getStatusColor } from './statusUtils';
 import logger from '@utils/logger';
@@ -51,10 +52,10 @@ const StatusPopup = ({ user, onClose, onStatusChange, wsRef, onLogout, anchorRef
       <div className="p-3 border-b border-gray-700 flex items-center gap-3">
         <div className="relative flex-shrink-0">
           <img
-            src={getProfileImageUrl(user?.profileImage) || '/images/default.webp'}
+            src={getProfileImageUrl(user?.profileImage) || getAvatarUrl(getAvatarSeed(user))}
             alt={user?.name}
             className="w-10 h-10 rounded-full object-cover"
-            onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+            onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(user)); }}
           />
           <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-gray-800 ${getStatusColor(currentStatus)}`} />
         </div>

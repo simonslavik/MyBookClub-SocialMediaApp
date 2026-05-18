@@ -103,15 +103,24 @@ export class BookClubBooksService {
   }
 
   /**
-   * Get current books for multiple bookclubs (single query instead of N)
+   * Get books to display per bookclub on cards (discover / home / sidebar).
+   * Prefers `current` books; if a club has none, falls back to its `upcoming`
+   * books so cards still show *something* the club is reading toward.
+   *
+   * The result key stays `currentBooks` to keep the existing client contract;
+   * each entry still has a `status` field so the UI can label "Currently Reading"
+   * vs "Up Next" appropriately.
    */
   static async getBatchCurrentBooks(bookClubIds: string[]) {
-    const currentBooks = await BookClubBooksRepository.findCurrentByBookClubIds(bookClubIds);
+    const books = await BookClubBooksRepository.findCurrentOrUpcomingByBookClubIds(bookClubIds);
 
-    // Map results back to each bookClubId, returning all current books per club
-    return bookClubIds.map((bookClubId) => ({
-      bookClubId,
-      currentBooks: currentBooks.filter((b) => b.bookClubId === bookClubId),
-    }));
+    return bookClubIds.map((bookClubId) => {
+      const clubBooks = books.filter((b) => b.bookClubId === bookClubId);
+      const current = clubBooks.filter((b) => b.status === 'current');
+      const displayed = current.length > 0
+        ? current
+        : clubBooks.filter((b) => b.status === 'upcoming');
+      return { bookClubId, currentBooks: displayed };
+    });
   }
 }

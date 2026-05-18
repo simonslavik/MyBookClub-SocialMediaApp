@@ -3,10 +3,11 @@ import { createPortal } from 'react-dom';
 import { FiHome, FiSend, FiUsers, FiBook } from 'react-icons/fi';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getProfileImageUrl, getCollabImageUrl } from '@config/constants';
+import { getAvatarUrl, getAvatarSeed, getBookclubCoverUrl, getBookclubSeed } from '@utils/avatar';
 import StatusPopup from './StatusPopup';
 import { getStatusColor } from './statusUtils';
 
-const MyBookClubsSidebar = ({ bookClubs, currentBookClubId, onSelectBookClub, onOpenDM, auth, setAuth, wsRef, onLogout, viewMode }: any) => {
+const MyBookClubsSidebar = ({ bookClubs, currentBookClubId, onSelectBookClub, onOpenDM, auth, setAuth, wsRef, onLogout, viewMode, unreadSummary }: any) => {
     const navigate = useNavigate();
     const location = useLocation();
     const [showStatusPopup, setShowStatusPopup] = useState(false);
@@ -68,35 +69,60 @@ const MyBookClubsSidebar = ({ bookClubs, currentBookClubId, onSelectBookClub, on
           <div className="w-10 h-px bg-gray-700"></div>
           
           {/* My Bookclubs */}
-          {bookClubs.map((club) => (
-            <button
-              key={club.id}
-              onClick={() => onSelectBookClub(club.id)}
-              onMouseEnter={(e) => handleMouseEnter(club, e)}
-              onMouseLeave={handleMouseLeave}
-              className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${
-                !isOnDMPage && club.id === currentBookClubId
-                  ? 'bg-indigo-700 ring-2 ring-indigo-500'
-                  : 'bg-gray-700 hover:bg-indigo-700'
-              }`}
-              title=""
-            >
-              {club.imageUrl ? (
-                <img
-                  src={getCollabImageUrl(club.imageUrl)}
-                  alt={club.name}
-                  className="w-full h-full rounded-full object-cover"
-                  onError={(e) => { 
-                    (e.target as HTMLElement).style.display = 'none';
-                    if ((e.target as HTMLElement).nextSibling) ((e.target as HTMLElement).nextSibling as HTMLElement).style.display = 'flex';
-                  }}
-                />
-              ) : null}
-              <span className={club.imageUrl ? 'hidden' : ''}>
-                {club.name.substring(0, 2).toUpperCase()}
-              </span>
-            </button>
-          ))}
+          {bookClubs.map((club) => {
+            const isActive = !isOnDMPage && club.id === currentBookClubId;
+            const unread = unreadSummary?.get?.(club.id);
+            // While the user is *inside* a club its badge is hidden — the
+            // existing per-bookclub WS clears the read state in real time and
+            // showing the badge would be visual noise.
+            const badgeMessages = !isActive ? (unread?.unreadMessageCount ?? 0) : 0;
+            const badgeSectionDot = !isActive && (unread?.unreadSections?.length ?? 0) > 0;
+            const showBadge = badgeMessages > 0 || badgeSectionDot;
+
+            // Always round in this sidebar (Discord-style). The generated
+            // bookclub cover SVG is square but gets clipped to a circle by
+            // the container — its colored stripes still read distinctly from
+            // the user avatars' marble pattern even inside the circle.
+            const coverFallback = getBookclubCoverUrl(getBookclubSeed(club));
+
+            return (
+              <div key={club.id} className="relative flex-shrink-0">
+                <button
+                  onClick={() => onSelectBookClub(club.id)}
+                  onMouseEnter={(e) => handleMouseEnter(club, e)}
+                  onMouseLeave={handleMouseLeave}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden ${
+                    isActive
+                      ? 'ring-2 ring-indigo-500'
+                      : 'hover:ring-2 hover:ring-indigo-500/40'
+                  }`}
+                  title=""
+                >
+                  <img
+                    src={club.imageUrl ? getCollabImageUrl(club.imageUrl) : coverFallback}
+                    alt={club.name}
+                    className="w-full h-full rounded-full object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).src = coverFallback; }}
+                  />
+                </button>
+                {showBadge && (
+                  badgeMessages > 0 ? (
+                    <span
+                      className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-gray-900 pointer-events-none"
+                      aria-label={`${badgeMessages} unread message${badgeMessages === 1 ? '' : 's'}`}
+                    >
+                      {badgeMessages > 99 ? '99+' : badgeMessages}
+                    </span>
+                  ) : (
+                    <span
+                      className="absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-gray-900 pointer-events-none"
+                      aria-label="New activity"
+                    />
+                  )
+                )}
+              </div>
+            );
+          })}
           
           {/* Add Bookclub Button */}
           <button
@@ -117,10 +143,10 @@ const MyBookClubsSidebar = ({ bookClubs, currentBookClubId, onSelectBookClub, on
           >
             <div className="relative">
               <img
-                src={getProfileImageUrl(auth.user.profileImage) || '/images/default.webp'}
+                src={getProfileImageUrl(auth.user.profileImage) || getAvatarUrl(getAvatarSeed(auth.user))}
                 alt={auth.user.name}
                 className="w-10 h-10 rounded-full object-cover hover:bg-gray-50 cursor-pointer"
-                onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(auth.user)); }}
               />
               <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-gray-900 ${getStatusColor(auth.user.status || 'ONLINE')}`}></div>
             </div>
@@ -150,20 +176,19 @@ const MyBookClubsSidebar = ({ bookClubs, currentBookClubId, onSelectBookClub, on
               {/* Arrow */}
               <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-800 border-l border-b border-gray-600 rotate-45" />
               
-              {/* Club image + name */}
+              {/* Club image + name — round to match the sidebar bubble. */}
               <div className="flex items-center gap-2.5 mb-2">
-                {hoveredClub.imageUrl ? (
-                  <img
-                    src={getCollabImageUrl(hoveredClub.imageUrl)}
-                    alt={hoveredClub.name}
-                    className="w-9 h-9 rounded-full object-cover flex-shrink-0"
-                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
-                  />
-                ) : (
-                  <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-                    {hoveredClub.name.substring(0, 2).toUpperCase()}
-                  </div>
-                )}
+                {(() => {
+                  const coverFallback = getBookclubCoverUrl(getBookclubSeed(hoveredClub));
+                  return (
+                    <img
+                      src={hoveredClub.imageUrl ? getCollabImageUrl(hoveredClub.imageUrl) : coverFallback}
+                      alt={hoveredClub.name}
+                      className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                      onError={(e) => { (e.target as HTMLImageElement).src = coverFallback; }}
+                    />
+                  );
+                })()}
                 <div className="min-w-0">
                   <p className="text-sm font-semibold truncate">{hoveredClub.name}</p>
                   {hoveredClub.category && (

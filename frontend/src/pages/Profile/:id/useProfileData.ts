@@ -70,9 +70,13 @@ export default function useProfileData() {
                 }
                 setProfile(profileRes.data);
 
-                // Fetch clubs + books in parallel (independent of each other)
+                // Fetch clubs + books in parallel (independent of each other).
+                // The /users/:userId endpoint returns clubs `id` is a member of
+                // (filtered for the viewer's visibility) — replaces the buggy
+                // /discover-then-filter approach which was matching `c.isMember`
+                // against the *viewer's* membership, not the profile owner's.
                 const [clubsResult] = await Promise.allSettled([
-                    apiClient.get('/v1/bookclubs/discover'),
+                    apiClient.get(`/v1/bookclubs/users/${id}`),
                     fetchBooks(id),
                 ]);
 
@@ -80,9 +84,9 @@ export default function useProfileData() {
 
                 if (clubsResult.status === 'fulfilled') {
                     const clubsRes = clubsResult.value.data;
-                    const clubs = clubsRes.success ? clubsRes.data : (clubsRes.bookClubs || []);
+                    const clubs = clubsRes.bookClubs || (clubsRes.success ? clubsRes.data : []);
                     setCreatedBookClubs(clubs.filter(c => c.creatorId === id));
-                    setMemberBookClubs(clubs.filter(c => c.isMember && c.creatorId !== id));
+                    setMemberBookClubs(clubs.filter(c => c.creatorId !== id));
                 }
             } catch (err) {
                 if (cancelled) return;

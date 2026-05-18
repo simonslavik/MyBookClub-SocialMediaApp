@@ -3,7 +3,23 @@ import logger from '../utils/logger';
 import { getRedisClient } from '../config/redis';
 import { ValidationError, TooManyRequestsError, BadGatewayError, NotFoundError } from '../utils/errors';
 
-function mapGoogleBooksError(status: number | undefined, context: 'search' | 'details'): Error {
+function mapGoogleBooksError(error: any, context: 'search' | 'details'): Error {
+  const status: number | undefined = error?.response?.status;
+
+  // Network-level / timeout failures don't carry a response status — without
+  // mapping them explicitly the caller bubbles the raw error up to express,
+  // the request handler hangs/throws, and the origin eventually drops the
+  // socket → Cloudflare returns a generic 502 with no CORS headers.
+  if (error?.code === 'ECONNABORTED' || error?.code === 'ETIMEDOUT') {
+    return new BadGatewayError(
+      context === 'search'
+        ? 'Book search is taking too long. Please try again.'
+        : 'Book details request timed out. Please try again.',
+    );
+  }
+  if (error?.code === 'ECONNRESET' || error?.code === 'ENOTFOUND' || error?.code === 'EAI_AGAIN') {
+    return new BadGatewayError('Book service is temporarily unreachable. Please try again shortly.');
+  }
   if (status === 400) {
     return new ValidationError(
       context === 'search'
@@ -28,6 +44,10 @@ function mapGoogleBooksError(status: number | undefined, context: 'search' | 'de
 const GOOGLE_BOOKS_API = 'https://www.googleapis.com/books/v1/volumes';
 const API_KEY = process.env.GOOGLE_BOOKS_API_KEY;
 const CACHE_TTL = 60 * 60 * 24; // 24 hours in seconds
+// Hard ceiling on every Google Books call — without this axios defaults to no
+// timeout, a hung upstream blocks an event-loop slot indefinitely and the
+// container eventually stops responding (Cloudflare then returns its own 502).
+const GOOGLE_BOOKS_TIMEOUT_MS = 8_000;
 
 interface GoogleBook {
   id: string;
@@ -90,7 +110,7 @@ export class GoogleBooksService {
         params.key = API_KEY;
       }
 
-      const response = await axios.get(GOOGLE_BOOKS_API, { params });
+      const response = await axios.get(GOOGLE_BOOKS_API, { params, timeout: GOOGLE_BOOKS_TIMEOUT_MS });
 
       const books =
         response.data.items?.map((item: GoogleBook) => ({
@@ -123,7 +143,7 @@ export class GoogleBooksService {
         try {
           const params2: any = { q: query, maxResults, printType: 'books', langRestrict: 'en', orderBy: 'relevance' };
           if (API_KEY) params2.key = API_KEY;
-          const retryResponse = await axios.get(GOOGLE_BOOKS_API, { params: params2 });
+          const retryResponse = await axios.get(GOOGLE_BOOKS_API, { params: params2, timeout: GOOGLE_BOOKS_TIMEOUT_MS });
           const retryBooks = retryResponse.data.items?.map((item: GoogleBook) => ({
             googleBooksId: item.id,
             title: item.volumeInfo.title,
@@ -144,8 +164,8 @@ export class GoogleBooksService {
           logger.error('Google Books API retry also failed:', { error: retryError.message, query });
         }
       }
-      logger.error('Google Books API search error:', { error: error.message, status, query });
-      throw mapGoogleBooksError(status, 'search');
+      logger.error('Google Books API search error:', { error: error.message, code: error.code, status, query });
+      throw mapGoogleBooksError(error, 'search');
     }
   }
 
@@ -170,7 +190,7 @@ export class GoogleBooksService {
       const params: any = {};
       if (API_KEY) params.key = API_KEY;
 
-      const response = await axios.get(`${GOOGLE_BOOKS_API}/${googleBooksId}`, { params });
+      const response = await axios.get(`${GOOGLE_BOOKS_API}/${googleBooksId}`, { params, timeout: GOOGLE_BOOKS_TIMEOUT_MS });
       const book = response.data;
 
       const bookData = {
@@ -196,8 +216,8 @@ export class GoogleBooksService {
       return bookData;
     } catch (error: any) {
       const status = error.response?.status;
-      logger.error('Google Books API get book error:', { error: error.message, status, googleBooksId });
-      throw mapGoogleBooksError(status, 'details');
+      logger.error('Google Books API get book error:', { error: error.message, code: error.code, status, googleBooksId });
+      throw mapGoogleBooksError(error, 'details');
     }
   }
 }

@@ -1,8 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { FiSearch, FiCompass, FiPlusCircle, FiUsers, FiMessageCircle } from 'react-icons/fi';
 import { getProfileImageUrl } from '@config/constants';
-
-const DEFAULT_IMAGE = '/images/default.webp';
+import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 
 const DMWelcomeScreen = ({ auth, friends = [], conversations = [], onSelectConversation }) => {
   const navigate = useNavigate();
@@ -86,11 +85,11 @@ const DMWelcomeScreen = ({ auth, friends = [], conversations = [], onSelectConve
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-800 transition-colors group cursor-pointer"
                 >
                   <img
-                    src={getProfileImageUrl(friend.profileImage) || DEFAULT_IMAGE}
+                    src={getProfileImageUrl(friend.profileImage) || getAvatarUrl(getAvatarSeed(friend))}
                     alt={friend.name || friend.username}
                     className="w-9 h-9 rounded-full object-cover flex-shrink-0"
                     loading="lazy"
-                    onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_IMAGE; }}
+                    onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(friend)); }}
                   />
                   <span className="text-sm text-gray-300 group-hover:text-white font-medium truncate">{friend.name || friend.username}</span>
                   <FiMessageCircle className="w-4 h-4 text-gray-600 group-hover:text-indigo-400 ml-auto flex-shrink-0 transition-colors" />

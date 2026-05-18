@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { FiUsers, FiStar, FiShield, FiAward, FiSearch, FiX } from 'react-icons/fi';
 import { getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 import { getStatusColor } from './statusUtils';
 import UserHoverCard from './UserHoverCard';
 import logger from '@utils/logger';
@@ -149,10 +150,10 @@ const ConnectedUsersSidebar = ({
                         onSendFriendRequest={onSendFriendRequest}
                       >
                         <img
-                          src={getProfileImageUrl(user.profileImage) || '/images/default.webp'}
+                          src={getProfileImageUrl(user.profileImage) || getAvatarUrl(getAvatarSeed(user))}
                           alt={user.username}
                           className="w-8 h-8 rounded-full object-cover"
-                          onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                          onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(user)); }}
                         />
                       </UserHoverCard>
                       <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-gray-800 ${getStatusColor(isOnline ? (user.status || 'ONLINE') : 'OFFLINE')}`} />
@@ -221,10 +222,10 @@ const ConnectedUsersSidebar = ({
                     onSendFriendRequest={onSendFriendRequest}
                   >
                     <img
-                      src={getProfileImageUrl(user.profileImage) || '/images/default.webp'}
+                      src={getProfileImageUrl(user.profileImage) || getAvatarUrl(getAvatarSeed(user))}
                       alt={user.username}
                       className="w-7 h-7 rounded-full object-cover"
-                      onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                      onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(user)); }}
                     />
                   </UserHoverCard>
                   <div className={`absolute bottom-0 right-0 w-2 h-2 rounded-full border-2 border-gray-800 ${getStatusColor(isOnline ? (user.status || 'ONLINE') : 'OFFLINE')}`}></div>

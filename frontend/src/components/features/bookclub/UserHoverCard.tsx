@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiMessageSquare, FiUserPlus } from 'react-icons/fi';
 import { getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 import { getStatusColor } from './statusUtils';
 
 /**
@@ -116,14 +117,14 @@ const UserHoverCard = ({
             <div className="absolute -bottom-5 left-4">
               <div className="relative">
                 <img
-                  src={getProfileImageUrl(user?.profileImage) || '/images/default.webp'}
+                  src={getProfileImageUrl(user?.profileImage) || getAvatarUrl(getAvatarSeed(user))}
                   alt={user?.username}
                   className="w-12 h-12 rounded-full object-cover border-[3px] border-gray-800 cursor-pointer hover:ring-2 hover:ring-indigo-500 transition-all"
                   onClick={() => {
                     setVisible(false);
                     navigate(`/profile/${user?.id}`);
                   }}
-                  onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                  onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(user)); }}
                 />
                 <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-gray-800 ${getStatusColor(status)}`} />
               </div>

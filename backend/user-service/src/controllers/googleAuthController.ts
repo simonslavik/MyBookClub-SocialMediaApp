@@ -4,6 +4,7 @@ import prisma from '../config/database.js';
 import { generateTokens } from '../utils/tokenUtils.js';
 import { logger, logError } from '../utils/logger.js';
 import { setRefreshCookie } from '../utils/cookieUtils.js';
+import { normalizeGooglePicture, isGoogleDefaultAvatar } from '../utils/googleAvatar.js';
 
 const googleClient = new OAuth2Client(
     process.env.GOOGLE_CLIENT_ID,
@@ -37,7 +38,13 @@ export const googleAuth = async (req: Request, res: Response) => {
             });
         }
 
-        const { sub: googleId, email, name, picture } = payload;
+        const { sub: googleId, email, name, picture: googlePicture } = payload;
+
+        // Strip Google's monogram / "no photo" placeholder URLs — those
+        // would otherwise display as letter initials in the app, fighting
+        // the in-app generated SVG avatar fallback. Real Google photos
+        // pass through untouched.
+        const picture = normalizeGooglePicture(googlePicture);
 
         if (!email || !name) {
             logger.warn({
@@ -113,7 +120,10 @@ export const googleAuth = async (req: Request, res: Response) => {
                     googleId,
                     authProvider: 'google',
                     profileImage: picture || null,
-                    password: null // OAuth users don't need password
+                    password: null, // OAuth users don't need password
+                    // Google has already proven the user owns the address; no
+                    // point sending our own verification mail.
+                    emailVerified: true,
                 },
                 select: {
                     id: true,
@@ -126,7 +136,7 @@ export const googleAuth = async (req: Request, res: Response) => {
                     createdAt: true
                 }
             });
-            
+
             logger.info({
                 type: 'USER_REGISTERED_GOOGLE',
                 userId: user.id,
@@ -134,6 +144,58 @@ export const googleAuth = async (req: Request, res: Response) => {
                 name: user.name
             });
         } else {
+            // Self-heal: any Google user who was created before the fix above
+            // (or via account-link from an unverified local account) lands
+            // here with `emailVerified: false` — flip it on this login so the
+            // frontend gate stops blocking them. Idempotent — no-op for users
+            // that are already verified.
+            if (!user.emailVerified) {
+                user = await prisma.user.update({
+                    where: { id: user.id },
+                    data: { emailVerified: true },
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        googleId: true,
+                        authProvider: true,
+                        emailVerified: true,
+                        profileImage: true,
+                        createdAt: true
+                    }
+                });
+                logger.info({
+                    type: 'GOOGLE_EMAIL_AUTOVERIFIED',
+                    userId: user.id,
+                    email: user.email,
+                });
+            }
+            // Self-heal: existing Google users may have a stored profile
+            // image that's actually a Google monogram placeholder URL
+            // (saved by the older code path before the normalize fix).
+            // Clear it on next login so the app's generated SVG avatar
+            // can take over.
+            if (isGoogleDefaultAvatar(user.profileImage)) {
+                user = await prisma.user.update({
+                    where: { id: user.id },
+                    data: { profileImage: null },
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        googleId: true,
+                        authProvider: true,
+                        emailVerified: true,
+                        profileImage: true,
+                        createdAt: true
+                    }
+                });
+                logger.info({
+                    type: 'GOOGLE_DEFAULT_AVATAR_CLEARED',
+                    userId: user.id,
+                    email: user.email,
+                });
+            }
             logger.info({
                 type: 'USER_LOGIN_GOOGLE',
                 userId: user.id,

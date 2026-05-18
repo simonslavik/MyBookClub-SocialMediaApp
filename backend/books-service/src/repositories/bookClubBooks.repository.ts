@@ -121,4 +121,20 @@ export class BookClubBooksRepository {
       orderBy: { createdAt: 'desc' },
     });
   }
+
+  /**
+   * Find current AND upcoming books for multiple bookclubs in a single query.
+   * Used by the discover/home cards which fall back to "next up" books when a
+   * club has none currently in progress.
+   */
+  static async findCurrentOrUpcomingByBookClubIds(bookClubIds: string[]) {
+    return await prisma.bookClubBook.findMany({
+      where: {
+        bookClubId: { in: bookClubIds },
+        status: { in: [BookClubBookStatus.current, BookClubBookStatus.upcoming] },
+      },
+      include: { book: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }

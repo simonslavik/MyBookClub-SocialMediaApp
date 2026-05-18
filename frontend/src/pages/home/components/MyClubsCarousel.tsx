@@ -1,10 +1,11 @@
 import { useState, useEffect, useContext, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiUsers } from 'react-icons/fi';
 import { getCollabImageUrl, getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl, getAvatarSeed, getBookclubCoverUrl, getBookclubSeed } from '@utils/avatar';
 import AuthContext from '@context/index';
 
-const DEFAULT_IMAGE = '/images/default.webp';
+const DEFAULT_IMAGE = '/images/default.svg';
 
 // ─── Sub-components ──────────────────────────────────────────
 
@@ -12,7 +13,7 @@ const DEFAULT_IMAGE = '/images/default.webp';
 const CreateClubCard = ({ onClick, scale, opacity, zIndex, isCenter }) => (
   <div
     onClick={onClick}
-    className="w-[240px] sm:w-[300px] h-[400px] sm:h-[480px] flex-shrink-0 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all duration-500 ease-out group"
+    className="w-[240px] sm:w-[300px] h-[460px] sm:h-[520px] flex-shrink-0 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all duration-500 ease-out group"
     style={{
       transform: `scale(${scale})`,
       opacity,
@@ -36,11 +37,14 @@ const CreateClubCard = ({ onClick, scale, opacity, zIndex, isCenter }) => (
 const CurrentBooksPreview = ({ books, clubId, bookIdx, onChangeIndex }) => {
   const currentEntry = books[bookIdx] || books[0];
   const hasMultiple = books.length > 1;
+  // Backend falls back to upcoming books when there's no current one — relabel.
+  const allUpcoming = books.every((b) => b.status === 'upcoming');
+  const heading = allUpcoming ? 'Up Next' : 'Currently Reading';
 
   return (
-    <div className="mt-3 px-3 py-3 rounded-xl bg-stone-800/5 dark:bg-white/5">
-      <p className="text-[10px] uppercase tracking-widest text-stone-400 dark:text-stone-500 font-semibold mb-2">
-        Currently Reading
+    <div className="mt-3 px-3 py-2 rounded-xl bg-stone-800/5 dark:bg-white/5 flex-shrink min-h-0">
+      <p className="text-[10px] uppercase tracking-widest text-stone-400 dark:text-stone-500 font-semibold mb-1">
+        {heading}
       </p>
 
       <div className="flex items-center gap-2">
@@ -101,33 +105,51 @@ const CurrentBooksPreview = ({ books, clubId, bookIdx, onChangeIndex }) => {
 };
 
 /** Member avatar stack shown at the bottom of a club card. */
-const MemberAvatars = ({ members, onHover, onLeave }) => {
+const MemberAvatars = ({ members, memberCount, onHover, onLeave }) => {
   const navigate = useNavigate();
+  const list = members || [];
+  const total = memberCount ?? list.length;
+
+  // Count-only fallback when avatar data is missing — keeps the bottom row
+  // populated so cards stay visually balanced.
+  if (list.length === 0) {
+    return (
+      <div className="mt-auto pt-3 flex items-center gap-2 text-stone-400 flex-shrink-0">
+        <FiUsers size={14} />
+        <span className="text-xs font-medium">
+          {total} {total === 1 ? 'member' : 'members'}
+        </span>
+      </div>
+    );
+  }
 
   return (
-    <div className="mt-auto pt-3 flex items-center justify-between">
+    <div className="mt-auto pt-3 flex items-center justify-between flex-shrink-0">
       <div className="flex -space-x-2">
-        {members.slice(0, 4).map((member) => (
-          <div key={member.id} className="relative">
-            <img
-              src={getProfileImageUrl(member.profileImage) || DEFAULT_IMAGE}
-              alt={member.username}
-              className="w-7 h-7 rounded-full border-2 border-white object-cover shadow-sm cursor-pointer hover:ring-2 hover:ring-stone-400 transition-all hover:z-10 relative"
-              onClick={(e) => { e.stopPropagation(); navigate(`/profile/${member.id}`); }}
-              onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_IMAGE; }}
-              onMouseEnter={(e) => onHover(e, member)}
-              onMouseLeave={onLeave}
-            />
-          </div>
-        ))}
-        {members.length > 4 && (
+        {list.slice(0, 4).map((member) => {
+          const fallback = getAvatarUrl(getAvatarSeed(member));
+          return (
+            <div key={member.id} className="relative">
+              <img
+                src={getProfileImageUrl(member.profileImage) || fallback}
+                alt={member.username}
+                className="w-7 h-7 rounded-full border-2 border-white object-cover shadow-sm cursor-pointer hover:ring-2 hover:ring-stone-400 transition-all hover:z-10 relative"
+                onClick={(e) => { e.stopPropagation(); navigate(`/profile/${member.id}`); }}
+                onError={(e) => { (e.target as HTMLImageElement).src = fallback; }}
+                onMouseEnter={(e) => onHover(e, member)}
+                onMouseLeave={onLeave}
+              />
+            </div>
+          );
+        })}
+        {total > list.length && (
           <div className="w-7 h-7 rounded-full border-2 border-white bg-stone-100 flex items-center justify-center text-[10px] font-bold text-stone-700">
-            +{members.length - 4}
+            +{total - list.length}
           </div>
         )}
       </div>
       <span className="text-xs text-gray-400 font-medium">
-        {members.length} {members.length === 1 ? 'member' : 'members'}
+        {total} {total === 1 ? 'member' : 'members'}
       </span>
     </div>
   );
@@ -159,7 +181,7 @@ const ClubCard = ({ bookClub, scale, opacity, zIndex, isCenter, cardBookIndex, o
   return (
     <div
       onClick={() => navigate(`/bookclub/${bookClub.id}`)}
-      className="w-[240px] sm:w-[300px] h-[400px] sm:h-[480px] flex-shrink-0 rounded-2xl flex flex-col cursor-pointer transition-all duration-500 ease-out relative overflow-hidden"
+      className="w-[240px] sm:w-[300px] h-[460px] sm:h-[520px] flex-shrink-0 rounded-2xl flex flex-col cursor-pointer transition-all duration-500 ease-out relative overflow-hidden"
       style={{
         transform: `scale(${scale})`,
         opacity,
@@ -172,27 +194,18 @@ const ClubCard = ({ bookClub, scale, opacity, zIndex, isCenter, cardBookIndex, o
     >
       {/* Top section — full-width image covering most of the card */}
       <div className="relative h-[220px] sm:h-[270px] flex-shrink-0 overflow-hidden rounded-t-2xl">
-        {bookClub.imageUrl ? (
-          <img
-            src={getCollabImageUrl(bookClub.imageUrl)}
-            alt={bookClub.name}
-            className="w-full h-full object-cover transition-transform duration-500"
-            loading="lazy"
-            onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_IMAGE; }}
-          />
-        ) : (
-          <div
-            className="w-full h-full flex items-center justify-center"
-            style={{ background: `linear-gradient(135deg, ${palette.text}22, ${palette.text}44)` }}
-          >
-            <span
-              className="font-display font-bold tracking-tight select-none"
-              style={{ fontSize: '5rem', color: palette.text, opacity: 0.55 }}
-            >
-              {bookClub.name.charAt(0).toUpperCase()}
-            </span>
-          </div>
-        )}
+        {(() => {
+          const coverFallback = getBookclubCoverUrl(getBookclubSeed(bookClub));
+          return (
+            <img
+              src={bookClub.imageUrl ? getCollabImageUrl(bookClub.imageUrl) : coverFallback}
+              alt={bookClub.name}
+              className="w-full h-full object-cover transition-transform duration-500"
+              loading="lazy"
+              onError={(e) => { (e.target as HTMLImageElement).src = coverFallback; }}
+            />
+          );
+        })()}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
 
         {/* Owner badge */}
@@ -211,15 +224,24 @@ const ClubCard = ({ bookClub, scale, opacity, zIndex, isCenter, cardBookIndex, o
 
       {/* Card body */}
       <div className="flex flex-col flex-1 px-4 pt-3 pb-4">
-        <h3 className="font-bold text-lg sm:text-xl leading-tight line-clamp-2" style={{ color: palette.text }}>
+        {/* Title — reserves space for exactly 2 lines so card layout doesn't
+            shift when titles wrap differently. */}
+        <h3
+          className="font-bold text-lg sm:text-xl leading-tight line-clamp-2"
+          style={{ color: palette.text, minHeight: 'calc(2 * 1.25 * 1.125rem)' }}
+        >
           {bookClub.name}
         </h3>
 
-        {bookClub.description && (
-          <p className="text-xs mt-1.5 line-clamp-2 leading-relaxed opacity-60" style={{ color: palette.text }}>
-            {bookClub.description}
-          </p>
-        )}
+        {/* Description — always renders the 2-line slot (even if empty) so the
+            books preview + members row align across cards regardless of
+            description length. */}
+        <p
+          className="text-xs mt-1.5 line-clamp-2 leading-relaxed opacity-60"
+          style={{ color: palette.text, minHeight: 'calc(2 * 1.625 * 0.75rem)' }}
+        >
+          {bookClub.description || ''}
+        </p>
 
         {/* Current books preview — text only */}
         {bookClub.currentBooks?.length > 0 && (
@@ -240,14 +262,15 @@ const ClubCard = ({ bookClub, scale, opacity, zIndex, isCenter, cardBookIndex, o
           </div>
         )}
 
-        {/* Members */}
-        {bookClub.members?.length > 0 && (
-          <MemberAvatars
-            members={bookClub.members}
-            onHover={onMemberHover}
-            onLeave={onMemberLeave}
-          />
-        )}
+        {/* Members — always rendered so the row reserves space at the bottom
+            of the card. MemberAvatars internally falls back to a count-only
+            label ("N members") when no avatar data is available. */}
+        <MemberAvatars
+          members={bookClub.members}
+          memberCount={bookClub.memberCount ?? bookClub.members?.length ?? 0}
+          onHover={onMemberHover}
+          onLeave={onMemberLeave}
+        />
       </div>
     </div>
   );
@@ -296,6 +319,14 @@ const MyClubsCarousel = ({
     [allMyBookClubs, filterCreatedByMe, auth?.user?.id]
   );
 
+  // When the user toggles the "Mine" filter the underlying list changes
+  // length and ordering — snap back to the first card so they land on a
+  // real bookclub (or the Create card if they have none) instead of an
+  // arbitrary clamped index from the previous view.
+  useEffect(() => {
+    setCarouselIndex(0);
+  }, [filterCreatedByMe]);
+
   const handleChangeBookIndex = useCallback((clubId, newIdx) => {
     setCardBookIndex((prev) => ({ ...prev, [clubId]: newIdx }));
   }, []);
@@ -306,7 +337,7 @@ const MyClubsCarousel = ({
       onSetHoveredMember({
         id: member.id,
         name: member.name || member.username,
-        image: getProfileImageUrl(member.profileImage) || DEFAULT_IMAGE,
+        image: getProfileImageUrl(member.profileImage) || getAvatarUrl(getAvatarSeed(member)),
         x: rect.left + rect.width / 2,
         y: rect.top,
       });
@@ -329,9 +360,15 @@ const MyClubsCarousel = ({
               ? "You haven't created any bookclubs yet."
               : "You're not in any bookclubs yet."}
           </p>
+
+          {/* Invitation card — pulls focus by combining three layered
+              motions: (1) gentle continuous float so the card breathes,
+              (2) scale + lift on hover, (3) plus-icon rotates 90° and
+              the surrounding ring grows on hover. Plus a soft pulsing
+              ring behind the + as an idle-state attractor. */}
           <div
             onClick={createNewBookClub}
-            className="w-[300px] h-[480px] rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all duration-500 ease-out group hover:shadow-xl"
+            className="group relative w-[300px] h-[480px] rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-shadow duration-500 ease-out hover:shadow-2xl animate-card-attract"
             style={{
               background: '#E4DDD4',
               border: '2px dashed',
@@ -339,11 +376,22 @@ const MyClubsCarousel = ({
               boxShadow: '0 12px 40px rgba(180, 160, 130, 0.12)',
             }}
           >
-            <div className="w-16 h-16 rounded-full bg-white/40 group-hover:bg-white/60 flex items-center justify-center transition-colors mb-3">
-              <span className="text-3xl text-stone-500 group-hover:text-stone-700 transition-colors">+</span>
+            {/* Plus icon with pulsing attractor ring behind it */}
+            <div className="relative mb-4">
+              {/* Pulsing halo — purely decorative, sits behind the + icon */}
+              <span
+                aria-hidden
+                className="absolute inset-0 rounded-full bg-stone-400/30 animate-ping-soft"
+              />
+              <div className="relative w-20 h-20 rounded-full bg-white/50 group-hover:bg-white/80 flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg">
+                <span className="text-4xl text-stone-500 group-hover:text-stone-700 transition-all duration-300 group-hover:rotate-90 leading-none">+</span>
+              </div>
             </div>
-            <span className="text-sm text-stone-500 group-hover:text-stone-700 font-semibold transition-colors">
+            <span className="text-sm text-stone-500 group-hover:text-stone-700 font-semibold transition-colors tracking-wide">
               Create Book Club
+            </span>
+            <span className="mt-1 text-xs text-stone-400 group-hover:text-stone-500 transition-colors">
+              Start your reading community
             </span>
           </div>
         </div>
@@ -381,7 +429,7 @@ const MyClubsCarousel = ({
 
       <div
         className="relative w-full flex items-center justify-center"
-        style={{ minHeight: isMobile ? '400px' : '500px' }}
+        style={{ minHeight: isMobile ? '460px' : '520px' }}
       >
         {/* Left arrow */}
         <CarouselArrow
@@ -393,7 +441,7 @@ const MyClubsCarousel = ({
         {/* Track */}
         <div
           className="overflow-x-clip overflow-y-visible w-full px-4 md:px-12"
-          style={{ height: isMobile ? '380px' : '470px' }}
+          style={{ height: isMobile ? '460px' : '520px' }}
         >
           <div
             className="flex items-center h-full transition-transform duration-500 ease-out"
@@ -442,21 +490,23 @@ const MyClubsCarousel = ({
           disabled={idx === items.length - 1}
           onClick={goNext}
         />
+      </div>
 
-        {/* Dot indicators */}
-        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
-          {items.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCarouselIndex(i)}
-              className={`rounded-full transition-all duration-300 ${
-                i === idx
-                  ? 'w-6 h-2.5 bg-stone-700 dark:bg-stone-400'
-                  : 'w-2.5 h-2.5 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400'
-              }`}
-            />
-          ))}
-        </div>
+      {/* Dot indicators — in normal flow under the carousel so the gap above
+          (cards → dots) matches the gap below (dots → Discover button), which
+          is set by `mt-6` on the Discover wrapper in home/index.tsx. */}
+      <div className="mt-6 flex justify-center gap-2">
+        {items.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCarouselIndex(i)}
+            className={`rounded-full transition-all duration-300 ${
+              i === idx
+                ? 'w-6 h-2.5 bg-stone-700 dark:bg-stone-400'
+                : 'w-2.5 h-2.5 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400'
+            }`}
+          />
+        ))}
       </div>
     </div>
   );

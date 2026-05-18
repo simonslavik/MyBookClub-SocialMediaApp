@@ -25,6 +25,9 @@ export const useBookclubWebSocket = (
   const [lastReadAt, setLastReadAt] = useState(null);
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
+  // True between a room/bookclub switch and the next init / room-switched event.
+  // Lets the chat view show a spinner instead of the empty-room "Welcome…" copy.
+  const [loadingMessages, setLoadingMessages] = useState(true);
 
   const { toastError } = useContext(UIFeedbackContext);
   const { typingUsers, noteTyping, resetTyping } = useTypingIndicators(auth?.user?.id);
@@ -59,6 +62,7 @@ export const useBookclubWebSocket = (
     if (isRoomSwitch && ws.current?.readyState === WebSocket.OPEN) {
       logger.debug('🔄 Switching room from', currentRoomIdRef.current, 'to', currentRoom.id);
       currentRoomIdRef.current = currentRoom.id;
+      setLoadingMessages(true);
       resetTyping();
       ws.current.send(JSON.stringify({
         type: 'switch-room',
@@ -71,6 +75,7 @@ export const useBookclubWebSocket = (
 
     // Otherwise we need a new socket (different bookclub, or no live connection).
     logger.debug('Establishing new WebSocket connection for bookclub:', bookClubId);
+    setLoadingMessages(true);
     isIntentionalCloseRef.current = false;
 
     const onMessage = createServerMessageHandler({
@@ -82,6 +87,7 @@ export const useBookclubWebSocket = (
       setUnreadSections,
       setLastReadAt,
       setLoadingOlder,
+      setLoadingMessages,
       noteTyping,
       currentRoomIdRef,
       toastError,
@@ -241,6 +247,7 @@ export const useBookclubWebSocket = (
     lastReadAt,
     hasMoreMessages,
     loadingOlder,
+    loadingMessages,
     loadOlderMessages,
     typingUsers,
     sendTyping,

@@ -6,6 +6,8 @@ import BookSuggestionDetailsModal from '../Modals/BookSuggestionDetailsModal';
 import apiClient from '@api/axios';
 import logger from '@utils/logger';
 import { getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl } from '@utils/avatar';
+import { stripHtmlExcerpt } from '@utils/text';
 
 const BookSuggestionsView = ({ bookClubId, auth, members = [], userRole, onSuggestionAdded }) => {
   const navigate = useNavigate();
@@ -112,7 +114,7 @@ const BookSuggestionsView = ({ bookClubId, auth, members = [], userRole, onSugge
               const suggesterId = suggestion.suggestedById || suggestion.suggestedBy?.id;
               const suggester = members.find(m => m.id === suggesterId);
               const suggesterName = suggester?.username || suggestion.suggestedBy?.name || 'Unknown';
-              const suggesterImage = getProfileImageUrl(suggester?.profileImage) || '/images/default-avatar.png';
+              const suggesterImage = getProfileImageUrl(suggester?.profileImage) || getAvatarUrl(suggesterId);
               return (
               <div
                 key={suggestion.id}
@@ -122,10 +124,10 @@ const BookSuggestionsView = ({ bookClubId, auth, members = [], userRole, onSugge
                 {/* Book Cover and Info */}
                 <div className="flex gap-3 mb-3">
                   <img
-                    src={suggestion.book?.coverUrl || '/images/default.webp'}
+                    src={suggestion.book?.coverUrl || '/images/default.svg'}
                     alt={suggestion.book?.title}
                     className="w-16 h-24 object-cover rounded shadow"
-                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.svg'; }}
                   />
                   <div className="flex-1 min-w-0">
                     <h3 className="text-white font-semibold text-sm line-clamp-2 mb-1">
@@ -149,7 +151,7 @@ const BookSuggestionsView = ({ bookClubId, auth, members = [], userRole, onSugge
                       src={suggesterImage}
                       alt={suggesterName}
                       className="w-6 h-6 rounded-full object-cover flex-shrink-0 mt-0.5"
-                      onError={(e) => { (e.target as HTMLImageElement).src = '/images/default-avatar.png'; }}
+                      onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(suggesterId); }}
                     />
                     <div className="relative flex-1 min-w-0 bg-indigo-500/10 border border-indigo-500/30 rounded-lg rounded-tl-sm px-3 py-2">
                       <span
@@ -203,12 +205,12 @@ const BookSuggestionsView = ({ bookClubId, auth, members = [], userRole, onSugge
                   )}
                 </div>
 
-                {/* Book Description (if available) */}
+                {/* Book Description (if available) — Google Books returns
+                    HTML in this field, strip it to plain text before display. */}
                 {suggestion.book?.description && (
                   <div className="mt-3 pt-3 border-t border-gray-700 max-h-20 overflow-hidden">
                     <p className="text-gray-400 text-[11px] break-words leading-relaxed">
-                      {suggestion.book.description.slice(0, 150)}
-                      {suggestion.book.description.length > 150 && '…'}
+                      {stripHtmlExcerpt(suggestion.book.description, 150)}
                     </p>
                   </div>
                 )}

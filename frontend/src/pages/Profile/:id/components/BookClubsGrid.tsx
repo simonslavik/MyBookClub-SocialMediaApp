@@ -1,7 +1,8 @@
 import { FiBook } from 'react-icons/fi';
 import { getProfileImageUrl, getCollabImageUrl } from '@config/constants';
+import { getAvatarUrl, getAvatarSeed, getBookclubCoverUrl, getBookclubSeed } from '@utils/avatar';
 
-const DEFAULT_IMG = '/images/default.webp';
+const DEFAULT_IMG = '/images/default.svg'; // book covers — kept as a generic placeholder
 
 export default function BookClubsGrid({ clubs, isOwnProfile, profileId, navigate, profileName }: any) {
     const count = clubs.length;
@@ -57,13 +58,18 @@ function ClubCard({ club, profileId, navigate }) {
         >
             {/* Image */}
             <div className="relative h-40 overflow-hidden">
-                <img
-                    src={club.imageUrl ? getCollabImageUrl(club.imageUrl) : DEFAULT_IMG}
-                    alt={club.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
-                    onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_IMG; }}
-                />
+                {(() => {
+                    const coverFallback = getBookclubCoverUrl(getBookclubSeed(club));
+                    return (
+                        <img
+                            src={club.imageUrl ? getCollabImageUrl(club.imageUrl) : coverFallback}
+                            alt={club.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                            onError={(e) => { (e.target as HTMLImageElement).src = coverFallback; }}
+                        />
+                    );
+                })()}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
 
                 {/* Badges */}
@@ -110,16 +116,19 @@ function ClubCard({ club, profileId, navigate }) {
                 {club.members?.length > 0 && (
                     <div className="mt-3 flex items-center justify-between">
                         <div className="flex -space-x-2">
-                            {club.members.slice(0, 4).map((m, i) => (
-                                <img
-                                    key={i}
-                                    src={getProfileImageUrl(m.profileImage) || DEFAULT_IMG}
-                                    alt=""
-                                    className="w-6 h-6 rounded-full border-2 border-white object-cover"
-                                    loading="lazy"
-                                    onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_IMG; }}
-                                />
-                            ))}
+                            {club.members.slice(0, 4).map((m, i) => {
+                                const fallback = getAvatarUrl(getAvatarSeed(m));
+                                return (
+                                    <img
+                                        key={i}
+                                        src={getProfileImageUrl(m.profileImage) || fallback}
+                                        alt=""
+                                        className="w-6 h-6 rounded-full border-2 border-white object-cover"
+                                        loading="lazy"
+                                        onError={(e) => { (e.target as HTMLImageElement).src = fallback; }}
+                                    />
+                                );
+                            })}
                             {club.members.length > 4 && (
                                 <div className="w-6 h-6 rounded-full border-2 border-white bg-stone-100 flex items-center justify-center text-[9px] font-bold text-stone-700">
                                     +{club.members.length - 4}

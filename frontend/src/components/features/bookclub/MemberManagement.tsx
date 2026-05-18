@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FiUsers, FiShield, FiUserX, FiChevronDown } from 'react-icons/fi';
 import { bookclubAPI } from '@api/bookclub.api';
 import { getProfileImageUrl } from '@config/constants';
+import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 import logger from '@utils/logger';
 import { useConfirm, useToast } from '@hooks/useUIFeedback';
 
@@ -135,10 +136,10 @@ const MemberManagement = ({ bookclub, currentUserId, currentUserRole, onMemberUp
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <img
-                    src={getProfileImageUrl(member.profileImage) || '/images/default.webp'}
+                    src={getProfileImageUrl(member.profileImage) || getAvatarUrl(getAvatarSeed(member))}
                     alt={member.username}
                     className="w-7 h-7 rounded-full object-cover flex-shrink-0"
-                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.webp'; }}
+                    onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(member)); }}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">

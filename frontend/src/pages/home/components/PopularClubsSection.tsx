@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { getCollabImageUrl } from '@config/constants';
-
-const DEFAULT_IMAGE = '/images/default.webp';
+import { getBookclubCoverUrl, getBookclubSeed } from '@utils/avatar';
 
 const RANK_STYLES = {
   0: { size: 'w-36 h-44', ring: 'ring-4 ring-yellow-400', badge: 'bg-yellow-500', emoji: '👑', textSize: 'text-sm' },
@@ -27,14 +26,21 @@ const RankedClubCard = ({ club, rank }) => {
         {style.emoji || rank + 1}
       </div>
 
-      {/* Club image */}
-      <img
-        src={club.imageUrl ? getCollabImageUrl(club.imageUrl) : DEFAULT_IMAGE}
-        alt={club.name}
-        className={`${isFirst ? 'w-14 h-14' : 'w-10 h-10'} rounded-full object-cover ${style.ring} shadow-md mb-2`}
-        loading="lazy"
-        onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_IMAGE; }}
-      />
+      {/* Club image — falls back to a generated square cover. The bubble shape
+          itself stays round (rounded-full) for visual consistency with the
+          other ranks; the cover SVG just provides the colored fill. */}
+      {(() => {
+        const coverFallback = getBookclubCoverUrl(getBookclubSeed(club));
+        return (
+          <img
+            src={club.imageUrl ? getCollabImageUrl(club.imageUrl) : coverFallback}
+            alt={club.name}
+            className={`${isFirst ? 'w-14 h-14' : 'w-10 h-10'} rounded-full object-cover ${style.ring} shadow-md mb-2`}
+            loading="lazy"
+            onError={(e) => { (e.target as HTMLImageElement).src = coverFallback; }}
+          />
+        );
+      })()}
 
       {/* Club name */}
       <p className={`${style.textSize} font-semibold text-stone-800 dark:text-warmgray-100 text-center line-clamp-2 leading-tight group-hover:text-stone-600 dark:group-hover:text-white transition-colors`}>

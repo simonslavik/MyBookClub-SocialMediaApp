@@ -2,17 +2,19 @@ import React from 'react';
 import { FiImage } from 'react-icons/fi';
 import { FiTrash2 } from 'react-icons/fi';
 import { getCollabImageUrl } from '@config/constants';
+import { getBookclubCoverUrl, getBookclubSeed } from '@utils/avatar';
 import logger from '@utils/logger';
 
 
 const BookClubImage = ({ bookClub, auth, uploadingImage, fileInputRef, handleImageUpload, handleDeleteImage }) => {
+    const coverFallback = getBookclubCoverUrl(getBookclubSeed(bookClub));
     return (
         <div className="relative mb-3 group">
-                    <img 
-                      src={bookClub?.imageUrl ? getCollabImageUrl(bookClub.imageUrl) : '/images/default.webp'}
+                    <img
+                      src={bookClub?.imageUrl ? getCollabImageUrl(bookClub.imageUrl) : coverFallback}
                       alt={bookClub?.name}
                       className="w-full h-52 object-cover rounded"
-                      onError={(e) => { (e.target as HTMLImageElement).src = '/images/IMG_2650.jpg'; }}
+                      onError={(e) => { (e.target as HTMLImageElement).src = coverFallback; }}
                     />
                     {auth?.user && auth.user.id === bookClub?.creatorId && (
                       <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 rounded">
