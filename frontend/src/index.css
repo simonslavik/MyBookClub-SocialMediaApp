@@ -360,3 +360,41 @@
 .stagger-4 { animation-delay: 200ms; }
 .stagger-5 { animation-delay: 250ms; }
 .stagger-6 { animation-delay: 300ms; }
+
+/* ── Continuous attractor animations ──
+   Used by idle-state CTAs (e.g. the empty-state Create Bookclub card)
+   to draw the eye without screaming. `float-soft` is a slow vertical
+   breathe; `ping-soft` is a much gentler version of Tailwind's stock
+   `animate-ping` (full opacity → 0 with a 2× scale is aggressive — we
+   tone both down for a calm pulse). */
+@keyframes float-soft {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+.animate-float-soft {
+  animation: float-soft 4s ease-in-out infinite;
+}
+
+@keyframes ping-soft {
+  0%   { transform: scale(1);    opacity: 0.55; }
+  100% { transform: scale(1.45); opacity: 0;    }
+}
+.animate-ping-soft {
+  animation: ping-soft 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Combined entrance + idle attractor for the empty-state Create card.
+   Both animations live in a single `animation:` shorthand so the second
+   doesn't override the first (the way two separate `.animate-bounce-in`
+   + `.animate-float-soft` classes would). Bounce plays once, then the
+   slow float takes over after a small gap. */
+@keyframes card-bounce-in {
+  0%   { opacity: 0; transform: scale(0.92) translateY(0); }
+  60%  { opacity: 1; transform: scale(1.02) translateY(0); }
+  100% { opacity: 1; transform: scale(1)    translateY(0); }
+}
+.animate-card-attract {
+  animation:
+    card-bounce-in 0.45s ease-out both,
+    float-soft 4s ease-in-out 0.6s infinite;
+}

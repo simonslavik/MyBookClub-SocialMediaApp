@@ -360,9 +360,15 @@ const MyClubsCarousel = ({
               ? "You haven't created any bookclubs yet."
               : "You're not in any bookclubs yet."}
           </p>
+
+          {/* Invitation card — pulls focus by combining three layered
+              motions: (1) gentle continuous float so the card breathes,
+              (2) scale + lift on hover, (3) plus-icon rotates 90° and
+              the surrounding ring grows on hover. Plus a soft pulsing
+              ring behind the + as an idle-state attractor. */}
           <div
             onClick={createNewBookClub}
-            className="w-[300px] h-[480px] rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all duration-500 ease-out group hover:shadow-xl"
+            className="group relative w-[300px] h-[480px] rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-shadow duration-500 ease-out hover:shadow-2xl animate-card-attract"
             style={{
               background: '#E4DDD4',
               border: '2px dashed',
@@ -370,11 +376,22 @@ const MyClubsCarousel = ({
               boxShadow: '0 12px 40px rgba(180, 160, 130, 0.12)',
             }}
           >
-            <div className="w-16 h-16 rounded-full bg-white/40 group-hover:bg-white/60 flex items-center justify-center transition-colors mb-3">
-              <span className="text-3xl text-stone-500 group-hover:text-stone-700 transition-colors">+</span>
+            {/* Plus icon with pulsing attractor ring behind it */}
+            <div className="relative mb-4">
+              {/* Pulsing halo — purely decorative, sits behind the + icon */}
+              <span
+                aria-hidden
+                className="absolute inset-0 rounded-full bg-stone-400/30 animate-ping-soft"
+              />
+              <div className="relative w-20 h-20 rounded-full bg-white/50 group-hover:bg-white/80 flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg">
+                <span className="text-4xl text-stone-500 group-hover:text-stone-700 transition-all duration-300 group-hover:rotate-90 leading-none">+</span>
+              </div>
             </div>
-            <span className="text-sm text-stone-500 group-hover:text-stone-700 font-semibold transition-colors">
+            <span className="text-sm text-stone-500 group-hover:text-stone-700 font-semibold transition-colors tracking-wide">
               Create Book Club
+            </span>
+            <span className="mt-1 text-xs text-stone-400 group-hover:text-stone-500 transition-colors">
+              Start your reading community
             </span>
           </div>
         </div>

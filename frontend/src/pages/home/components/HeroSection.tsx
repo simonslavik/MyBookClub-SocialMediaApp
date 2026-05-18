@@ -17,8 +17,14 @@ const HeroSection = () => {
       </p>
     </div>
 
+    {/* Mount-only entrance — `animate-fade-up` starts at opacity 0 +
+        translateY 12px and animates to its final state once. Crucially
+        these run synchronously at page load (above the fold), so the
+        animation never gates scrolling on content below — unlike the
+        old IntersectionObserver-based Reveal wrappers which hid every
+        below-fold section until 700ms after they came into view. */}
     <div className="relative z-10 flex flex-col md:flex-row items-center gap-10 md:gap-16">
-      <div className="w-full md:w-1/2">
+      <div className="w-full md:w-1/2 animate-fade-up">
         <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold leading-[1.05] text-stone-900 dark:text-warmgray-100 tracking-tight">
           &ldquo;Connect With<br />Your Fellow<br />BookLovers&rdquo;
         </h1>
@@ -31,15 +37,16 @@ const HeroSection = () => {
         </div>
       </div>
 
-      {/* Image placeholder */}
-      <div className="w-full md:w-1/2 aspect-[4/3] bg-stone-700 dark:bg-gray-700 rounded-sm overflow-hidden">
+      {/* Image placeholder — fades up slightly after the headline */}
+      <div className="w-full md:w-1/2 aspect-[4/3] bg-stone-700 dark:bg-gray-700 rounded-sm overflow-hidden animate-fade-up stagger-2">
         <div className="w-full h-full bg-stone-700 dark:bg-gray-700" />
       </div>
 
     </div>
 
-    {/* CTA buttons */}
-    <div className="relative z-10 flex justify-center gap-4 mt-12">
+    {/* CTA buttons — last in the stagger so the eye lands on them after
+        reading the headline + image. */}
+    <div className="relative z-10 flex justify-center gap-4 mt-12 animate-fade-up stagger-4">
       <button
         onClick={() => window.dispatchEvent(new Event('open-login'))}
         className="px-8 py-3 bg-stone-800 dark:bg-warmgray-200 text-white dark:text-stone-900 rounded-md hover:bg-stone-700 dark:hover:bg-warmgray-300 transition-colors text-sm font-medium cursor-pointer"
