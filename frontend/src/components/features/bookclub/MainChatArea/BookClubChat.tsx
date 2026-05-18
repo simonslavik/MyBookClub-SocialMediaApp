@@ -23,15 +23,46 @@ const BookClubChat = ({ messages, setMessages, currentRoom, auth, userRole, ws, 
 
   const canModerate = userRole && ['OWNER', 'ADMIN', 'MODERATOR'].includes(userRole);
   const currentUserId = auth?.user?.id;
-  const prevMessageCountRef = useRef(messages.length);
+  // Start at -1 so the very first render with messages already populated
+  // (cached state, fast preload) still trips the "messages grew" branch and
+  // scrolls to bottom — the old `useRef(messages.length)` swallowed that case.
+  const prevMessageCountRef = useRef(-1);
   const isLoadingOlderRef = useRef(false);
+  const didInitialScrollRef = useRef(false);
 
-  // ── Scroll only on NEW messages (not when prepending older ones) ──
+  // Reset the "have we scrolled yet" flag whenever the user switches rooms,
+  // so opening a new channel re-runs the bottom-anchor logic instead of
+  // landing the user partway up the previous transcript.
   useEffect(() => {
-    if (messages.length > prevMessageCountRef.current && !isLoadingOlderRef.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+    didInitialScrollRef.current = false;
+    prevMessageCountRef.current = -1;
+  }, [currentRoom?.id]);
+
+  // Pin to the bottom on (a) initial mount with messages present, (b) when
+  // a brand-new message arrives. Skip when older messages are being
+  // prepended (those keep the current scroll position). Uses container
+  // scrollTop instead of scrollIntoView — more reliable than `behavior:
+  // 'instant'` which some browsers ignore.
+  useEffect(() => {
+    if (isLoadingOlderRef.current) {
+      isLoadingOlderRef.current = false;
+      prevMessageCountRef.current = messages.length;
+      return;
     }
-    isLoadingOlderRef.current = false;
+
+    const isInitialPopulate = !didInitialScrollRef.current && messages.length > 0;
+    const isNewMessage = didInitialScrollRef.current && messages.length > prevMessageCountRef.current;
+
+    if (isInitialPopulate || isNewMessage) {
+      // Wait one frame so the freshly-rendered messages have their final
+      // heights before we measure scrollHeight.
+      requestAnimationFrame(() => {
+        const container = messagesContainerRef.current;
+        if (container) container.scrollTop = container.scrollHeight;
+      });
+      didInitialScrollRef.current = true;
+    }
+
     prevMessageCountRef.current = messages.length;
   }, [messages]);
 

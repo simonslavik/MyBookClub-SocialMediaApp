@@ -9,9 +9,12 @@ import { BOOKCLUB_CATEGORIES } from '@config/constants';
 const SearchFilterBar = ({ searchQuery, onSearchChange, selectedCategories, onToggleCategory }) => (
   <div className="max-w-7xl mx-auto px-5 md:px-8 -mt-7">
     <div className="rounded-2xl">
-      {/* Search input */}
-      <div className="relative">
-        <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 text-lg" />
+      {/* Search input — wrapped in a <label> so a click anywhere in the
+          padded chrome (icon area, end padding, even the border edge)
+          focuses the input. The icon itself uses `pointer-events-none`
+          so it doesn't intercept the click. */}
+      <label className="relative block cursor-text">
+        <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 text-lg pointer-events-none" />
         <input
           type="text"
           placeholder="Search for book clubs..."
@@ -21,13 +24,14 @@ const SearchFilterBar = ({ searchQuery, onSearchChange, selectedCategories, onTo
         />
         {searchQuery && (
           <button
+            type="button"
             onClick={() => onSearchChange('')}
             className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors"
           >
             <FiX className="text-lg" />
           </button>
         )}
-      </div>
+      </label>
 
       {/* Category pills — header label hidden on mobile (the pills are
           self-explanatory) and the row switches from wrap (desktop) to a

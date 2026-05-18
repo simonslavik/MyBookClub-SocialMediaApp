@@ -319,6 +319,14 @@ const MyClubsCarousel = ({
     [allMyBookClubs, filterCreatedByMe, auth?.user?.id]
   );
 
+  // When the user toggles the "Mine" filter the underlying list changes
+  // length and ordering — snap back to the first card so they land on a
+  // real bookclub (or the Create card if they have none) instead of an
+  // arbitrary clamped index from the previous view.
+  useEffect(() => {
+    setCarouselIndex(0);
+  }, [filterCreatedByMe]);
+
   const handleChangeBookIndex = useCallback((clubId, newIdx) => {
     setCardBookIndex((prev) => ({ ...prev, [clubId]: newIdx }));
   }, []);
