@@ -127,6 +127,27 @@ const FriendsPage = () => {
         }
     };
 
+    // Remove a confirmed friend. Same optimistic + rollback pattern as
+    // cancelRequest, but uses DELETE /friends/remove and refreshes the
+    // friends list afterwards so the "Friends" tab count updates.
+    const handleRemoveFriend = async (userId) => {
+        const ok = await confirm(
+            'Remove this friend?',
+            { title: 'Remove friend', variant: 'danger', confirmLabel: 'Remove' }
+        );
+        if (!ok) return;
+        const snapshot = friends;
+        setFriends(prev => prev.filter(f => (f.friend?.id || f.id) !== userId));
+        try {
+            await apiClient.delete('/v1/friends/remove', { data: { friendId: userId } });
+            toastSuccess('Friend removed');
+            await refreshFriendData();
+        } catch (err) {
+            setFriends(snapshot);
+            toastError(err.response?.data?.message || 'Failed to remove friend');
+        }
+    };
+
     // Cancel a request the current user sent. Optimistically drops the
     // user from `sentRequests` so the Pending pill flips back to "Add
     // Friend" before the API roundtrip resolves; rolls back on error.
@@ -412,9 +433,16 @@ const FriendsPage = () => {
                                                 </button>
                                             )}
                                             {relationship === 'friends' && (
-                                                <span className="flex items-center gap-1 px-3 py-1.5 bg-stone-100 dark:bg-gray-700 text-stone-600 dark:text-gray-300 text-xs rounded-lg font-medium">
-                                                    <FiCheck className="w-3 h-3" /> Friends
-                                                </span>
+                                                <button
+                                                    onClick={() => handleRemoveFriend(user.id)}
+                                                    title="Click to remove from friends"
+                                                    className="flex items-center gap-1 px-3 py-1.5 bg-stone-100 dark:bg-gray-700 text-stone-600 dark:text-gray-300 text-xs rounded-lg font-medium hover:bg-red-100 dark:hover:bg-red-950/30 hover:text-red-700 dark:hover:text-red-400 transition-colors cursor-pointer group"
+                                                >
+                                                    <FiCheck className="w-3 h-3 group-hover:hidden" />
+                                                    <FiX className="w-3 h-3 hidden group-hover:block" />
+                                                    <span className="group-hover:hidden">Friends</span>
+                                                    <span className="hidden group-hover:inline">Remove</span>
+                                                </button>
                                             )}
                                             {relationship === 'received' && (
                                                 <button

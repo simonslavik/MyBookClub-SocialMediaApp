@@ -285,6 +285,23 @@ export function useBookclubData(bookClubId) {
     }
   }, [bookClubId, toastSuccess, toastError]);
 
+  // Leave the bookclub. Anyone except the OWNER can leave (backend's
+  // BookClubController.leaveClub rejects owner attempts — they must
+  // either delete the club or transfer ownership first). Returns true
+  // on success so the caller can navigate away from the now-inaccessible
+  // page.
+  const handleLeaveBookclub = useCallback(async () => {
+    try {
+      await bookclubAPI.leaveBookclub(bookClubId);
+      toastSuccess('You left the bookclub');
+      return true;
+    } catch (err: any) {
+      logger.error('Error leaving bookclub:', err);
+      toastError(err.response?.data?.error || err.response?.data?.message || 'Failed to leave bookclub');
+      return false;
+    }
+  }, [bookClubId, toastSuccess, toastError]);
+
   const handleRoomDeleted = useCallback((deletedRoom) => {
     setRooms((prev) => {
       const remaining = prev.filter((r) => r.id !== deletedRoom.id);
@@ -350,6 +367,7 @@ export function useBookclubData(bookClubId) {
 
     // Bookclub deletion
     handleDeleteBookclub,
+    handleLeaveBookclub,
 
     // Social
     handleSendFriendRequest,
