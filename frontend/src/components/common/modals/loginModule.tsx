@@ -1,277 +1,249 @@
-import React, { useState, useContext, useEffect } from 'react';
+import { useState, useContext, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import apiClient from '@api/axios';
-import { useNavigate, useLocation } from "react-router-dom";
 import AuthContext from '@context/index';
-import { FiX } from 'react-icons/fi';
+import { FiX, FiMail, FiLock, FiBook } from 'react-icons/fi';
 import { GoogleLogin } from '@react-oauth/google';
 import ForgotPasswordModal from './ForgotPasswordModal';
 import logger from '@utils/logger';
 
 const Login = ({ onClose, onSwitchToRegister }) => {
+  const { setAuth } = useContext(AuthContext);
 
-    const navigate = useNavigate();
-    const location = useLocation();
-    const { setAuth } = useContext(AuthContext);
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [errors, setErrors] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
-    // Lock body scroll while modal is open
-    useEffect(() => {
-        const original = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        return () => { document.body.style.overflow = original; };
-    }, []);
-    const [formData, setFormData] = useState({
-        email: '',
-        password: ''
-    });
-    const [errors, setErrors] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState('');
-    const [showForgotPassword, setShowForgotPassword] = useState(false);
-
-    const validate = () => {
-        const errs = [];
-        if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) errs.push('Valid email is required');
-        if (!formData.password || formData.password.length < 8) errs.push('Password must be at least 8 characters');
-        return errs;
+  // Body scroll lock + Escape close — applied while the modal is mounted.
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose?.(); };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKey);
     };
+  }, [onClose]);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        // Clear previous errors/messages while the user edits
-        setMessage('');
-        setErrors([]);
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
+  const validate = () => {
+    const errs: string[] = [];
+    if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) errs.push('Enter a valid email address');
+    if (!formData.password || formData.password.length < 8) errs.push('Password must be at least 8 characters');
+    return errs;
+  };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setMessage('');
-        const v = validate();
-        if (v.length) {
-            setErrors(v);
-            return;
-        }
-        setErrors([]);
-        setLoading(true);
-        try {
-            const res = await apiClient.post('/v1/auth/login', formData);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setMessage('');
+    setErrors([]);
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
-            // Refresh token is now an HttpOnly cookie set by the response —
-            // we only extract the access token + user from the body.
-            const responseData = res?.data?.data || res?.data;
-            const accessToken = responseData?.accessToken || res?.data?.accessToken || res?.data?.token;
-            const user = responseData?.user || res?.data?.user;
+  const handleSubmit = useCallback(async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setMessage('');
+    const v = validate();
+    if (v.length) { setErrors(v); return; }
+    setErrors([]);
+    setLoading(true);
+    try {
+      const res = await apiClient.post('/v1/auth/login', formData);
+      const responseData = res?.data?.data || res?.data;
+      const accessToken = responseData?.accessToken || res?.data?.accessToken || res?.data?.token;
+      const user = responseData?.user || res?.data?.user;
+      if (!accessToken || !user) {
+        logger.error('Missing required data');
+        setErrors(['Login succeeded but received incomplete data from server']);
+        return;
+      }
+      setAuth({ token: accessToken, user });
+      onClose?.();
+      if (user.emailVerified === false) {
+        window.location.assign('/verify-required');
+      } else {
+        window.location.reload();
+      }
+    } catch (err: any) {
+      const respMsg = err?.response?.data?.message;
+      const respErrors = err?.response?.data?.errors;
+      if (respErrors && Array.isArray(respErrors)) setErrors(respErrors);
+      else setErrors([respMsg || 'Login failed']);
+    } finally {
+      setLoading(false);
+    }
+  }, [formData, setAuth, onClose]);
 
-            if (!accessToken || !user) {
-                logger.error('Missing required data - accessToken:', !!accessToken, 'user:', !!user);
-                setErrors(['Login succeeded but received incomplete data from server']);
-                return;
-            }
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true); setErrors([]); setMessage('');
+    try {
+      const res = await apiClient.post('/v1/auth/google', { credential: credentialResponse.credential });
+      const responseData = res?.data?.data || res?.data;
+      const accessToken = responseData?.accessToken || res?.data?.accessToken;
+      const user = responseData?.user || res?.data?.user;
+      if (accessToken && user) {
+        setAuth({ token: accessToken, user });
+        onClose?.();
+        window.location.reload();
+      } else {
+        setErrors(['Google login succeeded but received incomplete data from server']);
+      }
+    } catch (err: any) {
+      setErrors([err?.response?.data?.message || 'Google authentication failed']);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            setAuth({ token: accessToken, user });
-            onClose?.();
-            // Unverified users go straight to the gate so they can't poke
-            // around the app while we're nagging them to confirm their email.
-            if (user.emailVerified === false) {
-                window.location.assign('/verify-required');
-            } else {
-                window.location.reload();
-            }
-        } catch (err) {
-            const respMsg = err?.response?.data?.message;
-            const respErrors = err?.response?.data?.errors;
-            if (respErrors && Array.isArray(respErrors)) setErrors(respErrors);
-            else setErrors([respMsg || 'Login failed']);
-        } finally {
-            setLoading(false);
-        }
-    };
+  const handleGoogleError = () => {
+    logger.error('Google Sign-In error');
+    setErrors(['Google authentication failed. Please check that popups are not blocked and try again.']);
+  };
 
-    // Handle Google OAuth login
-    const handleGoogleSuccess = async (credentialResponse) => {
-        setLoading(true);
-        setErrors([]);
-        setMessage('');
-        
-        try {
-            const res = await apiClient.post('/v1/auth/google', {
-                credential: credentialResponse.credential
-            });
-
-            const responseData = res?.data?.data || res?.data;
-            const accessToken = responseData?.accessToken || res?.data?.accessToken;
-            const user = responseData?.user || res?.data?.user;
-
-            if (accessToken && user) {
-                setAuth({ token: accessToken, user });
-                onClose?.();
-                window.location.reload();
-            } else {
-                setErrors(['Google login succeeded but received incomplete data from server']);
-            }
-        } catch (err) {
-            const respMsg = err?.response?.data?.message;
-            setErrors([respMsg || 'Google authentication failed']);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleGoogleError = () => {
-        logger.error('Google Sign-In error');
-        console.error('[Google OAuth] Login failed. Origin:', window.location.origin);
-        setErrors(['Google authentication failed. Please check that popups are not blocked and try again.']);
-    };
-
-    return (
-        <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto py-8' onClick={onClose}>
-            <div className='bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md relative transition-colors duration-300 my-auto mx-4' onClick={(e) => e.stopPropagation()}>
-                {/* Close Button */}
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-                >
-                    <FiX size={24} />
-                </button>
-
-                {/* Header */}
-                <div className="mb-8 text-center">
-                    <div className="inline-block p-3 bg-stone-700 rounded-full mb-4">
-                        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                    </div>
-                    <h2 className='text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2'>Welcome Back</h2>
-                    <p className='text-gray-600 dark:text-gray-400'>Sign in to your account</p>
-                </div>
-
-                {/* Global error list */}
-                {errors && errors.length > 0 && (
-                    <div role="alert" className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-400 px-4 py-3 rounded-lg mb-4">
-                        <strong className="font-semibold block mb-2">Please fix the following:</strong>
-                        <ul className="list-disc list-inside space-y-1">
-                            {errors.map((err, i) => (
-                                <li key={i} className="text-sm">{err}</li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-
-                {/* Informational / success message */}
-                {message && (
-                    <div role="status" className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 text-green-800 dark:text-green-400 px-4 py-3 rounded-lg mb-4">
-                        {message}
-                    </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Email Address
-                        </label>
-                        <input 
-                            id="email"
-                            name="email" 
-                            type="email"
-                            value={formData.email} 
-                            onChange={handleChange}
-                            placeholder="email@example.com"
-                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all outline-none bg-white dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
-                        />
-                    </div>
-
-                    <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Password
-                        </label>
-                        <input 
-                            id="password"
-                            name="password" 
-                            type="password"
-                            value={formData.password} 
-                            onChange={handleChange}
-                            placeholder="Enter your password"
-                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all outline-none bg-white dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
-                        />
-                        <div className="text-right mt-1">
-                            <button
-                                type="button"
-                                onClick={() => setShowForgotPassword(true)}
-                                className="text-sm text-stone-700 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-300"
-                            >
-                                Forgot password?
-                            </button>
-                        </div>
-                    </div>
-
-                    <button 
-                        type="submit" 
-                        disabled={loading}
-                        className='w-full bg-stone-700 hover:bg-stone-800 text-white font-semibold py-3 px-6 rounded-lg transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg mt-6'
-                    >
-                        {loading ? (
-                            <span className="flex items-center justify-center">
-                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Signing in...
-                            </span>
-                        ) : 'Sign In'}
-                    </button>
-                </form>
-
-                {/* Google OAuth Button */}
-                <div className="mt-6">
-                    <div className="relative mb-4">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
-                        </div>
-                        <div className="relative flex justify-center text-sm">
-                            <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">Or continue with</span>
-                        </div>
-                    </div>
-                    
-                    <div className="flex justify-center">
-                        <GoogleLogin
-                            onSuccess={handleGoogleSuccess}
-                            onError={handleGoogleError}
-                            useOneTap
-                            theme="outline"
-                            size="large"
-                            text="signin_with"
-                            shape="rectangular"
-                            width="100%"
-                        />
-                    </div>
-                </div>
-
-                {/* Divider */}
-                <div className="relative my-6">
-                    <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
-                    </div>
-                    <div className="relative flex justify-center text-sm">
-                        <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">Don't have an account?</span>
-                    </div>
-                </div>
-
-            {/* Forgot Password Modal */}
-            <ForgotPasswordModal 
-                isOpen={showForgotPassword}
-                onClose={() => setShowForgotPassword(false)}
-            />
-
-                {/* Register Link */}
-                <button 
-                    onClick={onSwitchToRegister}
-                    className='w-full border-2 border-stone-700 dark:border-stone-500 text-stone-700 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-gray-700 font-semibold py-3 px-6 rounded-lg transition-all transform hover:scale-[1.02]'
-                >
-                    Create Account
-                </button>
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-150"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Sign in"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white dark:bg-gray-900 w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200"
+      >
+        {/* Header — brand glyph + title + close */}
+        <header className="flex items-start justify-between px-6 pt-6 pb-2 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex w-10 h-10 rounded-xl bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 items-center justify-center">
+              <FiBook size={18} />
+            </span>
+            <div>
+              <h2 className="text-xl font-semibold text-stone-900 dark:text-stone-100 leading-tight">Welcome back</h2>
+              <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">Sign in to your account</p>
             </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 -mr-1.5 text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            aria-label="Close"
+          >
+            <FiX size={20} />
+          </button>
+        </header>
+
+        {/* Body */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-6 pt-3">
+          {/* Inline error banner — flat list, no preamble */}
+          {errors.length > 0 && (
+            <div role="alert" className="mb-4 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 text-sm">
+              <ul className="space-y-1">
+                {errors.map((err, i) => <li key={i}>{err}</li>)}
+              </ul>
+            </div>
+          )}
+
+          {message && (
+            <div role="status" className="mb-4 px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-sm">
+              {message}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-3">
+            {/* Email — icon inside pill input */}
+            <label className="relative block cursor-text">
+              <FiMail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" size={16} />
+              <input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="email@example.com"
+                autoComplete="email"
+                className="w-full pl-10 pr-3 py-3 rounded-xl bg-stone-100 dark:bg-gray-800 text-sm text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-600 transition"
+              />
+            </label>
+
+            {/* Password */}
+            <label className="relative block cursor-text">
+              <FiLock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" size={16} />
+              <input
+                id="password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Password"
+                autoComplete="current-password"
+                className="w-full pl-10 pr-3 py-3 rounded-xl bg-stone-100 dark:bg-gray-800 text-sm text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-600 transition"
+              />
+            </label>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(true)}
+                className="text-xs font-medium text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
+              >
+                Forgot password?
+              </button>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full px-4 py-3 mt-1 text-sm font-semibold bg-stone-900 hover:bg-stone-800 dark:bg-stone-100 dark:hover:bg-white text-white dark:text-stone-900 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+            >
+              {loading && <span className="w-4 h-4 border-2 border-current border-r-transparent rounded-full animate-spin" />}
+              {loading ? 'Signing in…' : 'Sign in'}
+            </button>
+          </form>
+
+          {/* Single compact divider */}
+          <div className="relative my-5 flex items-center">
+            <div className="flex-grow border-t border-stone-200 dark:border-gray-800" />
+            <span className="px-3 text-[11px] uppercase tracking-wider text-stone-400 dark:text-stone-500 font-medium">or</span>
+            <div className="flex-grow border-t border-stone-200 dark:border-gray-800" />
+          </div>
+
+          {/* Google OAuth */}
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              useOneTap
+              theme="outline"
+              size="large"
+              text="signin_with"
+              shape="rectangular"
+              width="100%"
+            />
+          </div>
+
+          {/* Switch-to-register — inline link, not a full secondary button */}
+          <p className="text-center text-sm text-stone-500 dark:text-stone-400 mt-6">
+            Don't have an account?{' '}
+            <button
+              onClick={onSwitchToRegister}
+              className="font-semibold text-stone-900 dark:text-stone-100 hover:underline"
+            >
+              Create one
+            </button>
+          </p>
         </div>
-    );
+
+        {/* Forgot Password Modal */}
+        <ForgotPasswordModal
+          isOpen={showForgotPassword}
+          onClose={() => setShowForgotPassword(false)}
+        />
+      </div>
+    </div>,
+    document.body
+  );
 };
 
 export default Login;
