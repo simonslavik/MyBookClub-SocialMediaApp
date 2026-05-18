@@ -19,9 +19,9 @@ const SHOTS = [
     caption: 'Meetings, reading deadlines, and milestones at a glance.',
   },
   {
-    src: '/images/reading-progress.png',
-    title: 'Reading progress',
-    caption: 'Track pages, share notes, see where everyone is in the book.',
+    src: '/images/reading-progress-2.png',
+    title: 'Ratings & reviews',
+    caption: 'Rate club books, leave reviews, see what everyone thought.',
   },
   {
     src: '/images/user-profile.png',

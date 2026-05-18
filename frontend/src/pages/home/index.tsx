@@ -6,7 +6,6 @@ import {
   HeroSection,
   FeatureSection,
   ScreenshotShowcase,
-  FeatureVideosShowcase,
   TopChartingSection,
   MyClubsCarousel,
   MemberTooltip,
@@ -54,16 +53,11 @@ const Home = () => {
               suggestions, progress) before reading any feature copy. */}
           <ScreenshotShowcase />
 
-          {/* Demo videos — 4 short autoplay-in-viewport loops of the
-              core flows (create club, suggest book, track progress,
-              rate). IntersectionObserver-gated so they don't all chew
-              bandwidth simultaneously. */}
-          <FeatureVideosShowcase />
-
           <FeatureSection
             initial="C"
             text="reate your own bookclub channel and have whole bookloving community together."
             bgClass="bg-[#F0EFEB] dark:bg-gray-800"
+            media={{ type: 'video', src: '/videos/demo-create-bookclub.mov', alt: 'Demo: creating a new bookclub' }}
           />
 
           <div className="flex justify-center -mt-10 bg-parchment dark:bg-gray-900">
@@ -83,6 +77,7 @@ const Home = () => {
             text="iscover new reads, share reviews, and discuss your favorite chapters with readers who get&nbsp;it."
             reverse
             bgClass="bg-parchment dark:bg-gray-900"
+            media={{ type: 'image', src: '/images/bookclub-suggestions.png', alt: 'Book suggestions with member voting' }}
           />
 
           <div className="flex justify-center bg-parchment dark:bg-gray-900">
@@ -107,6 +102,7 @@ const Home = () => {
             initial="T"
             text="rack your reading progress, set goals, and celebrate milestones with friends who share your&nbsp;passion."
             bgClass="bg-[#F0EFEB] dark:bg-gray-800"
+            media={{ type: 'video', src: '/videos/demo-reading-progress.mov', alt: 'Demo: updating reading progress' }}
           />
 
           <div className="flex justify-center -mt-2 bg-parchment dark:bg-gray-900">
