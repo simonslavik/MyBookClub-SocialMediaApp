@@ -15,7 +15,7 @@ const ProfilePage = () => {
         id, profile, allClubs,
         loading, error, isOwnProfile,
         imagePreview, uploadingImage, fileInputRef, handleImageSelect,
-        friendRequestLoading, sendFriendRequest,
+        friendRequestLoading, sendFriendRequest, cancelFriendRequest,
         favoriteBooks, booksReading, booksToRead, booksRead,
         fetchBooks, deleteBook, navigate,
         isAuthed,
@@ -86,6 +86,7 @@ const ProfilePage = () => {
                 onImageSelect={handleImageSelect}
                 friendRequestLoading={friendRequestLoading}
                 onSendFriendRequest={handleSendFriendRequest}
+                onCancelFriendRequest={cancelFriendRequest}
                 onMessage={handleMessage}
                 clubCount={allClubs.length}
                 navigate={navigate}

@@ -31,10 +31,13 @@ const Home = () => {
   }, []);
 
   return (
-    // overflow-x-hidden kills the horizontal scrollbar on mobile that the
-    // many decorative `flex` rows below (logo / grass / flowers strips) and
-    // any wide carousel can otherwise trigger by overflowing the viewport.
-    <div className="overflow-x-hidden">
+    // overflow-x-clip (not -hidden) kills the horizontal scrollbar on mobile
+    // that the decorative `flex` rows (logo / grass / flowers strips) and any
+    // wide carousel can trigger by overflowing the viewport. `-clip` is
+    // crucial: `overflow-x-hidden` implicitly makes this element a scroll
+    // container which breaks `position: sticky` on the Header — `-clip`
+    // clips overflow without creating a scroll container.
+    <div className="overflow-x-clip">
       <HomePageHeader />
 
       {/* ===== LOGGED-OUT LANDING PAGE ===== */}

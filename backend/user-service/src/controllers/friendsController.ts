@@ -153,6 +153,41 @@ export const rejectFriendRequest = async (req: Request, res: Response) => {
     }  
 };
 
+/**
+ * Cancel a pending friend request the current user sent.
+ * POST /friends/cancel  body: { recipientId }
+ */
+export const cancelFriendRequest = async (req: Request, res: Response) => {
+    try {
+        const { recipientId } = req.body;
+        const userId = req.user?.userId;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'User not authenticated' });
+        }
+
+        await FriendshipService.cancelFriendRequest(userId, recipientId);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Friend request cancelled',
+        });
+    } catch (error: any) {
+        if (error.message === 'FRIENDSHIP_NOT_FOUND') {
+            return res.status(404).json({ message: 'No pending request to cancel' });
+        }
+        if (error.message === 'NOT_PENDING') {
+            return res.status(400).json({ message: 'Request is no longer pending' });
+        }
+        if (error.message === 'NOT_SENDER') {
+            return res.status(403).json({ message: 'Only the sender can cancel this request' });
+        }
+
+        logError(error, 'Cancel friend request error', { userId: req.user?.userId, recipientId: req.body.recipientId });
+        return res.status(500).json({ message: 'Failed to cancel friend request' });
+    }
+};
+
 export const removeFriend = async (req: Request, res: Response) => {
     try {
         const { friendId } = req.body;

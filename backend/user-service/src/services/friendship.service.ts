@@ -118,6 +118,43 @@ export class FriendshipService {
   }
 
   /**
+   * Cancel a pending friend request that THIS user sent.
+   *
+   * Distinct from `rejectFriendRequest` (receiver rejects) and
+   * `removeFriend` (mutual friendship deletion). Only the original
+   * sender can cancel — anyone else trying gets UNAUTHORIZED so the
+   * endpoint can't be used to bypass the reject flow.
+   */
+  static async cancelFriendRequest(userId: string, recipientId: string) {
+    const friendship = await FriendshipRepository.findByUserIds(userId, recipientId);
+
+    if (!friendship) {
+      throw new Error('FRIENDSHIP_NOT_FOUND');
+    }
+
+    if (friendship.status !== FriendshipStatus.PENDING) {
+      throw new Error('NOT_PENDING');
+    }
+
+    // Sender == userId (the row stores userId = sender, friendId = recipient).
+    // findByUserIds is bidirectional so we must double-check who actually
+    // sent the request before letting them cancel it.
+    if (friendship.userId !== userId) {
+      throw new Error('NOT_SENDER');
+    }
+
+    await FriendshipRepository.delete(friendship.id);
+
+    logger.info({
+      type: 'FRIEND_REQUEST_CANCELLED',
+      userId,
+      recipientId,
+    });
+
+    return { message: 'Friend request cancelled' };
+  }
+
+  /**
    * Remove friend (by friendId, not friendshipId)
    */
   static async removeFriend(userId: string, friendId: string) {
