@@ -63,7 +63,7 @@ The project demonstrates production-grade engineering practices including servic
       <p align="center"><sub>Members suggest reads, club votes on what to pick up next</sub></p>
     </td>
     <td width="50%" valign="top">
-      <img src="frontend/public/images/reading-progress.png" alt="Reading progress tracking" />
+      <img src="frontend/public/images/reading-progress-2.png" alt="Reading progress tracking" />
       <p align="center"><strong>Reading progress</strong></p>
       <p align="center"><sub>Per-member page tracking, shared notes, group sync</sub></p>
     </td>
@@ -75,12 +75,37 @@ The project demonstrates production-grade engineering practices including servic
       <p align="center"><sub>Reading, want-to-read, finished, favourites — your own bookshelf</sub></p>
     </td>
     <td width="50%" valign="top">
-      <img src="frontend/public/images/book-rating.png" alt="Star ratings + reviews" />
+      <img src="frontend/public/images/adding-ratings.png" alt="Star ratings + reviews" />
       <p align="center"><strong>Ratings &amp; reviews</strong></p>
       <p align="center"><sub>Rate club books, leave reviews, see what everyone thought</sub></p>
     </td>
   </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="frontend/public/images/notification-mobile.jpeg" alt="Mobile notification" />
+      <p align="center"><strong>Mobile-first responsive</strong></p>
+      <p align="center"><sub>Bottom sheets, dynamic viewport handling, push notifications on the phone</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="frontend/public/images/bookclub-chat-2.png" alt="Bookclub chat — alternate view" />
+      <p align="center"><strong>Multiple rooms per club</strong></p>
+      <p align="center"><sub>Channels, file attachments, image previews, threaded replies</sub></p>
+    </td>
+  </tr>
 </table>
+
+### Demo videos
+
+Short screen recordings of the core flows. Click to download / play locally
+(GitHub renders `<video>` only in issue comments, not in committed READMEs).
+
+- 🎬 [**Create a book club**](frontend/public/videos/demo-create-bookclub.mov) — cover, category, visibility, all in seconds
+- 🎬 [**Suggest a book for voting**](frontend/public/videos/demo-add-suggestion.mov) — search the catalogue, attach a note, submit
+- 🎬 [**Track reading progress**](frontend/public/videos/demo-reading-progress.mov) — pages, notes, group sync
+- 🎬 [**Rate &amp; review a club book**](frontend/public/videos/demo-rate-book.mov) — stars, review text, group average
+
+> The same videos auto-play in-viewport on the live site's logged-out homepage:
+> **[mybookclub.win](https://mybookclub.win)** → scroll past the hero.
 
 ---
 

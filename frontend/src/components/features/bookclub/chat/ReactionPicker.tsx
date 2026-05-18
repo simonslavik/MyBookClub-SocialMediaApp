@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { BsEmojiSmile } from 'react-icons/bs';
+import { FiPlus } from 'react-icons/fi';
+import Picker from '@emoji-mart/react';
+import data from '@emoji-mart/data';
 
 const QUICK_EMOJIS = [
   '👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥',
@@ -8,7 +11,10 @@ const QUICK_EMOJIS = [
   '💪', '🤝', '📚', '⭐',
 ];
 
-const DROPDOWN_W = 200;
+// Two widths: a compact quick-pick row (5 cols of 20 emojis + "More")
+// and a wider one when the full emoji-mart picker is expanded.
+const QUICK_W = 200;
+const FULL_W = 360;
 // Rough min space needed to comfortably show the picker below the trigger.
 // Used ONLY to decide flip direction — never as a positioning offset, so the
 // real dropdown height can vary without throwing off alignment.
@@ -16,6 +22,9 @@ const FLIP_THRESHOLD = 140;
 
 const ReactionPicker = ({ onSelectEmoji, position = 'top', currentUserEmoji = null, isOwn = false }) => {
   const [isOpen, setIsOpen] = useState(false);
+  // Toggles the dropdown between the quick-pick row and the full
+  // emoji-mart picker (~1800 emojis with search + categories).
+  const [showAll, setShowAll] = useState(false);
   // Fixed-position coords measured from the trigger button. `top` is set when
   // opening below; `bottom` is set when opening above. Using CSS `bottom` for
   // the above case means we don't need to know the dropdown's real height —
@@ -31,27 +40,25 @@ const ReactionPicker = ({ onSelectEmoji, position = 'top', currentUserEmoji = nu
 
   // Compute portal coords: pin dropdown to the trigger button using viewport
   // coords (position: fixed). Auto-flip above/below based on available space,
-  // and clamp horizontally so it doesn't spill off-screen.
+  // and clamp horizontally so it doesn't spill off-screen. Width depends on
+  // whether the full emoji-mart picker is expanded (~360 vs 200 for quick).
   const reposition = () => {
     const btn = triggerRef.current;
     if (!btn) return;
     const r = btn.getBoundingClientRect();
     const spaceBelow = window.innerHeight - r.bottom;
-    // Prefer the orientation hinted by `position`, but flip if there isn't
-    // enough room there and the other side has more.
     const preferBelow = position === 'bottom';
     const openBelow = preferBelow
       ? spaceBelow >= FLIP_THRESHOLD || r.top < FLIP_THRESHOLD
       : !(r.top >= FLIP_THRESHOLD) && spaceBelow >= FLIP_THRESHOLD;
 
-    let left = isOwn ? r.right - DROPDOWN_W : r.left;
-    left = Math.max(8, Math.min(left, window.innerWidth - DROPDOWN_W - 8));
+    const width = showAll ? FULL_W : QUICK_W;
+    let left = isOwn ? r.right - width : r.left;
+    left = Math.max(8, Math.min(left, window.innerWidth - width - 8));
 
     if (openBelow) {
       setCoords({ left, top: r.bottom + 8 });
     } else {
-      // Anchor by `bottom` so the dropdown grows upward from its own height —
-      // no need to know the real height ahead of time.
       setCoords({ left, bottom: window.innerHeight - r.top + 8 });
     }
   };
@@ -67,8 +74,8 @@ const ReactionPicker = ({ onSelectEmoji, position = 'top', currentUserEmoji = nu
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Recompute coords whenever the picker opens, and keep it pinned while the
-  // chat list scrolls or the window resizes underneath.
+  // Recompute coords whenever the picker opens, the user toggles between
+  // quick / full mode (width changes), or the page scrolls / resizes.
   useLayoutEffect(() => {
     if (!isOpen) return;
     reposition();
@@ -79,6 +86,13 @@ const ReactionPicker = ({ onSelectEmoji, position = 'top', currentUserEmoji = nu
       window.removeEventListener('scroll', onChange, true);
       window.removeEventListener('resize', onChange);
     };
+  }, [isOpen, showAll]);
+
+  // Reset to quick-pick view whenever the picker closes — otherwise
+  // re-opening it on a different message would jump straight into the
+  // full picker, surprising the user.
+  useEffect(() => {
+    if (!isOpen) setShowAll(false);
   }, [isOpen]);
 
   const handleSelect = (emoji: string) => {
@@ -113,27 +127,56 @@ const ReactionPicker = ({ onSelectEmoji, position = 'top', currentUserEmoji = nu
             style={{
               position: 'fixed',
               left: coords.left,
-              width: DROPDOWN_W,
+              width: showAll ? FULL_W : QUICK_W,
               ...('top' in coords ? { top: coords.top } : { bottom: coords.bottom }),
             }}
             className="z-[300] bg-gray-800 border border-gray-700 rounded-lg shadow-xl p-1.5"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="grid grid-cols-5 gap-0.5">
-              {QUICK_EMOJIS.map((emoji) => (
+            {showAll ? (
+              // Full emoji-mart picker — ~1800 emojis with category tabs,
+              // search, and frequently-used row. Auto-themed dark to match
+              // the warm-theme palette in the portal scope.
+              <Picker
+                data={data}
+                onEmojiSelect={(emojiData: any) => handleSelect(emojiData.native)}
+                theme="dark"
+                previewPosition="none"
+                skinTonePosition="none"
+                maxFrequentRows={1}
+                perLine={8}
+                navPosition="bottom"
+              />
+            ) : (
+              <>
+                <div className="grid grid-cols-5 gap-0.5">
+                  {QUICK_EMOJIS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      onClick={() => handleSelect(emoji)}
+                      className={`text-base p-1 rounded transition-colors flex items-center justify-center ${
+                        emoji === currentUserEmoji
+                          ? 'bg-indigo-700/40 ring-1 ring-indigo-500'
+                          : 'hover:bg-gray-700'
+                      }`}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+                {/* "More" affordance — opens the full emoji catalogue.
+                    Sits as a separate row so it's discoverable, not
+                    hidden as a 21st grid cell. */}
                 <button
-                  key={emoji}
-                  onClick={() => handleSelect(emoji)}
-                  className={`text-base p-1 rounded transition-colors flex items-center justify-center ${
-                    emoji === currentUserEmoji
-                      ? 'bg-indigo-700/40 ring-1 ring-indigo-500'
-                      : 'hover:bg-gray-700'
-                  }`}
+                  type="button"
+                  onClick={() => setShowAll(true)}
+                  className="mt-1.5 w-full inline-flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] font-medium text-gray-300 hover:text-white hover:bg-gray-700 rounded transition-colors"
                 >
-                  {emoji}
+                  <FiPlus size={11} />
+                  More emojis
                 </button>
-              ))}
-            </div>
+              </>
+            )}
           </div>
         </div>,
         document.body

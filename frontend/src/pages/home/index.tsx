@@ -6,6 +6,7 @@ import {
   HeroSection,
   FeatureSection,
   ScreenshotShowcase,
+  FeatureVideosShowcase,
   TopChartingSection,
   MyClubsCarousel,
   MemberTooltip,
@@ -52,6 +53,12 @@ const Home = () => {
               new visitors see real product previews (chat, calendar,
               suggestions, progress) before reading any feature copy. */}
           <ScreenshotShowcase />
+
+          {/* Demo videos — 4 short autoplay-in-viewport loops of the
+              core flows (create club, suggest book, track progress,
+              rate). IntersectionObserver-gated so they don't all chew
+              bandwidth simultaneously. */}
+          <FeatureVideosShowcase />
 
           <FeatureSection
             initial="C"
