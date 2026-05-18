@@ -44,6 +44,14 @@ interface ProxyConfig {
  */
 const SERVICES: ServiceConfig[] = [
   // User Service routes
+  //
+  // /v1/auth/change-password MUST be registered BEFORE /v1/auth so Express's
+  // path matching (first-registered-wins) routes it through the authenticated
+  // proxy. The user-service authMiddleware reads `X-User-Id` set by the
+  // gateway after JWT verification — and the broad /v1/auth entry below uses
+  // requireAuth: false (login/register/forgot/etc. are public), which would
+  // skip that header and break authed endpoints living under /v1/auth.
+  { envVar: 'USER_SERVICE_URL', route: '/v1/auth/change-password', name: 'Change Password', requireAuth: true },
   { envVar: 'USER_SERVICE_URL', route: '/v1/auth', name: 'Auth Service', requireAuth: false },
   { envVar: 'USER_SERVICE_URL', route: '/v1/profile', name: 'Profile Service', requireAuth: 'optional' },
   { envVar: 'USER_SERVICE_URL', route: '/v1/users', name: 'User Service', requireAuth: true },

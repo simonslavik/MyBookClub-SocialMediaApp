@@ -17,7 +17,11 @@
 
 </div>
 
-> **Live demo:** [mybookclub.win](https://mybookclub.win) · **Demo account:** _email / password_
+> **Live demo:** [mybookclub.win](https://mybookclub.win)
+>
+> **Demo account** (already joined a couple of clubs so you land in a real-looking state):
+> - **Email:** `simonslavik009@gmail.com`
+> - **Password:** `test1234A@`
 
 <p align="center">
   <img src="frontend/public/images/homepage.png" alt="MyBookClub — logged-in homepage with bookclub carousel" width="900" />
