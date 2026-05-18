@@ -5,6 +5,7 @@ import useHomeData from '@hooks/useHomeData';
 import {
   HeroSection,
   FeatureSection,
+  ScreenshotShowcase,
   TopChartingSection,
   MyClubsCarousel,
   MemberTooltip,
@@ -46,6 +47,11 @@ const Home = () => {
             <img src="/images/logo4.png" alt="" className="h-14 opacity-60 dark:invert" />
             <img src="/images/logo4.png" alt="" className="h-14 opacity-60 dark:invert" />
           </div>
+
+          {/* Product screenshot gallery — sits right under the hero so
+              new visitors see real product previews (chat, calendar,
+              suggestions, progress) before reading any feature copy. */}
+          <ScreenshotShowcase />
 
           <FeatureSection
             initial="C"

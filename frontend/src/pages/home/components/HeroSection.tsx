@@ -37,9 +37,19 @@ const HeroSection = () => {
         </div>
       </div>
 
-      {/* Image placeholder — fades up slightly after the headline */}
-      <div className="w-full md:w-1/2 aspect-[4/3] bg-stone-700 dark:bg-gray-700 rounded-sm overflow-hidden animate-fade-up stagger-2">
-        <div className="w-full h-full bg-stone-700 dark:bg-gray-700" />
+      {/* Hero screenshot — chat shot fits the "Connect with fellow
+          BookLovers" tagline best (real conversation, real users). The
+          faux-browser frame (rounded card + subtle ring + shadow) lifts
+          it from "raw screenshot" to "this is a real product". */}
+      <div className="w-full md:w-1/2 animate-fade-up stagger-2">
+        <div className="relative rounded-2xl overflow-hidden bg-stone-100 dark:bg-gray-800 ring-1 ring-black/10 dark:ring-white/10 shadow-2xl">
+          <img
+            src="/images/bookclub-chat.png"
+            alt="MyBookClub real-time chat in a Murakami book club"
+            className="w-full h-auto block"
+            loading="eager"
+          />
+        </div>
       </div>
 
     </div>

@@ -6,6 +6,7 @@ import apiClient from '@api/axios';
 import logger from '@utils/logger';
 import { getProfileImageUrl } from '@config/constants';
 import { getAvatarUrl } from '@utils/avatar';
+import { stripHtml } from '@utils/text';
 import { useConfirm, useToast } from '@hooks/useUIFeedback';
 
 const BookSuggestionDetailsModal = ({ suggestion, bookClubId, auth, members = [], userRole, onClose, onDeleted }: any) => {
@@ -148,7 +149,7 @@ const BookSuggestionDetailsModal = ({ suggestion, bookClubId, auth, members = []
             <div className="mt-6 pt-5 border-t border-stone-100 dark:border-gray-800">
               <p className="text-xs uppercase tracking-wider font-semibold text-stone-500 dark:text-stone-400 mb-2">Description</p>
               <p className="text-sm text-stone-600 dark:text-stone-300 leading-relaxed whitespace-pre-wrap">
-                {suggestion.book.description}
+                {stripHtml(suggestion.book.description)}
               </p>
             </div>
           )}

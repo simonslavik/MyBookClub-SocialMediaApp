@@ -1,5 +1,6 @@
 export { default as HeroSection } from './HeroSection';
 export { default as FeatureSection } from './FeatureSection';
+export { default as ScreenshotShowcase } from './ScreenshotShowcase';
 export { default as TopChartingSection } from './TopChartingSection';
 export { default as PopularClubsSection } from './PopularClubsSection';
 export { default as MyClubsCarousel } from './MyClubsCarousel';

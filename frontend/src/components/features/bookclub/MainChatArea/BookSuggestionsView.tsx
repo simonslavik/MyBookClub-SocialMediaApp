@@ -7,6 +7,7 @@ import apiClient from '@api/axios';
 import logger from '@utils/logger';
 import { getProfileImageUrl } from '@config/constants';
 import { getAvatarUrl } from '@utils/avatar';
+import { stripHtmlExcerpt } from '@utils/text';
 
 const BookSuggestionsView = ({ bookClubId, auth, members = [], userRole, onSuggestionAdded }) => {
   const navigate = useNavigate();
@@ -204,12 +205,12 @@ const BookSuggestionsView = ({ bookClubId, auth, members = [], userRole, onSugge
                   )}
                 </div>
 
-                {/* Book Description (if available) */}
+                {/* Book Description (if available) — Google Books returns
+                    HTML in this field, strip it to plain text before display. */}
                 {suggestion.book?.description && (
                   <div className="mt-3 pt-3 border-t border-gray-700 max-h-20 overflow-hidden">
                     <p className="text-gray-400 text-[11px] break-words leading-relaxed">
-                      {suggestion.book.description.slice(0, 150)}
-                      {suggestion.book.description.length > 150 && '…'}
+                      {stripHtmlExcerpt(suggestion.book.description, 150)}
                     </p>
                   </div>
                 )}
