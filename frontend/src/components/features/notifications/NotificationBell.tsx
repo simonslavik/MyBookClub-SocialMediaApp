@@ -29,7 +29,6 @@ const NotificationBell = () => {
   // full-width bottom sheet (handled in JSX), so coords are unused there.
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef(null);
   const reconnectTimerRef = useRef(null);
 
@@ -154,14 +153,19 @@ const NotificationBell = () => {
     };
   }, [auth?.token]);
 
-  // Close dropdown when clicking outside (trigger and panel both excluded,
-   // since the panel is portalled and not a descendant of the trigger).
+  // Close dropdown when clicking outside. Both panels (desktop + mobile)
+   // are rendered to the DOM with `hidden sm:flex` / `sm:hidden`, so a
+   // shared React ref can only point to one of them — the other panel
+   // would be treated as "outside" and clicks on it would close the
+   // dropdown unexpectedly. Mark both panels with a data attribute and
+   // check via `closest()` instead so either is recognised.
   useEffect(() => {
     if (!showDropdown) return;
     const handleClick = (e: MouseEvent) => {
-      const target = e.target as Node;
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
       if (triggerRef.current?.contains(target)) return;
-      if (panelRef.current?.contains(target)) return;
+      if (target.closest('[data-notification-panel]')) return;
       setShowDropdown(false);
     };
     document.addEventListener('mousedown', handleClick);
@@ -304,7 +308,7 @@ const NotificationBell = () => {
           />
 
           <div
-            ref={panelRef}
+            data-notification-panel
             style={
               anchorRect
                 ? {
@@ -332,7 +336,7 @@ const NotificationBell = () => {
 
           {/* Mobile sheet */}
           <div
-            ref={panelRef}
+            data-notification-panel
             className="fixed sm:hidden left-0 right-0 bottom-0 z-[200] flex flex-col bg-white dark:bg-gray-900 rounded-t-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 max-h-[80vh] overflow-hidden animate-in slide-in-from-bottom-4 duration-200"
           >
             {/* Drag handle visual cue */}
