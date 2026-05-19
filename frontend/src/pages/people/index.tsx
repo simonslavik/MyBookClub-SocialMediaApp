@@ -109,7 +109,10 @@ const FriendsPage = () => {
 
     const handleAcceptRequest = async (requestId) => {
         try {
-            await apiClient.post('/v1/friends/accept', { friendshipId: requestId });
+            // Backend Joi schema (acceptFriendRequestSchema) expects `requestId`,
+            // not `friendshipId`. Mismatch was the reason Accept/Decline buttons
+            // silently 400-ed for every receiver.
+            await apiClient.post('/v1/friends/accept', { requestId });
             toastSuccess('Friend request accepted!');
             await refreshFriendData();
         } catch (err) {
@@ -119,7 +122,7 @@ const FriendsPage = () => {
 
     const handleRejectRequest = async (requestId) => {
         try {
-            await apiClient.post('/v1/friends/reject', { friendshipId: requestId });
+            await apiClient.post('/v1/friends/reject', { requestId });
             toastSuccess('Friend request declined');
             setFriendRequests(prev => prev.filter(r => r.id !== requestId));
         } catch (err) {
