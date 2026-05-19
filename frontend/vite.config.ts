@@ -28,10 +28,13 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
+        // Note: emoji-mart used to be a forced manualChunk, but now it's
+        // dynamically imported by FullEmojiPicker.tsx. Vite auto-creates
+        // an async chunk for it, fetched only when the user opens the
+        // emoji picker — kept off the homepage critical path.
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-monaco': ['@monaco-editor/react'],
-          'vendor-emoji': ['emoji-mart', '@emoji-mart/data', '@emoji-mart/react'],
         },
       },
     },

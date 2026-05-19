@@ -1,7 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, Suspense, lazy } from 'react';
 import { BsEmojiSmile } from 'react-icons/bs';
-import Picker from '@emoji-mart/react';
-import data from '@emoji-mart/data';
+
+// Lazy: defer emoji-mart (~500KB) until the user clicks the smiley
+// icon for the first time. Composer renders instantly without it.
+const FullEmojiPicker = lazy(() => import('./FullEmojiPicker'));
 
 /**
  * EmojiPickerButton — a button that opens a full emoji picker (emoji-mart).
@@ -24,8 +26,8 @@ const EmojiPickerButton = ({ onEmojiSelect }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSelect = (emojiData) => {
-    onEmojiSelect(emojiData.native);
+  const handleSelect = (native: string) => {
+    onEmojiSelect(native);
   };
 
   return (
@@ -41,15 +43,17 @@ const EmojiPickerButton = ({ onEmojiSelect }) => {
 
       {isOpen && (
         <div className="absolute bottom-full mb-2 left-0 z-[70]">
-          <Picker
-            data={data}
-            onEmojiSelect={handleSelect}
-            theme="dark"
-            previewPosition="none"
-            skinTonePosition="none"
-            maxFrequentRows={2}
-            perLine={8}
-          />
+          {/* Lazy-loaded emoji catalog. Spinner is brief — fetch is ~50-150ms
+              on a modern connection, picker mounts straight after. */}
+          <Suspense
+            fallback={
+              <div className="flex justify-center items-center h-40 w-72 bg-gray-800 rounded-lg border border-gray-700">
+                <div className="w-5 h-5 border-2 border-stone-600 border-t-stone-300 rounded-full animate-spin" />
+              </div>
+            }
+          >
+            <FullEmojiPicker onSelect={handleSelect} perLine={8} />
+          </Suspense>
         </div>
       )}
     </div>

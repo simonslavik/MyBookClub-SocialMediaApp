@@ -10,24 +10,31 @@ import useScrollReveal from '@hooks/useScrollReveal';
  * durations + small stagger keep the scroll feeling instant — none of
  * the cards stay hidden long enough to look "stuck".
  */
+// WebP + explicit dimensions. Aspect ratio comes from the dimensions
+// JSON emitted by scripts/convert-screenshots.mjs — keeps layout
+// stable on first paint so CLS stays 0.
 const SHOTS = [
   {
-    src: '/images/bookclub-suggestions.png',
+    src: '/images/bookclub-suggestions.webp',
+    width: 1600, height: 908,
     title: 'Book voting',
     caption: 'Suggest reads, vote on what the club picks up next.',
   },
   {
-    src: '/images/bookclub-calendar.png',
+    src: '/images/bookclub-calendar.webp',
+    width: 1600, height: 903,
     title: 'Shared calendar',
     caption: 'Meetings, reading deadlines, and milestones at a glance.',
   },
   {
-    src: '/images/reading-progress-2.png',
+    src: '/images/reading-progress-2.webp',
+    width: 1600, height: 901,
     title: 'Ratings & reviews',
     caption: 'Rate club books, leave reviews, see what everyone thought.',
   },
   {
-    src: '/images/user-profile.png',
+    src: '/images/user-profile.webp',
+    width: 1600, height: 908,
     title: 'Personal library',
     caption: 'Your own bookshelf — finished, reading, want-to-read, favorites.',
   },
@@ -72,7 +79,10 @@ const ScreenshotShowcase = () => {
                 <img
                   src={shot.src}
                   alt={shot.title}
+                  width={shot.width}
+                  height={shot.height}
                   loading="lazy"
+                  decoding="async"
                   className="w-full h-auto block transition-transform duration-500 group-hover:scale-[1.02]"
                 />
               </div>

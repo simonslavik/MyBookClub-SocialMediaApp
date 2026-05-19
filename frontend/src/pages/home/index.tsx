@@ -45,7 +45,7 @@ const Home = () => {
         <div className="min-h-screen bg-parchment dark:bg-gray-900 transition-colors duration-300">
           <HeroSection />
 
-          <div className="flex justify-center -mt-8 dark:bg-gray-800">
+          <div className="flex justify-center mt-0 dark:bg-gray-800">
             <img src="/images/logo4.png" alt="" className="h-14 opacity-60 dark:invert" />
             <img src="/images/logo4.png" alt="" className="h-14 opacity-60 dark:invert" />
             <img src="/images/logo4.png" alt="" className="h-14 opacity-60 dark:invert" />
@@ -80,7 +80,7 @@ const Home = () => {
             text="iscover new reads, share reviews, and discuss your favorite chapters with readers who get&nbsp;it."
             reverse
             bgClass="bg-parchment dark:bg-gray-900"
-            media={{ type: 'image', src: '/images/bookclub-suggestions.png', alt: 'Book suggestions with member voting' }}
+            media={{ type: 'image', src: '/images/bookclub-suggestions.webp', alt: 'Book suggestions with member voting' }}
           />
 
           <div className="flex justify-center bg-parchment dark:bg-gray-900">

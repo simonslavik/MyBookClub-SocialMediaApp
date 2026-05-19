@@ -1,5 +1,9 @@
-/* Cozy bookish font stack */
-@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=JetBrains+Mono:wght@400;600&display=swap');
+/* Cozy bookish font stack — loaded via <link> in index.html with
+   preconnect + async swap, NOT @import here. CSS-level @import is a
+   render-blocking request (browser waits for it before painting the
+   first frame), which cost us ~1.75s of FCP per Lighthouse. The
+   <head>-level link loads in parallel + the swap directive paints
+   fallback text immediately while web fonts stream in. */
 
 /* If you have Recife font files, uncomment and place them in /public/fonts/ */
 /* 

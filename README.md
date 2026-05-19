@@ -419,24 +419,63 @@ cd frontend && npm run dev
 
 ## Testing
 
-Each backend service includes unit and integration tests using Jest and Supertest:
+Frontend tests are written with Vitest + Testing Library; backend services use Jest + Supertest.
+All suites are green:
+
+| Layer | Files | Tests | Tooling |
+| --- | --- | --- | --- |
+| Frontend (`frontend/`) | **7** | **53 passed** | Vitest, Testing Library, jsdom |
+| Backend `user-service` unit | **25** | **390 passed** | Jest, ts-jest |
+| Backend `user-service` integration | available via `npm run test:integration` (requires Postgres) | | Supertest |
 
 ```bash
-# Run all tests for a service
-cd backend/<service-name> && npm test
+# Frontend
+cd frontend && npm run test:run
 
-# Run with coverage
-npm run test:coverage
-
-# Run only unit tests
-npm run test:unit
-
-# Run only integration tests
-npm run test:integration
-
-# Watch mode
-npm run test:watch
+# Each backend service
+cd backend/<service-name> && npm test            # unit + integration
+cd backend/<service-name> && npm run test:unit   # unit only
 ```
+
+---
+
+## Performance
+
+The homepage critical path is tuned for fast first paint:
+
+- **`emoji-mart` (510 KB / 110 KB gzipped) is lazy-loaded** via `React.lazy` —
+  fetched only when a user opens the emoji picker (chat composer or reaction
+  "More emojis"). Off the logged-out homepage entirely.
+- **Manual chunking** keeps React + router in their own long-lived `vendor-react`
+  chunk, so app code can churn without invalidating it in the browser cache.
+- **`preload="metadata"` + IntersectionObserver** on demo videos in
+  `FeatureSection` — only the `moov` atom of each `.mov` loads up front;
+  playback bytes stream when the section scrolls into view, and pause
+  when it leaves.
+- **`loading="lazy"`** on every below-the-fold image.
+
+### Lighthouse
+
+Run a local audit on the production build:
+
+```bash
+cd frontend && npm run build && npm run preview     # serves the dist on http://localhost:4173
+# in another terminal:
+npx lighthouse http://localhost:4173 \
+  --only-categories=performance,accessibility,best-practices,seo \
+  --view
+```
+
+Or for the deployed site:
+
+```bash
+npx lighthouse https://mybookclub.win --view
+```
+
+> **Tip:** Lighthouse runs in incognito by default; first-party cookies
+> are skipped, so the audit measures the truly-cold logged-out
+> experience (which is what most search-engine / preview-card traffic
+> hits anyway).
 
 ---
 

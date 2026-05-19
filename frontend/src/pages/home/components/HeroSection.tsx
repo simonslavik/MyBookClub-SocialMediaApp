@@ -9,7 +9,7 @@ const HeroSection = () => {
   const navigate = useNavigate();
 
   return (
-  <section className="relative overflow-hidden px-6 md:px-16 py-16 md:py-20">
+  <section className="relative overflow-hidden px-6 md:px-16 py-16 md:py-30">
     {/* Background watermark text */}
     <div className="absolute inset-0 pointer-events-none select-none overflow-hidden opacity-[0.06] dark:opacity-[0.04] pt-1">
       <p className="text-[1rem] md:text-[1.1rem] leading-relaxed text-stone-800 dark:text-warmgray-200 font-serif">

@@ -89,10 +89,18 @@ const FeatureMedia = ({ media }: { media: MediaProp }) => {
   if (media.type === 'image') {
     return (
       <div className="rounded-2xl overflow-hidden ring-1 ring-black/5 dark:ring-white/10 shadow-xl bg-white dark:bg-gray-900">
+        {/* Hard-coded 1600×908 matches every screenshot WebP emitted by
+            scripts/convert-screenshots.mjs (all landscape app shots).
+            Tailwind's `h-auto` + the explicit `width`/`height` attrs
+            give the browser an aspect ratio up front → no CLS, no
+            layout shift while the image streams in. */}
         <img
           src={media.src}
           alt={media.alt || ''}
+          width={1600}
+          height={908}
           loading="lazy"
+          decoding="async"
           className="w-full h-auto block"
         />
       </div>
