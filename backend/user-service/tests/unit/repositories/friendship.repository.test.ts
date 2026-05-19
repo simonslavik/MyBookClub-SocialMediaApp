@@ -102,20 +102,34 @@ describe('FriendshipRepository', () => {
   });
 
   describe('getPendingRequests', () => {
-    it('should get pending requests for user', async () => {
+    it('should fetch both incoming AND outgoing pending requests', async () => {
+      // Mix of incoming (friendId=u-1) and outgoing (userId=u-1) rows.
       mockPrisma.friendship.findMany.mockResolvedValue([
-        { id: 'f-1', userId: 'u-2', friendId: 'u-1', status: 'PENDING', user: { name: 'User2' } },
+        { id: 'f-1', userId: 'u-2', friendId: 'u-1', status: 'PENDING', user: { name: 'User2' }, friend: { name: 'User1' } },
+        { id: 'f-2', userId: 'u-1', friendId: 'u-3', status: 'PENDING', user: { name: 'User1' }, friend: { name: 'User3' } },
       ]);
 
       const result = await FriendshipRepository.getPendingRequests('u-1');
 
+      // Endpoint now serves both directions via OR clause; both `user`
+      // (sender) and `friend` (recipient) are included so the FE can
+      // render the right profile depending on incoming vs outgoing.
       expect(mockPrisma.friendship.findMany).toHaveBeenCalledWith({
-        where: { friendId: 'u-1', status: 'PENDING' },
-        include: { user: { select: expect.any(Object) } },
+        where: {
+          status: 'PENDING',
+          OR: [
+            { friendId: 'u-1' },
+            { userId: 'u-1' },
+          ],
+        },
+        include: {
+          user: { select: expect.any(Object) },
+          friend: { select: expect.any(Object) },
+        },
         take: 100,
         orderBy: { createdAt: 'desc' },
       });
-      expect(result).toHaveLength(1);
+      expect(result).toHaveLength(2);
     });
   });
 

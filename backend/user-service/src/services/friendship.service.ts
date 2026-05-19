@@ -229,7 +229,15 @@ export class FriendshipService {
   }
 
   /**
-   * Get pending friend requests received with pagination
+   * Get pending friend requests (both directions — incoming + outgoing)
+   * with pagination.
+   *
+   * Response shape preserves the full row so the FE can:
+   *   - filter `r.friendId === currentUserId` → Requests tab (incoming)
+   *   - filter `r.userId === currentUserId` → Pending pill (outgoing)
+   *
+   * Kept the legacy `friendshipId` and `from` aliases so older FE code
+   * that still references them keeps working — additive change only.
    */
   static async getPendingRequests(userId: string, page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
@@ -239,8 +247,14 @@ export class FriendshipService {
     const paginatedRequests = allRequests.slice(skip, skip + limit);
 
     const requests = paginatedRequests.map(r => ({
-      friendshipId: r.id,
-      from: r.user,
+      id: r.id,
+      friendshipId: r.id,    // legacy alias
+      userId: r.userId,       // sender
+      friendId: r.friendId,   // recipient
+      status: r.status,
+      user: r.user,           // sender profile
+      friend: r.friend,       // recipient profile
+      from: r.user,           // legacy alias for incoming-only callers
       createdAt: r.createdAt,
     }));
 
