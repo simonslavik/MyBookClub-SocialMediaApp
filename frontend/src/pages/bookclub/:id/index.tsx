@@ -33,7 +33,7 @@ const BookClub = () => {
   const {
     auth, setAuth, logout,
     bookClub, setBookClub, rooms, setRooms, currentRoom, setCurrentRoom,
-    loading, error, myBookClubs, userRole, setUserRole, friends,
+    loading, error, myBookClubs, userRole, setUserRole, friends, sentFriendRequestIds,
     bookclubBooks, loadingBooks, fetchBookclubBooks,
     handleStatusChange, handleRateBook, handleRemoveRating,
     settingsForm, setSettingsForm, savingSettings, handleSaveSettings,
@@ -385,7 +385,7 @@ const BookClub = () => {
             handleRateBook={handleRateBook} handleRemoveRating={handleRemoveRating}
             messages={messages} setMessages={setMessages}
             currentRoom={currentRoom} ws={ws}
-            friends={friends} handleSendFriendRequest={handleSendFriendRequest}
+            friends={friends} sentFriendRequestIds={sentFriendRequestIds} handleSendFriendRequest={handleSendFriendRequest}
             connectedUsers={connectedUsers} lastReadAt={lastReadAt}
             hasMoreMessages={hasMoreMessages} loadingOlder={loadingOlder}
             loadingMessages={loadingMessages}
@@ -411,7 +411,7 @@ const BookClub = () => {
           <ResizablePanel side="left" defaultWidth={176} minWidth={120} maxWidth={320} storageKey="bookclub-users-width">
             <ConnectedUsersSidebar
               bookClubMembers={mappedBookClubMembers} connectedUsers={connectedUsers}
-              friends={friends} auth={auth} onSendFriendRequest={handleSendFriendRequest}
+              friends={friends} sentFriendRequestIds={sentFriendRequestIds} auth={auth} onSendFriendRequest={handleSendFriendRequest}
             />
           </ResizablePanel>
         </div>

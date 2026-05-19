@@ -85,11 +85,15 @@ describe('UserController', () => {
   let mockRes: Partial<Response>;
 
   beforeEach(() => {
-    mockReq = { body: {}, user: undefined, headers: {} };
+    mockReq = { body: {}, user: undefined, headers: {}, cookies: {} };
     mockRes = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn().mockReturnThis(),
-    };
+      // Required so setRefreshCookie() / clearRefreshCookie() don't
+      // throw — those are called inside register/login/refresh/logout.
+      cookie: jest.fn().mockReturnThis(),
+      clearCookie: jest.fn().mockReturnThis(),
+    } as Partial<Response>;
   });
 
   afterEach(() => jest.clearAllMocks());
@@ -153,8 +157,12 @@ describe('UserController', () => {
   });
 
   describe('refreshAccessToken', () => {
+    // Refresh token moved from request body to HttpOnly cookie, so the
+    // controller now reads it from `req.cookies.refreshToken`. Tests
+    // updated to match — old form (token in body) was rejected with
+    // "Refresh token missing" before any other logic ran.
     it('should return new tokens when refresh token is valid', async () => {
-      mockReq.body = { refreshToken: 'valid-rt' };
+      mockReq.cookies = { refresh_token: 'valid-rt' };
       mockVerifyRefreshToken.mockResolvedValue({ id: 'u-1', email: 'john@test.com' });
       mockRevokeRefreshToken.mockResolvedValue(undefined);
       mockGenerateTokens.mockResolvedValue({ accessToken: 'new-at', refreshToken: 'new-rt' });
@@ -165,7 +173,7 @@ describe('UserController', () => {
     });
 
     it('should throw UnauthorizedError when refresh token is invalid', async () => {
-      mockReq.body = { refreshToken: 'invalid-rt' };
+      mockReq.cookies = { refresh_token: 'invalid-rt' };
       mockVerifyRefreshToken.mockResolvedValue(null);
 
       await expect(refreshAccessToken(mockReq as Request, mockRes as Response))
@@ -173,7 +181,7 @@ describe('UserController', () => {
     });
 
     it('should return 500 on unexpected error', async () => {
-      mockReq.body = { refreshToken: 'rt' };
+      mockReq.cookies = { refresh_token: 'rt' };
       mockVerifyRefreshToken.mockRejectedValue(new Error('DB error'));
 
       await refreshAccessToken(mockReq as Request, mockRes as Response);
@@ -184,7 +192,8 @@ describe('UserController', () => {
 
   describe('logoutUser', () => {
     it('should logout user and return 200', async () => {
-      mockReq.body = { refreshToken: 'valid-rt' };
+      // Same migration as refreshAccessToken — token now reads from cookie.
+      mockReq.cookies = { refresh_token: 'valid-rt' };
       mockAuthService.logout.mockResolvedValue(undefined);
 
       await logoutUser(mockReq as Request, mockRes as Response);
@@ -193,16 +202,23 @@ describe('UserController', () => {
       expect(mockRes.status).toHaveBeenCalledWith(200);
     });
 
-    it('should throw NotFoundError when token not found', async () => {
-      mockReq.body = { refreshToken: 'bad-rt' };
+    it('should swallow TOKEN_NOT_FOUND and still return 200', async () => {
+      // Logout is best-effort: if the refresh token is already gone from
+      // the DB (rotated, expired, manually revoked), the cookie still
+      // gets cleared and the user is logged out successfully. We do NOT
+      // want to surface 404/500 in that case — the user's intent ("log
+      // me out") is satisfied regardless of DB state.
+      mockReq.cookies = { refresh_token: 'bad-rt' };
       mockAuthService.logout.mockRejectedValue(new Error('TOKEN_NOT_FOUND'));
 
-      await expect(logoutUser(mockReq as Request, mockRes as Response))
-        .rejects.toThrow();
+      await logoutUser(mockReq as Request, mockRes as Response);
+
+      expect(mockRes.clearCookie).toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(200);
     });
 
     it('should return 500 on unexpected error', async () => {
-      mockReq.body = { refreshToken: 'rt' };
+      mockReq.cookies = { refresh_token: 'rt' };
       mockAuthService.logout.mockRejectedValue(new Error('DB error'));
 
       await logoutUser(mockReq as Request, mockRes as Response);

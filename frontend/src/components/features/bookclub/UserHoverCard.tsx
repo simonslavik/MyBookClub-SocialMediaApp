@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiMessageSquare, FiUserPlus } from 'react-icons/fi';
+import { FiMessageSquare, FiUserPlus, FiClock } from 'react-icons/fi';
 import { getProfileImageUrl } from '@config/constants';
 import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 import { getStatusColor } from './statusUtils';
@@ -22,6 +22,10 @@ const UserHoverCard = ({
   user,
   currentUserId,
   isFriend = false,
+  // True when the current user has an outgoing pending friend request
+  // to this user. Hides the Add Friend button and shows a "Pending"
+  // chip instead so we don't fire duplicate requests.
+  requestSent = false,
   isOnline = false,
   onSendFriendRequest,
   children,
@@ -126,7 +130,7 @@ const UserHoverCard = ({
                   }}
                   onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(user)); }}
                 />
-                <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-gray-800 ${getStatusColor(status)}`} />
+                <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full ring-2 ring-white dark:ring-gray-900 ${getStatusColor(status)}`} />
               </div>
             </div>
           </div>
@@ -163,23 +167,33 @@ const UserHoverCard = ({
               <FiMessageSquare size={13} />
               Message
             </button>
-            {!isFriend && onSendFriendRequest && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSendFriendRequest(user?.id);
-                  setVisible(false);
-                }}
-                className="flex-1 flex items-center justify-center gap-1.5 bg-indigo-700 hover:bg-indigo-500 text-white text-xs font-medium py-1.5 rounded-lg transition-colors cursor-pointer"
-              >
-                <FiUserPlus size={13} />
-                Add Friend
-              </button>
-            )}
-            {isFriend && (
+            {/* Three friendship states, in priority order:
+                1. Friends   → calm "Friends" pill
+                2. Pending   → amber "Pending" chip (request already sent)
+                3. None      → Add Friend CTA */}
+            {isFriend ? (
               <span className="flex-1 flex items-center justify-center gap-1.5 text-pink-400 text-xs font-medium py-1.5">
                 ♥ Friends
               </span>
+            ) : requestSent ? (
+              <span className="flex-1 flex items-center justify-center gap-1.5 bg-amber-500/15 text-amber-300 text-xs font-medium py-1.5 rounded-lg">
+                <FiClock size={13} />
+                Pending
+              </span>
+            ) : (
+              onSendFriendRequest && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSendFriendRequest(user?.id);
+                    setVisible(false);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-1.5 bg-indigo-700 hover:bg-indigo-500 text-white text-xs font-medium py-1.5 rounded-lg transition-colors cursor-pointer"
+                >
+                  <FiUserPlus size={13} />
+                  Add Friend
+                </button>
+              )
             )}
           </div>
         </div>

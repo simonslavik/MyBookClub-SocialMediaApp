@@ -7,7 +7,7 @@ import OwnMessage from '../chat/OwnMessage';
 import OtherMessage from '../chat/OtherMessage';
 import { shouldGroupMessages } from '../chat/messageUtils';
 
-const BookClubChat = ({ messages, setMessages, currentRoom, auth, userRole, ws, members = [], onReply, friends = [], onSendFriendRequest, connectedUsers = [], lastReadAt, hasMoreMessages = false, loadingOlder = false, loadingMessages = false, onLoadOlder }) => {
+const BookClubChat = ({ messages, setMessages, currentRoom, auth, userRole, ws, members = [], onReply, friends = [], sentFriendRequestIds, onSendFriendRequest, connectedUsers = [], lastReadAt, hasMoreMessages = false, loadingOlder = false, loadingMessages = false, onLoadOlder }) => {
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const editInputRef = useRef(null);
@@ -235,6 +235,7 @@ const BookClubChat = ({ messages, setMessages, currentRoom, auth, userRole, ws, 
     onScrollToMessage: scrollToMessage,
     getUserReactionEmoji,
     friends,
+    sentFriendRequestIds,
     onSendFriendRequest,
     connectedUsers,
   };
