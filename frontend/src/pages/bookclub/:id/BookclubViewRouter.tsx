@@ -39,7 +39,7 @@ const BookclubViewRouter = ({
   loadingBooks, bookclubBooks, openAddBookModal, setCurrentBookData, currentBookData,
   handleStatusChange, handleRateBook, handleRemoveRating,
   // chat
-  messages, setMessages, currentRoom, ws, friends, handleSendFriendRequest,
+  messages, setMessages, currentRoom, ws, friends, sentFriendRequestIds, handleSendFriendRequest,
   connectedUsers, lastReadAt, hasMoreMessages, loadingOlder, loadingMessages,
   loadOlderMessages, setReplyingTo,
 }) => {
@@ -115,7 +115,7 @@ const BookclubViewRouter = ({
       messages={messages} setMessages={setMessages}
       currentRoom={currentRoom} auth={auth} userRole={userRole} ws={ws}
       members={bookClubMembers} onReply={setReplyingTo}
-      friends={friends} onSendFriendRequest={handleSendFriendRequest}
+      friends={friends} sentFriendRequestIds={sentFriendRequestIds} onSendFriendRequest={handleSendFriendRequest}
       connectedUsers={connectedUsers} lastReadAt={lastReadAt}
       hasMoreMessages={hasMoreMessages} loadingOlder={loadingOlder}
       loadingMessages={loadingMessages}

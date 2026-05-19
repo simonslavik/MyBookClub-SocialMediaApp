@@ -207,6 +207,59 @@ describe('FriendshipService', () => {
     });
   });
 
+  describe('cancelFriendRequest', () => {
+    it('should throw when no friendship row exists', async () => {
+      mockFriendshipRepo.findByUserIds.mockResolvedValue(null);
+
+      await expect(FriendshipService.cancelFriendRequest('u-1', 'u-2'))
+        .rejects.toThrow('FRIENDSHIP_NOT_FOUND');
+    });
+
+    it('should throw when the request is already accepted (no longer pending)', async () => {
+      mockFriendshipRepo.findByUserIds.mockResolvedValue({
+        id: 'f-1',
+        userId: 'u-1',
+        friendId: 'u-2',
+        status: 'ACCEPTED',
+      });
+
+      await expect(FriendshipService.cancelFriendRequest('u-1', 'u-2'))
+        .rejects.toThrow('NOT_PENDING');
+      expect(mockFriendshipRepo.delete).not.toHaveBeenCalled();
+    });
+
+    it('should throw NOT_SENDER when the receiver tries to cancel', async () => {
+      // findByUserIds is bidirectional — if u-2 (the receiver) looks
+      // up the friendship to u-1, they get the same row back. They
+      // must use rejectFriendRequest, not cancel — cancel is sender-only.
+      mockFriendshipRepo.findByUserIds.mockResolvedValue({
+        id: 'f-1',
+        userId: 'u-1',     // u-1 was the sender
+        friendId: 'u-2',
+        status: 'PENDING',
+      });
+
+      await expect(FriendshipService.cancelFriendRequest('u-2', 'u-1'))
+        .rejects.toThrow('NOT_SENDER');
+      expect(mockFriendshipRepo.delete).not.toHaveBeenCalled();
+    });
+
+    it('should delete the row when sender cancels a pending request', async () => {
+      mockFriendshipRepo.findByUserIds.mockResolvedValue({
+        id: 'f-1',
+        userId: 'u-1',
+        friendId: 'u-2',
+        status: 'PENDING',
+      });
+      mockFriendshipRepo.delete.mockResolvedValue(undefined);
+
+      const result = await FriendshipService.cancelFriendRequest('u-1', 'u-2');
+
+      expect(mockFriendshipRepo.delete).toHaveBeenCalledWith('f-1');
+      expect(result.message).toContain('cancelled');
+    });
+  });
+
   describe('blockUser', () => {
     it('should throw when friendship not found', async () => {
       mockFriendshipRepo.findById.mockResolvedValue(null);

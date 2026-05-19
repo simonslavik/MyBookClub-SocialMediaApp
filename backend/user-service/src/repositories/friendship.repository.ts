@@ -87,16 +87,28 @@ export class FriendshipRepository {
   }
 
   /**
-   * Get pending friend requests received by user
+   * Returns BOTH incoming and outgoing pending requests for a user.
+   * The FE filters direction by comparing `userId` (sender) vs
+   * `friendId` (recipient) against the current user's ID — both
+   * "Requests" tab (incoming) and "Pending" hover-card chip (outgoing)
+   * share this endpoint to avoid a second roundtrip.
+   *
+   * `user` = sender profile, `friend` = recipient profile. Caller
+   * picks the right one based on which side of the relationship they
+   * want to render.
    */
   static async getPendingRequests(userId: string, limit = 100) {
     return await prisma.friendship.findMany({
       where: {
-        friendId: userId,
         status: FriendshipStatus.PENDING,
+        OR: [
+          { friendId: userId },  // incoming (someone sent ME a request)
+          { userId },            // outgoing (I sent THEM a request)
+        ],
       },
       include: {
         user: { select: USER_BASIC_FIELDS },
+        friend: { select: USER_BASIC_FIELDS },
       },
       take: limit,
       orderBy: { createdAt: 'desc' },

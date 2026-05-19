@@ -1,11 +1,13 @@
-import { FiEdit2, FiMessageCircle, FiUserPlus, FiUserCheck, FiClock, FiBook, FiUsers, FiCalendar } from 'react-icons/fi';
+import { useEffect, useRef, useState } from 'react';
+import { FiEdit2, FiMessageCircle, FiUserPlus, FiUserCheck, FiUserX, FiClock, FiBook, FiUsers, FiCalendar, FiX, FiChevronDown } from 'react-icons/fi';
 import { getProfileImageUrl } from '@config/constants';
 import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
+import { useConfirm } from '@hooks/useUIFeedback';
 
 export default function ProfileHero({
     profile, isOwnProfile,
     imagePreview, uploadingImage, fileInputRef, onImageSelect,
-    friendRequestLoading, onSendFriendRequest, onMessage,
+    friendRequestLoading, onSendFriendRequest, onCancelFriendRequest, onRemoveFriend, onMessage,
     clubCount, navigate,
 }) {
     const joinDate = new Date(profile.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -91,7 +93,10 @@ export default function ProfileHero({
                                 <FriendButton
                                     status={profile.friendshipStatus}
                                     loading={friendRequestLoading}
+                                    profileName={profile.name}
                                     onAdd={onSendFriendRequest}
+                                    onCancel={onCancelFriendRequest}
+                                    onRemove={onRemoveFriend}
                                     onRespond={() => navigate('/')}
                                 />
                             </>
@@ -104,20 +109,12 @@ export default function ProfileHero({
 }
 
 /* ── Friend status button ─────────────────────────── */
-function FriendButton({ status, loading, onAdd, onRespond }) {
+function FriendButton({ status, loading, profileName, onAdd, onCancel, onRemove, onRespond }) {
     if (status === 'friends') {
-        return (
-            <span className="px-5 py-2.5 bg-white/10 text-green-400 rounded-xl text-sm font-semibold flex items-center gap-2 backdrop-blur-sm">
-                <FiUserCheck size={15} /> Friends
-            </span>
-        );
+        return <FriendsDropdown loading={loading} profileName={profileName} onRemove={onRemove} />;
     }
     if (status === 'request_sent') {
-        return (
-            <span className="px-5 py-2.5 bg-white/10 text-stone-300 rounded-xl text-sm font-semibold flex items-center gap-2 backdrop-blur-sm">
-                <FiClock size={15} /> Pending
-            </span>
-        );
+        return <PendingDropdown loading={loading} profileName={profileName} onCancel={onCancel} />;
     }
     if (status === 'request_received') {
         return (
@@ -135,5 +132,143 @@ function FriendButton({ status, loading, onAdd, onRespond }) {
             <FiUserPlus size={15} />
             {loading ? 'Sending…' : 'Add Friend'}
         </button>
+    );
+}
+
+/**
+ * Friends-state dropdown. Click the Friends chip → small menu opens
+ * with "Remove friend" (and room for more — e.g. block, share clubs).
+ * Confirms before destructive action.
+ */
+function FriendsDropdown({ loading, profileName, onRemove }) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef(null);
+    const { confirm } = useConfirm();
+
+    useEffect(() => {
+        if (!open) return;
+        const onClick = (e) => {
+            if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+        };
+        const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+        document.addEventListener('mousedown', onClick);
+        window.addEventListener('keydown', onKey);
+        return () => {
+            document.removeEventListener('mousedown', onClick);
+            window.removeEventListener('keydown', onKey);
+        };
+    }, [open]);
+
+    const handleRemove = async () => {
+        setOpen(false);
+        const ok = await confirm(
+            `Remove ${profileName || 'this user'} from your friends?`,
+            { title: 'Remove friend', variant: 'danger', confirmLabel: 'Remove' }
+        );
+        if (ok) onRemove?.();
+    };
+
+    return (
+        <div className="relative" ref={ref}>
+            <button
+                type="button"
+                onClick={() => setOpen((v) => !v)}
+                disabled={loading}
+                className="px-5 py-2.5 bg-white/10 hover:bg-white/15 text-green-400 rounded-xl text-sm font-semibold flex items-center gap-2 backdrop-blur-sm transition-colors disabled:opacity-50"
+                aria-haspopup="menu"
+                aria-expanded={open}
+            >
+                <FiUserCheck size={15} /> Friends
+                <FiChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+            </button>
+
+            {open && (
+                <div
+                    role="menu"
+                    className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-gray-900 rounded-xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 overflow-hidden z-20 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150"
+                >
+                    <button
+                        type="button"
+                        role="menuitem"
+                        onClick={handleRemove}
+                        disabled={loading}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors disabled:opacity-50"
+                    >
+                        <FiUserX size={14} />
+                        {loading ? 'Removing…' : 'Remove friend'}
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+/**
+ * Pending-state dropdown. Click the Pending chip → small menu opens
+ * with "Cancel request" (and room to add more actions later, e.g.
+ * "Send message" or "Block"). Confirms via `useConfirm` so destructive
+ * action isn't fired on accidental click.
+ */
+function PendingDropdown({ loading, profileName, onCancel }) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef(null);
+    const { confirm } = useConfirm();
+
+    // Close on outside click + Escape
+    useEffect(() => {
+        if (!open) return;
+        const onClick = (e) => {
+            if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+        };
+        const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+        document.addEventListener('mousedown', onClick);
+        window.addEventListener('keydown', onKey);
+        return () => {
+            document.removeEventListener('mousedown', onClick);
+            window.removeEventListener('keydown', onKey);
+        };
+    }, [open]);
+
+    const handleCancel = async () => {
+        setOpen(false);
+        const ok = await confirm(
+            `Cancel friend request to ${profileName || 'this user'}?`,
+            { title: 'Cancel request', variant: 'danger', confirmLabel: 'Cancel request' }
+        );
+        if (ok) onCancel?.();
+    };
+
+    return (
+        <div className="relative" ref={ref}>
+            <button
+                type="button"
+                onClick={() => setOpen((v) => !v)}
+                disabled={loading}
+                className="px-5 py-2.5 bg-white/10 hover:bg-white/15 text-stone-200 rounded-xl text-sm font-semibold flex items-center gap-2 backdrop-blur-sm transition-colors disabled:opacity-50"
+                aria-haspopup="menu"
+                aria-expanded={open}
+            >
+                <FiClock size={15} /> Pending
+                <FiChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+            </button>
+
+            {open && (
+                <div
+                    role="menu"
+                    className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-gray-900 rounded-xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 overflow-hidden z-20 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150"
+                >
+                    <button
+                        type="button"
+                        role="menuitem"
+                        onClick={handleCancel}
+                        disabled={loading}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors disabled:opacity-50"
+                    >
+                        <FiX size={14} />
+                        {loading ? 'Cancelling…' : 'Cancel request'}
+                    </button>
+                </div>
+            )}
+        </div>
     );
 }

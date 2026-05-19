@@ -1,9 +1,11 @@
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, Suspense, lazy } from 'react';
 import { createPortal } from 'react-dom';
 import { BsEmojiSmile } from 'react-icons/bs';
 import { FiPlus } from 'react-icons/fi';
-import Picker from '@emoji-mart/react';
-import data from '@emoji-mart/data';
+
+// Lazy: only fetches emoji-mart (~500KB) the first time a user clicks
+// "More emojis" on any message. The quick-pick grid never needs it.
+const FullEmojiPicker = lazy(() => import('./FullEmojiPicker'));
 
 const QUICK_EMOJIS = [
   '👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥',
@@ -135,18 +137,18 @@ const ReactionPicker = ({ onSelectEmoji, position = 'top', currentUserEmoji = nu
           >
             {showAll ? (
               // Full emoji-mart picker — ~1800 emojis with category tabs,
-              // search, and frequently-used row. Auto-themed dark to match
-              // the warm-theme palette in the portal scope.
-              <Picker
-                data={data}
-                onEmojiSelect={(emojiData: any) => handleSelect(emojiData.native)}
-                theme="dark"
-                previewPosition="none"
-                skinTonePosition="none"
-                maxFrequentRows={1}
-                perLine={8}
-                navPosition="bottom"
-              />
+              // search, and frequently-used row. Lazy-loaded: the heavy
+              // bundle only downloads on first "More emojis" click ever.
+              // Suspense fallback shows a brief spinner during fetch.
+              <Suspense
+                fallback={
+                  <div className="flex justify-center items-center h-40 w-full">
+                    <div className="w-5 h-5 border-2 border-stone-300 border-t-stone-600 rounded-full animate-spin" />
+                  </div>
+                }
+              >
+                <FullEmojiPicker onSelect={handleSelect} />
+              </Suspense>
             ) : (
               <>
                 <div className="grid grid-cols-5 gap-0.5">

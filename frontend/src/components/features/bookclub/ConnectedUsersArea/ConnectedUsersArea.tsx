@@ -79,7 +79,7 @@ const ConnectedUsersArea = (
                             onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(user)); }}
                           />
                         </UserHoverCard>
-                        <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-gray-800 ${getStatusColor(user.status || (isOnline ? 'ONLINE' : 'OFFLINE'))}`}></div>
+                        <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-white dark:ring-gray-900 ${getStatusColor(user.status || (isOnline ? 'ONLINE' : 'OFFLINE'))}`}></div>
                       </div>
                       <span className="truncate">{user.username}</span>
                       {isFriend && (

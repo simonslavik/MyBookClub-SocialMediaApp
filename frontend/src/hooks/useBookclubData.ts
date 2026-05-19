@@ -26,6 +26,10 @@ export function useBookclubData(bookClubId) {
   const [myBookClubs, setMyBookClubs] = useState([]);
   const [userRole, setUserRole] = useState(null);
   const [friends, setFriends] = useState([]);
+  // IDs of users the current user has an OUTGOING pending friend request
+  // for. Used by hover cards to render "Pending" instead of "Add Friend"
+  // so we don't let the user fire duplicate requests / show stale UI.
+  const [sentFriendRequestIds, setSentFriendRequestIds] = useState<Set<string>>(new Set());
 
   // ─── Books state ──────────────────────────────────────────
   const [bookclubBooks, setBookclubBooks] = useState({ current: [], upcoming: [], completed: [] });
@@ -132,13 +136,30 @@ export function useBookclubData(bookClubId) {
       .catch((err) => logger.error('Error fetching my book clubs:', err));
   }, [auth?.user?.id]);
 
-  // ─── Fetch friends ────────────────────────────────────────
+  // ─── Fetch friends + outgoing friend requests ─────────────
+  // Friends list drives the "Friends" pill in hover cards. Outgoing
+  // requests drive the "Pending" state so the user doesn't see "Add
+  // Friend" on someone they just asked yesterday from another tab.
   useEffect(() => {
     if (!auth?.token) return;
-    apiClient.get('/v1/friends/list')
-      .then((res) => setFriends(res.data?.data || []))
-      .catch((err) => logger.error('Error fetching friends:', err));
-  }, [auth?.token]);
+    Promise.allSettled([
+      apiClient.get('/v1/friends/list'),
+      apiClient.get('/v1/friends/requests'),
+    ]).then(([friendsRes, requestsRes]) => {
+      if (friendsRes.status === 'fulfilled') {
+        setFriends(friendsRes.value.data?.data || []);
+      }
+      if (requestsRes.status === 'fulfilled') {
+        const rows = requestsRes.value.data?.data || [];
+        // BE schema: userId = sender, friendId = recipient.
+        // Outgoing = rows where the current user is the sender.
+        const outgoing = rows
+          .filter((r: any) => r.userId === auth.user?.id && r.status === 'PENDING')
+          .map((r: any) => r.friendId);
+        setSentFriendRequestIds(new Set(outgoing));
+      }
+    });
+  }, [auth?.token, auth?.user?.id]);
 
   // ─── Populate settings form when bookclub data arrives ────
   useEffect(() => {
@@ -245,6 +266,10 @@ export function useBookclubData(bookClubId) {
 
   const handleSendFriendRequest = useCallback(async (userId) => {
     if (!auth?.token) return;
+    // Optimistic update: mark the user as pending immediately so the
+    // hover card swaps "Add Friend" → "Pending" without waiting for the
+    // server. Roll back on failure.
+    setSentFriendRequestIds((prev) => new Set([...prev, userId]));
     try {
       const response = await apiClient.post('/v1/friends/request', { recipientId: userId });
       toastSuccess(response.data.message || 'Friend request sent!');
@@ -253,6 +278,12 @@ export function useBookclubData(bookClubId) {
         setFriends(friendsRes.data?.data || []);
       } catch { /* refresh best-effort */ }
     } catch (err) {
+      // Roll back the optimistic add — the API rejected the request.
+      setSentFriendRequestIds((prev) => {
+        const next = new Set(prev);
+        next.delete(userId);
+        return next;
+      });
       logger.error('Error sending friend request:', err);
       toastError(
         err.response?.data?.error || err.response?.data?.message || 'Failed to send friend request',
@@ -281,6 +312,23 @@ export function useBookclubData(bookClubId) {
     } catch (err) {
       logger.error('Error deleting bookclub:', err);
       toastError(err.response?.data?.error || err.response?.data?.message || 'Failed to delete bookclub');
+      return false;
+    }
+  }, [bookClubId, toastSuccess, toastError]);
+
+  // Leave the bookclub. Anyone except the OWNER can leave (backend's
+  // BookClubController.leaveClub rejects owner attempts — they must
+  // either delete the club or transfer ownership first). Returns true
+  // on success so the caller can navigate away from the now-inaccessible
+  // page.
+  const handleLeaveBookclub = useCallback(async () => {
+    try {
+      await bookclubAPI.leaveBookclub(bookClubId);
+      toastSuccess('You left the bookclub');
+      return true;
+    } catch (err: any) {
+      logger.error('Error leaving bookclub:', err);
+      toastError(err.response?.data?.error || err.response?.data?.message || 'Failed to leave bookclub');
       return false;
     }
   }, [bookClubId, toastSuccess, toastError]);
@@ -334,6 +382,7 @@ export function useBookclubData(bookClubId) {
     // Core state
     bookClub, setBookClub, rooms, setRooms, currentRoom, setCurrentRoom,
     loading, error, myBookClubs, userRole, setUserRole, friends,
+    sentFriendRequestIds,
 
     // Books
     bookclubBooks, loadingBooks, fetchBookclubBooks,
@@ -350,6 +399,7 @@ export function useBookclubData(bookClubId) {
 
     // Bookclub deletion
     handleDeleteBookclub,
+    handleLeaveBookclub,
 
     // Social
     handleSendFriendRequest,

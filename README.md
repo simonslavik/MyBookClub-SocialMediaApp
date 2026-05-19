@@ -419,24 +419,98 @@ cd frontend && npm run dev
 
 ## Testing
 
-Each backend service includes unit and integration tests using Jest and Supertest:
+Frontend tests are written with Vitest + Testing Library; backend services use Jest + Supertest.
+All suites are green:
+
+| Layer | Files | Tests | Tooling |
+| --- | --- | --- | --- |
+| Frontend (`frontend/`) | **7** | **53 passed** | Vitest, Testing Library, jsdom |
+| Backend `user-service` unit | **25** | **390 passed** | Jest, ts-jest |
+| Backend `user-service` integration | available via `npm run test:integration` (requires Postgres) | | Supertest |
 
 ```bash
-# Run all tests for a service
-cd backend/<service-name> && npm test
+# Frontend
+cd frontend && npm run test:run
 
-# Run with coverage
-npm run test:coverage
-
-# Run only unit tests
-npm run test:unit
-
-# Run only integration tests
-npm run test:integration
-
-# Watch mode
-npm run test:watch
+# Each backend service
+cd backend/<service-name> && npm test            # unit + integration
+cd backend/<service-name> && npm run test:unit   # unit only
 ```
+
+---
+
+## Performance
+
+<p align="center">
+  <img src="frontend/public/images/lighthouse-score.webp" alt="Lighthouse audit: Performance 73, Accessibility 98, Best Practices 92, SEO 92" width="720" />
+  <br />
+  <sub><em>Lighthouse audit of the logged-out homepage — <code>npm run preview</code> + Chrome incognito, no cache.</em></sub>
+</p>
+
+| Category | Score |
+| --- | --- |
+| **Accessibility** | **98** &nbsp;✅ |
+| **Best Practices** | **92** &nbsp;✅ |
+| **SEO** | **92** &nbsp;✅ |
+| **Performance** | **73** &nbsp;⚠️ |
+
+| Core Web Vital | Value | Status |
+| --- | --- | --- |
+| Cumulative Layout Shift (CLS) | **0** | ✅ |
+| Total Blocking Time (TBT) | **0 ms** | ✅ |
+| First Contentful Paint (FCP) | 3.0 s | ⚠️ |
+| Largest Contentful Paint (LCP) | 5.4 s | ⚠️ |
+| Speed Index | 4.4 s | ⚠️ |
+
+> **On the Performance score:** the SPA's cold-start budget (no SSR) is dominated
+> by JS parse on Lighthouse's throttled 4×-CPU simulation. Real-world (unthrottled)
+> homepage paints in ~1 s. Bumping to 90+ would require Next.js / Astro
+> migration — out of scope for this iteration. CLS = 0 and TBT = 0 ms (perfect on
+> both) reflect deliberate engineering: every image has explicit `width`/`height`,
+> long tasks are split via `React.lazy`, and below-the-fold work is gated by
+> `IntersectionObserver`.
+
+### Optimisations shipped
+
+- **`emoji-mart` (510 KB / 110 KB gzipped) is lazy-loaded** via `React.lazy` —
+  fetched only when a user opens the emoji picker (chat composer or reaction
+  "More emojis"). Off the logged-out homepage entirely.
+- **All homepage screenshots converted to WebP + resized to ≤ 1600 px** via
+  `scripts/convert-screenshots.mjs` — **7.3 MB → 475 KB (-93 %)**. Emits a
+  `screenshotDimensions.json` so JSX can set explicit `width`/`height` and
+  lock layout.
+- **`<link rel="preload" as="image" fetchpriority="high">`** in `index.html`
+  for the LCP hero image — browser starts fetching during JS-parse, image
+  is in cache before React mounts.
+- **Google Fonts moved off CSS `@import`** to a non-render-blocking
+  `<link media="print" onload>` pattern + preconnect to `fonts.gstatic.com`.
+  Saved ~1.75 s of render-blocking time.
+- **`preload="metadata"` + IntersectionObserver** on demo videos in
+  `FeatureSection` — only the `moov` atom of each `.mov` loads up front;
+  playback bytes stream when the section scrolls into view, and pause
+  when it leaves.
+- **`loading="lazy"`** on every below-the-fold image.
+
+### Reproduce the audit
+
+```bash
+cd frontend && npm run build && npm run preview     # serves dist on http://localhost:4173
+# in another terminal:
+npx lighthouse http://localhost:4173 \
+  --only-categories=performance,accessibility,best-practices,seo \
+  --view
+```
+
+Or for the deployed site:
+
+```bash
+npx lighthouse https://mybookclub.win --view
+```
+
+> **Tip:** Lighthouse runs in incognito by default; first-party cookies
+> are skipped, so the audit measures the truly-cold logged-out
+> experience (which is what most search-engine / preview-card traffic
+> hits anyway).
 
 ---
 

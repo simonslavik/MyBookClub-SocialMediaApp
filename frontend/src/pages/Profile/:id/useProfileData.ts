@@ -10,7 +10,7 @@ export default function useProfileData() {
     const navigate = useNavigate();
     const { auth, setAuth } = useContext(AuthContext);
     const { confirm } = useConfirm();
-    const { toastError, toastWarning } = useToast();
+    const { toastError, toastWarning, toastSuccess } = useToast();
 
     const [profile, setProfile] = useState(null);
     const [createdBookClubs, setCreatedBookClubs] = useState([]);
@@ -150,6 +150,48 @@ export default function useProfileData() {
         }
     }, [auth?.token, id, toastError]);
 
+    // Cancel a pending request that the current user sent earlier. Flips
+    // the local friendshipStatus optimistically back to 'none' so the
+    // ProfileHero Pending pill turns back into the Add Friend button
+    // immediately on success.
+    const cancelFriendRequest = useCallback(async () => {
+        if (!auth?.token) return;
+        setFriendRequestLoading(true);
+        try {
+            await apiClient.post('/v1/friends/cancel', { recipientId: id });
+            setProfile(prev => ({ ...prev, friendshipStatus: 'none' }));
+            toastSuccess('Friend request cancelled');
+        } catch (err: any) {
+            logger.error('Error cancelling friend request:', err);
+            toastError(err.response?.data?.message || 'Failed to cancel friend request');
+        } finally {
+            setFriendRequestLoading(false);
+        }
+    }, [auth?.token, id, toastSuccess, toastError]);
+
+    // Remove an existing friend. Backend's removeFriend service rejects
+    // anything that isn't an ACCEPTED friendship, so this is only called
+    // from the friends-state branch in the UI. Flips status → 'none'
+    // and decrements numberOfFriends optimistically.
+    const removeFriend = useCallback(async () => {
+        if (!auth?.token) return;
+        setFriendRequestLoading(true);
+        try {
+            await apiClient.delete('/v1/friends/remove', { data: { friendId: id } });
+            setProfile(prev => ({
+                ...prev,
+                friendshipStatus: 'none',
+                numberOfFriends: Math.max(0, (prev?.numberOfFriends || 1) - 1),
+            }));
+            toastSuccess('Friend removed');
+        } catch (err: any) {
+            logger.error('Error removing friend:', err);
+            toastError(err.response?.data?.message || 'Failed to remove friend');
+        } finally {
+            setFriendRequestLoading(false);
+        }
+    }, [auth?.token, id, toastSuccess, toastError]);
+
     // ── Delete book ──────────────────────────────────────
     const deleteBook = useCallback(async (userBookId) => {
         const ok = await confirm('Remove this book from your library?', { title: 'Remove Book', variant: 'danger', confirmLabel: 'Remove' });
@@ -173,7 +215,7 @@ export default function useProfileData() {
         id, profile, allClubs, createdBookClubs,
         loading, error, isOwnProfile,
         imagePreview, uploadingImage, fileInputRef, handleImageSelect,
-        friendRequestLoading, sendFriendRequest,
+        friendRequestLoading, sendFriendRequest, cancelFriendRequest, removeFriend,
         favoriteBooks, booksReading, booksToRead, booksRead,
         fetchBooks, deleteBook, navigate,
         isAuthed: !!auth?.token,

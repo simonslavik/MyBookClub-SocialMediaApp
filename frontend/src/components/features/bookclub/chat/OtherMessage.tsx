@@ -21,12 +21,13 @@ const OtherMessage = ({
   onToggleReaction, onToggleMenu,
   onPin, onCopy, onReply, onDelete,
   onScrollToMessage, getUserReactionEmoji,
-  friends = [], onSendFriendRequest, connectedUsers = [],
+  friends = [], sentFriendRequestIds, onSendFriendRequest, connectedUsers = [],
 }) => {
   const [showFullDate, setShowFullDate] = useState(false);
   const navigate = useNavigate();
 
   const isFriend = friends.some(f => f.friend?.id === msg.userId);
+  const requestSent = sentFriendRequestIds?.has?.(msg.userId) ?? false;
   const isOnline = connectedUsers.some(cu => cu.userId === msg.userId);
 
   const hoverUser = {
@@ -49,6 +50,7 @@ const OtherMessage = ({
           user={hoverUser}
           currentUserId={auth?.user?.id}
           isFriend={isFriend}
+          requestSent={requestSent}
           isOnline={isOnline}
           onSendFriendRequest={onSendFriendRequest}
           className="flex-shrink-0 self-end"

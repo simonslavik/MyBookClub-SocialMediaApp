@@ -15,6 +15,7 @@ import ResizablePanel from '@components/common/ResizablePanel';
 import BookclubHeader from '@components/features/bookclub/MainChatArea/BookclubHeader';
 
 import { FiMenu, FiUsers } from 'react-icons/fi';
+import { useConfirm } from '@hooks/useUIFeedback';
 import logger from '@utils/logger';
 
 import { BookclubLoadingScreen, BookclubErrorScreen } from './BookclubStatusScreens';
@@ -25,19 +26,21 @@ import BookclubChatComposer from './BookclubChatComposer';
 const BookClub = () => {
   const { id: bookClubId } = useParams();
   const navigate = useNavigate();
+  const { confirm } = useConfirm();
   useDarkBodyLock();
 
   // ─── Data layer ─────────────────────────────────────────
   const {
     auth, setAuth, logout,
     bookClub, setBookClub, rooms, setRooms, currentRoom, setCurrentRoom,
-    loading, error, myBookClubs, userRole, setUserRole, friends,
+    loading, error, myBookClubs, userRole, setUserRole, friends, sentFriendRequestIds,
     bookclubBooks, loadingBooks, fetchBookclubBooks,
     handleStatusChange, handleRateBook, handleRemoveRating,
     settingsForm, setSettingsForm, savingSettings, handleSaveSettings,
     uploadingImage, fileInputRef, handleImageUpload, handleDeleteImage,
     handleCreateRoomSubmit, handleRoomUpdated, handleRoomDeleted,
     handleDeleteBookclub,
+    handleLeaveBookclub,
     handleSendFriendRequest, handleMemberUpdate,
     roleUpdateCounter, extractUserRole, buildMappedMembers,
     toastError,
@@ -235,6 +238,20 @@ const BookClub = () => {
     if (ok) navigate('/');
   }, [handleDeleteBookclub, navigate]);
 
+  // Leave-bookclub flow: confirm → call API → on success bounce to home.
+  // Owners can't leave (backend rejects); the header menu only shows the
+  // Leave action for non-owner roles, so we shouldn't hit that error in
+  // normal use — but the toast covers it if it does happen.
+  const handleLeaveBookclubAndRedirect = useCallback(async () => {
+    const ok = await confirm(
+      'Leave this bookclub? You will need a new invite or join request to come back.',
+      { title: 'Leave bookclub', variant: 'danger', confirmLabel: 'Leave' }
+    );
+    if (!ok) return;
+    const success = await handleLeaveBookclub();
+    if (success) navigate('/');
+  }, [confirm, handleLeaveBookclub, navigate]);
+
   const handleLoginRedirect = useCallback((id) => {
     navigate('/login', { state: { from: `/bookclub/${id}` } });
   }, [navigate]);
@@ -341,6 +358,8 @@ const BookClub = () => {
               auth={auth}
               onInviteClick={() => modals.open('invite')}
               onSettingsClick={openSettings}
+              onLeaveClick={handleLeaveBookclubAndRedirect}
+              bookClubName={bookClub?.name}
               userRole={userRole}
               pendingRequestsCount={pendingRequestsCount}
             />
@@ -366,7 +385,7 @@ const BookClub = () => {
             handleRateBook={handleRateBook} handleRemoveRating={handleRemoveRating}
             messages={messages} setMessages={setMessages}
             currentRoom={currentRoom} ws={ws}
-            friends={friends} handleSendFriendRequest={handleSendFriendRequest}
+            friends={friends} sentFriendRequestIds={sentFriendRequestIds} handleSendFriendRequest={handleSendFriendRequest}
             connectedUsers={connectedUsers} lastReadAt={lastReadAt}
             hasMoreMessages={hasMoreMessages} loadingOlder={loadingOlder}
             loadingMessages={loadingMessages}
@@ -392,7 +411,7 @@ const BookClub = () => {
           <ResizablePanel side="left" defaultWidth={176} minWidth={120} maxWidth={320} storageKey="bookclub-users-width">
             <ConnectedUsersSidebar
               bookClubMembers={mappedBookClubMembers} connectedUsers={connectedUsers}
-              friends={friends} auth={auth} onSendFriendRequest={handleSendFriendRequest}
+              friends={friends} sentFriendRequestIds={sentFriendRequestIds} auth={auth} onSendFriendRequest={handleSendFriendRequest}
             />
           </ResizablePanel>
         </div>

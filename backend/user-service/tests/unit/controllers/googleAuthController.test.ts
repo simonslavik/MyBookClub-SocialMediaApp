@@ -45,7 +45,10 @@ describe('GoogleAuthController', () => {
     mockRes = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn().mockReturnThis(),
-    };
+      // setRefreshCookie() calls res.cookie() — required so the controller
+      // doesn't throw and short-circuit to 500.
+      cookie: jest.fn().mockReturnThis(),
+    } as Partial<Response>;
   });
 
   afterEach(() => jest.clearAllMocks());
@@ -88,11 +91,14 @@ describe('GoogleAuthController', () => {
         })
       );
       expect(mockRes.status).toHaveBeenCalledWith(200);
+      // Refresh token now lives only in the HttpOnly cookie set via
+      // setRefreshCookie() — the response body carries just the access
+      // token + user object.
+      expect(mockRes.cookie).toHaveBeenCalled();
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
           message: 'Google authentication successful',
           accessToken: 'at',
-          refreshToken: 'rt',
         })
       );
     });
@@ -189,7 +195,12 @@ describe('GoogleAuthController', () => {
         name: 'John',
         googleId: 'google-123',
         authProvider: 'google',
-        profileImage: 'https://pic.url',
+        // emailVerified is required — without it, the controller's
+        // self-heal block flips it on and calls user.update.
+        emailVerified: true,
+        // Real Google photo URL (not a default monogram), so the avatar
+        // self-heal also leaves it alone.
+        profileImage: 'https://lh3.googleusercontent.com/a/ACg8ocREAL_PHOTO_ID_LONG_ENOUGH=s96-c',
         createdAt: new Date(),
       };
       mockPrisma.user.findFirst.mockResolvedValue(existingUser);

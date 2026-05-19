@@ -3,7 +3,7 @@ import { registerUser, loginUser, refreshAccessToken, logoutUser, logoutAllDevic
 import { getProfileById, updateMyProfile, updateMyStatus, getUserById, listUsers, getUsersByIds, searchUsers, getSuggestedUsers } from '../controllers/profileController.js';
 import { authMiddleware, optionalAuthMiddleware } from '../middleware/authMiddleware.js';
 import { addProfileImage, deleteProfileImage, uploadProfileImageMiddleware } from '../controllers/profileImageController.js';
-import { sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriend, listFriends, listFriendRequests} from '../controllers/friendsController.js';
+import { sendFriendRequest, acceptFriendRequest, rejectFriendRequest, cancelFriendRequest, removeFriend, listFriends, listFriendRequests} from '../controllers/friendsController.js';
 import { getDirectMessages, sendDirectMessage, getConversations, deleteDirectMessage, markConversationAsRead, addDMReaction, removeDMReaction } from '../controllers/directMessagesController.js';
 import { googleAuth } from '../controllers/googleAuthController.js';
 import { forgotPassword, resetPassword, verifyEmail, resendVerification, changePassword } from '../controllers/authController.js';
@@ -76,6 +76,11 @@ userRoutes.get('/users/:id', authMiddleware, asyncHandler(getUserById));
 userRoutes.post('/friends/request', validateRequest(sendFriendRequestSchema), authMiddleware, asyncHandler(sendFriendRequest));
 userRoutes.post('/friends/accept', validateRequest(acceptFriendRequestSchema), authMiddleware, asyncHandler(acceptFriendRequest));
 userRoutes.post('/friends/reject', validateRequest(rejectFriendRequestSchema), authMiddleware, asyncHandler(rejectFriendRequest));
+// Reuses the send schema — same shape `{ recipientId }`. Cancels a PENDING
+// request that the current user previously sent. Distinct from /reject
+// (which is the receiver's action) and /remove (which deletes a confirmed
+// friendship).
+userRoutes.post('/friends/cancel', validateRequest(sendFriendRequestSchema), authMiddleware, asyncHandler(cancelFriendRequest));
 userRoutes.delete('/friends/remove', validateRequest(removeFriendSchema), authMiddleware, asyncHandler(removeFriend));
 userRoutes.get('/friends/list', validateRequest(paginationSchema, 'query'), authMiddleware, asyncHandler(listFriends));
 userRoutes.get('/friends/requests', validateRequest(paginationSchema, 'query'), authMiddleware, asyncHandler(listFriendRequests));

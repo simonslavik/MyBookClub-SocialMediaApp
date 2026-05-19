@@ -7,7 +7,7 @@ import { getProfileImageUrl } from '@config/constants';
 import { getAvatarUrl, getAvatarSeed } from '@utils/avatar';
 import apiClient from '@api/axios';
 import logger from '@utils/logger';
-import { useToast } from '@hooks/useUIFeedback';
+import { useToast, useConfirm } from '@hooks/useUIFeedback';
 
 type Tab = 'friends' | 'requests' | 'discover';
 
@@ -16,6 +16,7 @@ const FriendsPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { toastSuccess, toastError, toastWarning } = useToast();
+    const { confirm } = useConfirm();
 
     const initialTab = (location.state as any)?.tab as Tab | undefined;
     const [activeTab, setActiveTab] = useState<Tab>(initialTab && ['friends','requests','discover'].includes(initialTab) ? initialTab : 'friends');
@@ -108,7 +109,10 @@ const FriendsPage = () => {
 
     const handleAcceptRequest = async (requestId) => {
         try {
-            await apiClient.post('/v1/friends/accept', { friendshipId: requestId });
+            // Backend Joi schema (acceptFriendRequestSchema) expects `requestId`,
+            // not `friendshipId`. Mismatch was the reason Accept/Decline buttons
+            // silently 400-ed for every receiver.
+            await apiClient.post('/v1/friends/accept', { requestId });
             toastSuccess('Friend request accepted!');
             await refreshFriendData();
         } catch (err) {
@@ -118,11 +122,53 @@ const FriendsPage = () => {
 
     const handleRejectRequest = async (requestId) => {
         try {
-            await apiClient.post('/v1/friends/reject', { friendshipId: requestId });
+            await apiClient.post('/v1/friends/reject', { requestId });
             toastSuccess('Friend request declined');
             setFriendRequests(prev => prev.filter(r => r.id !== requestId));
         } catch (err) {
             toastError('Failed to decline request');
+        }
+    };
+
+    // Remove a confirmed friend. Same optimistic + rollback pattern as
+    // cancelRequest, but uses DELETE /friends/remove and refreshes the
+    // friends list afterwards so the "Friends" tab count updates.
+    const handleRemoveFriend = async (userId) => {
+        const ok = await confirm(
+            'Remove this friend?',
+            { title: 'Remove friend', variant: 'danger', confirmLabel: 'Remove' }
+        );
+        if (!ok) return;
+        const snapshot = friends;
+        setFriends(prev => prev.filter(f => (f.friend?.id || f.id) !== userId));
+        try {
+            await apiClient.delete('/v1/friends/remove', { data: { friendId: userId } });
+            toastSuccess('Friend removed');
+            await refreshFriendData();
+        } catch (err) {
+            setFriends(snapshot);
+            toastError(err.response?.data?.message || 'Failed to remove friend');
+        }
+    };
+
+    // Cancel a request the current user sent. Optimistically drops the
+    // user from `sentRequests` so the Pending pill flips back to "Add
+    // Friend" before the API roundtrip resolves; rolls back on error.
+    const handleCancelRequest = async (userId) => {
+        const ok = await confirm(
+            'Cancel friend request?',
+            { title: 'Cancel request', variant: 'danger', confirmLabel: 'Cancel request' }
+        );
+        if (!ok) return;
+        setSentRequests(prev => prev.filter(uid => uid !== userId));
+        try {
+            await apiClient.post('/v1/friends/cancel', { recipientId: userId });
+            toastSuccess('Friend request cancelled');
+            await refreshFriendData();
+        } catch (err) {
+            // Roll back the optimistic remove on failure
+            setSentRequests(prev => prev.includes(userId) ? prev : [...prev, userId]);
+            toastError(err.response?.data?.message || 'Failed to cancel friend request');
         }
     };
 
@@ -378,14 +424,28 @@ const FriendsPage = () => {
                                                 </button>
                                             )}
                                             {relationship === 'pending' && (
-                                                <span className="flex items-center gap-1 px-3 py-1.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs rounded-lg font-medium">
-                                                    <FiClock className="w-3 h-3" /> Pending
-                                                </span>
+                                                <button
+                                                    onClick={() => handleCancelRequest(user.id)}
+                                                    title="Click to cancel the request"
+                                                    className="flex items-center gap-1 px-3 py-1.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs rounded-lg font-medium hover:bg-red-100 dark:hover:bg-red-950/30 hover:text-red-700 dark:hover:text-red-400 transition-colors cursor-pointer group"
+                                                >
+                                                    <FiClock className="w-3 h-3 group-hover:hidden" />
+                                                    <FiX className="w-3 h-3 hidden group-hover:block" />
+                                                    <span className="group-hover:hidden">Pending</span>
+                                                    <span className="hidden group-hover:inline">Cancel</span>
+                                                </button>
                                             )}
                                             {relationship === 'friends' && (
-                                                <span className="flex items-center gap-1 px-3 py-1.5 bg-stone-100 dark:bg-gray-700 text-stone-600 dark:text-gray-300 text-xs rounded-lg font-medium">
-                                                    <FiCheck className="w-3 h-3" /> Friends
-                                                </span>
+                                                <button
+                                                    onClick={() => handleRemoveFriend(user.id)}
+                                                    title="Click to remove from friends"
+                                                    className="flex items-center gap-1 px-3 py-1.5 bg-stone-100 dark:bg-gray-700 text-stone-600 dark:text-gray-300 text-xs rounded-lg font-medium hover:bg-red-100 dark:hover:bg-red-950/30 hover:text-red-700 dark:hover:text-red-400 transition-colors cursor-pointer group"
+                                                >
+                                                    <FiCheck className="w-3 h-3 group-hover:hidden" />
+                                                    <FiX className="w-3 h-3 hidden group-hover:block" />
+                                                    <span className="group-hover:hidden">Friends</span>
+                                                    <span className="hidden group-hover:inline">Remove</span>
+                                                </button>
                                             )}
                                             {relationship === 'received' && (
                                                 <button

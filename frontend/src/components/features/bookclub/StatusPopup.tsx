@@ -57,7 +57,7 @@ const StatusPopup = ({ user, onClose, onStatusChange, wsRef, onLogout, anchorRef
             className="w-10 h-10 rounded-full object-cover"
             onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(user)); }}
           />
-          <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-gray-800 ${getStatusColor(currentStatus)}`} />
+          <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-white dark:ring-gray-900 ${getStatusColor(currentStatus)}`} />
         </div>
         <div className="min-w-0">
           <p className="text-white text-sm font-semibold truncate">{user?.name}</p>

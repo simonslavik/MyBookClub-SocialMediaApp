@@ -1,0 +1,46 @@
+{
+  "homepage.webp": {
+    "width": 1600,
+    "height": 911
+  },
+  "bookclub-chat.webp": {
+    "width": 1600,
+    "height": 904
+  },
+  "bookclub-chat-2.webp": {
+    "width": 1600,
+    "height": 911
+  },
+  "bookclub-suggestions.webp": {
+    "width": 1600,
+    "height": 908
+  },
+  "bookclub-calendar.webp": {
+    "width": 1600,
+    "height": 903
+  },
+  "reading-progress.webp": {
+    "width": 1600,
+    "height": 900
+  },
+  "reading-progress-2.webp": {
+    "width": 1600,
+    "height": 901
+  },
+  "user-profile.webp": {
+    "width": 1600,
+    "height": 908
+  },
+  "book-rating.webp": {
+    "width": 1600,
+    "height": 904
+  },
+  "adding-ratings.webp": {
+    "width": 1600,
+    "height": 906
+  },
+  "notification-mobile.webp": {
+    "width": 750,
+    "height": 1146
+  }
+}

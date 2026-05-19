@@ -32,10 +32,11 @@ const RoleBadge = ({ role }) => {
   );
 };
 
-const ConnectedUsersSidebar = ({ 
-  bookClubMembers, 
-  connectedUsers, 
-  friends = [], 
+const ConnectedUsersSidebar = ({
+  bookClubMembers,
+  connectedUsers,
+  friends = [],
+  sentFriendRequestIds,
   auth,
   onSendFriendRequest
 }) => {
@@ -134,6 +135,7 @@ const ConnectedUsersSidebar = ({
               {sortedMembers.map(user => {
                 const isOnline = connectedUsers.some(cu => cu.userId === user.id);
                 const isFriend = friends.some(f => f.friend?.id === user.id);
+                const requestSent = sentFriendRequestIds?.has?.(user.id) ?? false;
                 const isCurrentUser = user.id === auth?.user?.id;
                 return (
                   <div
@@ -146,6 +148,7 @@ const ConnectedUsersSidebar = ({
                         user={user}
                         currentUserId={auth?.user?.id}
                         isFriend={isFriend}
+                        requestSent={requestSent}
                         isOnline={isOnline}
                         onSendFriendRequest={onSendFriendRequest}
                       >
@@ -156,7 +159,7 @@ const ConnectedUsersSidebar = ({
                           onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(user)); }}
                         />
                       </UserHoverCard>
-                      <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-gray-800 ${getStatusColor(isOnline ? (user.status || 'ONLINE') : 'OFFLINE')}`} />
+                      <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-white dark:ring-gray-900 ${getStatusColor(isOnline ? (user.status || 'ONLINE') : 'OFFLINE')}`} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -183,6 +186,7 @@ const ConnectedUsersSidebar = ({
           const isOnline = connectedUsers.some(connectedUser => connectedUser.userId === user.id);
           const isCurrentUser = user.id === auth?.user?.id;
           const isFriend = friends.some(f => f.friend?.id === user.id);
+          const requestSent = sentFriendRequestIds?.has?.(user.id) ?? false;
           
           // Debug logging for each user
           logger.debug(`User ${user.username} - ID: ${user.id}, isFriend: ${isFriend}`, {
@@ -218,6 +222,7 @@ const ConnectedUsersSidebar = ({
                     user={user}
                     currentUserId={auth?.user?.id}
                     isFriend={isFriend}
+                    requestSent={requestSent}
                     isOnline={isOnline}
                     onSendFriendRequest={onSendFriendRequest}
                   >
@@ -228,7 +233,7 @@ const ConnectedUsersSidebar = ({
                       onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(getAvatarSeed(user)); }}
                     />
                   </UserHoverCard>
-                  <div className={`absolute bottom-0 right-0 w-2 h-2 rounded-full border-2 border-gray-800 ${getStatusColor(isOnline ? (user.status || 'ONLINE') : 'OFFLINE')}`}></div>
+                  <div className={`absolute bottom-0 right-0 w-2 h-2 rounded-full ring-2 ring-white dark:ring-gray-900 ${getStatusColor(isOnline ? (user.status || 'ONLINE') : 'OFFLINE')}`}></div>
                 </div>
                 <div className="flex-1 flex items-center gap-1.5 min-w-0">
                   <span className="truncate text-[13px]">{user.username}</span>
